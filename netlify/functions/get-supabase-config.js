@@ -11,11 +11,17 @@ exports.handler = async (event) => {
     try {
         const supabaseUrl = process.env.SUPABASE_URL;
         const supabaseAnonKey = process.env.SUPABASE_ANON_KEY;
+        
+        // Debug: log whether env vars exist
+        console.log('SUPABASE_URL exists:', !!supabaseUrl);
+        console.log('SUPABASE_ANON_KEY exists:', !!supabaseAnonKey);
+        console.log('SUPABASE_URL length:', supabaseUrl ? supabaseUrl.length : 0);
+        console.log('SUPABASE_ANON_KEY length:', supabaseAnonKey ? supabaseAnonKey.length : 0);
 
         if (!supabaseUrl || !supabaseAnonKey) {
             return {
                 statusCode: 200,
-                body: JSON.stringify({ configured: false })
+                body: JSON.stringify({ configured: false, debug: { hasUrl: !!supabaseUrl, hasKey: !!supabaseAnonKey } })
             };
         }
 
