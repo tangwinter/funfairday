@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Site Settings - FunFairDay Admin</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <h2>FunFairDay</h2>
+            <span>Admin Dashboard</span>
+        </div>
+        <nav class="admin-nav">
+            <a href="dashboard.html" class="admin-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="products.html" class="admin-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <span>Products</span>
+            </a>
+            <a href="settings.html" class="admin-nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>Site Settings</span>
+            </a>
+        </nav>
+        <div class="admin-sidebar-footer">
+            <button class="admin-logout-btn" id="logoutBtn">Logout</button>
+        </div>
+    </aside>
+
+    <main class="admin-main">
+        <div class="admin-header">
+            <h1>Site Settings</h1>
+            <span style="color:var(--admin-text);font-size:0.9rem;">Changes take effect immediately</span>
+        </div>
+
+        <!-- Logo -->
+        <div class="admin-settings-section">
+            <h3>Logo</h3>
+            <div class="admin-form-group">
+                <label>Current Logo</label>
+                <div class="admin-image-upload">
+                    <img id="logoPreview" class="admin-image-preview" src="" alt="Logo preview" style="display:none;">
+                    <div id="logoPlaceholder" class="admin-image-preview-placeholder">No image</div>
+                </div>
+            </div>
+            <div class="admin-form-group">
+                <label>Logo Image URL</label>
+                <input type="text" id="logoUrl" class="admin-input" placeholder="https://... or /images/...">
+            </div>
+            <div class="admin-form-group">
+                <label>Upload New Logo</label>
+                <input type="file" id="logoFileInput" accept="image/*" class="admin-input" style="padding:8px;">
+            </div>
+        </div>
+
+        <!-- Banner -->
+        <div class="admin-settings-section">
+            <h3>Hero Banner</h3>
+            <div class="admin-form-group">
+                <label>Current Banner</label>
+                <div class="admin-image-upload">
+                    <img id="bannerPreview" class="admin-image-preview" src="" alt="Banner preview" style="display:none;">
+                    <div id="bannerPlaceholder" class="admin-image-preview-placeholder">No image</div>
+                </div>
+            </div>
+            <div class="admin-form-group">
+                <label>Banner Image URL</label>
+                <input type="text" id="bannerUrl" class="admin-input" placeholder="https://... or /images/...">
+            </div>
+            <div class="admin-form-group">
+                <label>Upload New Banner</label>
+                <input type="file" id="bannerFileInput" accept="image/*" class="admin-input" style="padding:8px;">
+            </div>
+        </div>
+
+        <!-- Site Name & Slogan -->
+        <div class="admin-settings-section">
+            <h3>Site Content</h3>
+            <div class="admin-form-group">
+                <label>Site Name</label>
+                <input type="text" id="siteName" class="admin-input" placeholder="FunFairDay">
+            </div>
+            <div class="admin-form-group">
+                <label>Slogan</label>
+                <input type="text" id="slogan" class="admin-input" placeholder="Every day is a little carnival">
+            </div>
+        </div>
+
+        <!-- Save Button -->
+        <button class="admin-btn admin-btn-primary" id="saveSettingsBtn" style="padding:14px 32px;font-size:1rem;">Save All Settings</button>
+    </main>
+
+    <div class="admin-toast" id="adminToast"></div>
+
+    <script>
+        let supabase = null;
+        let accessToken = '';
+        let currentSettings = {};
+
+        async function init() {
+            try {
+                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const config = await res.json();
+                if (!config.configured) { throw new Error('Not configured'); }
+                supabase = window.supabase.createClient(config.url, config.anonKey);
+
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error || !session) { window.location.href = 'index.html'; return; }
+                accessToken = session.access_token;
+                await loadSettings();
+            } catch(e) {
+                window.location.href = 'index.html';
+            }
+        }
+
+        async function loadSettings() {
+            try {
+                const response = await fetch('/.netlify/functions/get-public-data');
+                const data = await response.json();
+                currentSettings = data.settings || {};
+
+                document.getElementById('logoUrl').value = currentSettings.logo_url || '';
+                document.getElementById('bannerUrl').value = currentSettings.banner_url || '';
+                document.getElementById('siteName').value = currentSettings.site_name || 'FunFairDay';
+                document.getElementById('slogan').value = currentSettings.slogan || '';
+
+                updatePreview('logoPreview', 'logoPlaceholder', currentSettings.logo_url);
+                updatePreview('bannerPreview', 'bannerPlaceholder', currentSettings.banner_url);
+            } catch (e) {
+                console.error('Failed to load settings:', e);
+            }
+        }
+
+        function updatePreview(imgId, placeholderId, url) {
+            const img = document.getElementById(imgId);
+            const placeholder = document.getElementById(placeholderId);
+            if (url) {
+                img.src = url;
+                img.style.display = 'block';
+                placeholder.style.display = 'none';
+            } else {
+                img.style.display = 'none';
+                placeholder.style.display = 'flex';
+            }
+        }
+
+        // Image upload handler
+        async function uploadImage(file, folder) {
+            if (!file) return null;
+
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = async (e) => {
+                    try {
+                        const base64 = e.target.result.split(',')[1];
+                        const response = await fetch('/.netlify/functions/admin-upload-image', {
+                            method: 'POST',
+                            headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                file_name: file.name,
+                                file_base64: base64,
+                                folder: folder || 'general'
+                            })
+                        });
+                        const data = await response.json();
+                        if (data.success) resolve(data.url);
+                        else reject(new Error(data.error));
+                    } catch (err) {
+                        reject(err);
+                    }
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        document.getElementById('saveSettingsBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('saveSettingsBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                // Upload logo if selected
+                const logoFile = document.getElementById('logoFileInput').files[0];
+                if (logoFile) {
+                    const logoUrl = await uploadImage(logoFile, 'logo');
+                    if (logoUrl) document.getElementById('logoUrl').value = logoUrl;
+                }
+
+                // Upload banner if selected
+                const bannerFile = document.getElementById('bannerFileInput').files[0];
+                if (bannerFile) {
+                    const bannerUrl = await uploadImage(bannerFile, 'banner');
+                    if (bannerUrl) document.getElementById('bannerUrl').value = bannerUrl;
+                }
+
+                // Save all settings
+                const settings = {
+                    logo_url: document.getElementById('logoUrl').value,
+                    banner_url: document.getElementById('bannerUrl').value,
+                    site_name: document.getElementById('siteName').value,
+                    slogan: document.getElementById('slogan').value
+                };
+
+                const response = await fetch('/.netlify/functions/admin-update-settings', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ settings })
+                });
+
+                if (!response.ok) throw new Error('Failed to save settings');
+
+                showToast('Settings saved successfully!', 'success');
+                await loadSettings();
+
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Save All Settings';
+        });
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('adminToast');
+            toast.textContent = msg;
+            toast.className = 'admin-toast active ' + (type || '');
+            setTimeout(() => toast.classList.remove('active'), 3000);
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = 'index.html';
+        });
+
+        init();
+    </script>
+</body>
+</html>

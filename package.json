@@ -1,0 +1,13 @@
+{
+    "name": "funfairday-website",
+    "version": "1.0.0",
+    "description": "FunFairDay E-Commerce Website",
+    "private": true,
+    "scripts": {
+        "dev": "netlify dev",
+        "build": "echo 'Static site - no build required'"
+    },
+    "devDependencies": {
+        "netlify-cli": "^17.0.0"
+    }
+}

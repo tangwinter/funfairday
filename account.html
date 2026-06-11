@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Account - FunFairDay</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <style>
+        .account-page {
+            min-height: 100vh;
+            padding: 100px 20px 60px;
+        }
+        .account-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+        .account-header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+        .account-email {
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        .account-logout-btn {
+            padding: 8px 20px;
+            background: none;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            border-radius: 8px;
+            font-family: var(--font);
+            font-weight: 700;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .account-logout-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+        .account-section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+        }
+        .account-section h2 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .order-card {
+            padding: 20px;
+            border: 1px solid rgba(0,0,0,0.06);
+            border-radius: 12px;
+            margin-bottom: 16px;
+            transition: all 0.3s ease;
+        }
+        .order-card:last-child { margin-bottom: 0; }
+        .order-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 12px rgba(255,107,107,0.1);
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .order-id {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+        .order-date {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+        .order-total {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--primary);
+        }
+        .order-status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        .order-status-pending { background: #fff3e0; color: #e65100; }
+        .order-status-processing { background: #e3f2fd; color: #1565c0; }
+        .order-status-shipped { background: #e8f5e9; color: #2e7d32; }
+        .order-status-delivered { background: #e8f5e9; color: #1b5e20; }
+        .order-status-cancelled { background: #fce4ec; color: #c62828; }
+        .order-items { margin-top: 12px; }
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.04);
+            font-size: 0.85rem;
+        }
+        .order-item:last-child { border-bottom: none; }
+        .order-item-name { color: var(--dark); font-weight: 600; }
+        .order-item-detail { color: var(--text-light); font-size: 0.8rem; }
+        .order-item-price { color: var(--primary); font-weight: 700; }
+        .no-orders {
+            text-align: center;
+            padding: 48px 20px;
+            color: var(--text-light);
+        }
+        .no-orders svg {
+            margin-bottom: 16px;
+            opacity: 0.3;
+        }
+        .no-orders p {
+            margin-bottom: 20px;
+        }
+        .loading-state {
+            text-align: center;
+            padding: 48px;
+            color: var(--text-light);
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-inner">
+            <a href="index.html" class="logo">
+                <img src="images/FFD Logo.jpeg" alt="FunFairDay Logo" class="logo-img">
+                <span class="logo-text" id="siteNameHeader">FunFairDay</span>
+            </a>
+            <nav class="nav">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="index.html#categories" class="nav-link">Shop</a>
+            </nav>
+            <button class="cart-btn" id="cartBtn" aria-label="Open Cart">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                <span class="cart-badge" id="cartBadge">0</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="account-page">
+        <div class="container">
+            <div class="account-header">
+                <div>
+                    <h1>My Account</h1>
+                    <span class="account-email" id="userEmail"></span>
+                </div>
+                <button class="account-logout-btn" id="logoutBtn">Logout</button>
+            </div>
+
+            <div class="account-section">
+                <h2>Order History</h2>
+                <div id="ordersContainer">
+                    <div class="loading-state">Loading your orders...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cart Overlay & Panel (same as index.html) -->
+    <div class="cart-overlay" id="cartOverlay"></div>
+    <div class="cart-panel" id="cartPanel">
+        <div class="cart-header">
+            <h3>Shopping Cart</h3>
+            <button class="cart-close" id="cartClose" aria-label="Close Cart">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="cart-items" id="cartItems">
+            <div class="cart-empty">
+                <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                <p>Your cart is empty</p>
+            </div>
+        </div>
+        <div class="cart-footer" id="cartFooter" style="display: none;">
+            <div class="cart-total">
+                <span>Total:</span>
+                <span class="cart-total-price" id="cartTotal">$0.00</span>
+            </div>
+            <button class="btn btn-primary btn-checkout" id="checkoutBtn">Checkout</button>
+        </div>
+    </div>
+
+    <script>
+        let supabase = null;
+        let accessToken = null;
+
+        async function initSupabase() {
+            try {
+                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const config = await res.json();
+                if (!config.configured) { return false; }
+                supabase = window.supabase.createClient(config.url, config.anonKey);
+                return true;
+            } catch(e) {
+                return false;
+            }
+        }
+
+        ;(async function() {
+            const ready = await initSupabase();
+            if (!ready) {
+                document.getElementById('ordersContainer').innerHTML =
+                    '<div class="loading-state">Site not configured yet.</div>';
+                return;
+            }
+
+            const { data: { session }, error } = await supabase.auth.getSession();
+            if (error || !session) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            accessToken = session.access_token;
+            document.getElementById('userEmail').textContent = session.user.email;
+
+            try {
+                const cartData = JSON.parse(localStorage.getItem('funfairday_cart') || '[]');
+                const count = cartData.reduce((s, i) => s + i.quantity, 0);
+                const badge = document.getElementById('cartBadge');
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
+            } catch(e) {}
+
+            await loadOrders();
+        })();
+
+        async function loadOrders() {
+            const container = document.getElementById('ordersContainer');
+
+            try {
+                const response = await fetch('/.netlify/functions/get-orders', {
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+
+                if (!response.ok) throw new Error('Failed to load orders');
+
+                const { orders } = await response.json();
+
+                if (!orders || orders.length === 0) {
+                    container.innerHTML = '<div class="no-orders">' +
+                        '<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>' +
+                        '<p>You haven\'t placed any orders yet.</p>' +
+                        '<a href="index.html#categories" class="btn btn-primary">Start Shopping</a>' +
+                    '</div>';
+                    return;
+                }
+
+                container.innerHTML = orders.map(order => {
+                    const date = new Date(order.created_at).toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'long', day: 'numeric'
+                    });
+
+                    const itemsHtml = (order.order_items || []).map(item => {
+                        const details = [];
+                        if (item.case_style) details.push('Case: ' + item.case_style + (item.case_color ? ' (' + item.case_color + ')' : ''));
+                        if (item.options_text) details.push('Options: ' + item.options_text);
+                        const detailStr = details.length > 0 ? '<br><span class="order-item-detail">' + details.join(' | ') + '</span>' : '';
+                        return '<div class="order-item">' +
+                            '<div><span class="order-item-name">' + item.product_name + '</span> x' + item.quantity + detailStr + '</div>' +
+                            '<span class="order-item-price">$' + parseFloat(item.price).toFixed(2) + '</span>' +
+                        '</div>';
+                    }).join('');
+
+                    return '<div class="order-card">' +
+                        '<div class="order-header">' +
+                            '<span class="order-id">#' + order.id.slice(0, 8) + '</span>' +
+                            '<span class="order-date">' + date + '</span>' +
+                        '</div>' +
+                        '<span class="order-status order-status-' + order.status + '">' + order.status + '</span>' +
+                        '<div class="order-items">' + itemsHtml + '</div>' +
+                        '<div style="text-align:right;margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.06);">' +
+                            '<span style="font-size:0.85rem;color:var(--text-light);">Total: </span>' +
+                            '<span class="order-total">$' + parseFloat(order.total).toFixed(2) + '</span>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+
+            } catch (e) {
+                console.error('Failed to load orders:', e);
+                container.innerHTML = '<div class="loading-state">Failed to load orders. Please try again later.</div>';
+            }
+        }
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = 'index.html';
+        });
+
+        // Basic cart UI (simplified)
+        const cartPanel = document.getElementById('cartPanel');
+        const cartOverlay = document.getElementById('cartOverlay');
+        document.getElementById('cartBtn').addEventListener('click', () => {
+            cartPanel.classList.add('active');
+            cartOverlay.classList.add('active');
+        });
+        document.getElementById('cartClose').addEventListener('click', () => {
+            cartPanel.classList.remove('active');
+            cartOverlay.classList.remove('active');
+        });
+        cartOverlay.addEventListener('click', () => {
+            cartPanel.classList.remove('active');
+            cartOverlay.classList.remove('active');
+        });
+
+    </script>
+</body>
+</html>

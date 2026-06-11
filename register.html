@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - FunFairDay</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <style>
+        .auth-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 20px 40px;
+        }
+        .auth-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        }
+        .auth-card h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .auth-card p {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 32px;
+        }
+        .auth-error {
+            background: #fce4ec;
+            color: #c62828;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .auth-error.show { display: block; }
+        .auth-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .auth-success.show { display: block; }
+        .auth-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        .auth-link a {
+            color: var(--primary);
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .auth-link a:hover { text-decoration: underline; }
+        .auth-form .form-group {
+            margin-bottom: 20px;
+        }
+        .auth-form .form-group label {
+            display: block;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+        .auth-form .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid rgba(0,0,0,0.08);
+            border-radius: 8px;
+            font-family: var(--font);
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease;
+        }
+        .auth-form .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .auth-form .btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-inner">
+            <a href="index.html" class="logo">
+                <img src="images/FFD Logo.jpeg" alt="FunFairDay Logo" class="logo-img">
+                <span class="logo-text">FunFairDay</span>
+            </a>
+            <nav class="nav">
+                <a href="index.html" class="nav-link">Home</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="auth-page">
+        <div class="auth-card">
+            <h1>Create Account</h1>
+            <p>Join FunFairDay and start shopping</p>
+            <div class="auth-error" id="registerError"></div>
+            <div class="auth-success" id="registerSuccess">Account created! Redirecting...</div>
+            <form class="auth-form" id="registerForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="At least 6 characters" minlength="6" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Repeat your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="registerBtn">Create Account</button>
+            </form>
+            <div class="auth-link">
+                Already have an account? <a href="login.html">Sign in</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let supabase = null;
+
+        function showError(msg) {
+            const el = document.getElementById('registerError');
+            if (el) { el.textContent = msg; el.classList.add('show'); }
+        }
+
+        (async function init() {
+            try {
+                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const config = await res.json();
+                if (!config.configured) { showError('Site not configured yet.'); return; }
+                supabase = window.supabase.createClient(config.url, config.anonKey);
+            } catch(e) {
+                showError('Failed to connect. Please contact the site owner.');
+            }
+        })();
+
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!supabase) { showError('Supabase not configured.'); return; }
+
+            const btn = document.getElementById('registerBtn');
+            const errorDiv = document.getElementById('registerError');
+            const successDiv = document.getElementById('registerSuccess');
+            errorDiv.classList.remove('show');
+            successDiv.classList.remove('show');
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+
+            if (password !== confirmPassword) {
+                errorDiv.textContent = 'Passwords do not match';
+                errorDiv.classList.add('show');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Creating account...';
+
+            try {
+                const { data, error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: { emailRedirectTo: window.location.origin + '/login.html' }
+                });
+
+                if (error) throw error;
+
+                successDiv.classList.add('show');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+
+            } catch (err) {
+                errorDiv.textContent = err.message;
+                errorDiv.classList.add('show');
+                btn.disabled = false;
+                btn.textContent = 'Create Account';
+            }
+        });
+    </script>
+</body>
+</html>

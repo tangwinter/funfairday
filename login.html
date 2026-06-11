@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In - FunFairDay</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <style>
+        .auth-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 100px 20px 40px;
+        }
+        .auth-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            width: 100%;
+            max-width: 420px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        }
+        .auth-card h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--dark);
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .auth-card p {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 32px;
+        }
+        .auth-error {
+            background: #fce4ec;
+            color: #c62828;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .auth-error.show { display: block; }
+        .auth-success {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+            display: none;
+        }
+        .auth-success.show { display: block; }
+        .auth-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--text-light);
+        }
+        .auth-link a {
+            color: var(--primary);
+            font-weight: 700;
+            text-decoration: none;
+        }
+        .auth-link a:hover { text-decoration: underline; }
+        .auth-form .form-group {
+            margin-bottom: 20px;
+        }
+        .auth-form .form-group label {
+            display: block;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 6px;
+            font-size: 0.9rem;
+        }
+        .auth-form .form-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid rgba(0,0,0,0.08);
+            border-radius: 8px;
+            font-family: var(--font);
+            font-size: 0.95rem;
+            transition: border-color 0.2s ease;
+        }
+        .auth-form .form-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .auth-form .btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-inner">
+            <a href="index.html" class="logo">
+                <img src="images/FFD Logo.jpeg" alt="FunFairDay Logo" class="logo-img">
+                <span class="logo-text">FunFairDay</span>
+            </a>
+            <nav class="nav">
+                <a href="index.html" class="nav-link">Home</a>
+            </nav>
+        </div>
+    </header>
+
+    <div class="auth-page">
+        <div class="auth-card">
+            <h1>Welcome Back</h1>
+            <p>Sign in to your account</p>
+            <div class="auth-error" id="loginError"></div>
+            <form class="auth-form" id="loginForm">
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="loginBtn">Sign In</button>
+            </form>
+            <div class="auth-link">
+                Don't have an account? <a href="register.html">Create one</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let supabase = null;
+
+        function showLoginError(msg) {
+            const el = document.getElementById('loginError');
+            if (el) { el.textContent = msg; el.classList.add('show'); }
+        }
+
+        (async function init() {
+            try {
+                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const config = await res.json();
+                if (!config.configured) { showLoginError('Site not configured yet.'); return; }
+                supabase = window.supabase.createClient(config.url, config.anonKey);
+
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) { window.location.href = 'account.html'; }
+            } catch(e) {
+                showLoginError('Failed to connect. Please contact the site owner.');
+            }
+        })();
+
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!supabase) { showLoginError('Supabase not configured.'); return; }
+
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true;
+            btn.textContent = 'Signing in...';
+            document.getElementById('loginError').classList.remove('show');
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                window.location.href = 'account.html';
+            } catch (err) {
+                document.getElementById('loginError').textContent = err.message;
+                document.getElementById('loginError').classList.add('show');
+                btn.disabled = false;
+                btn.textContent = 'Sign In';
+            }
+        });
+    </script>
+</body>
+</html>
