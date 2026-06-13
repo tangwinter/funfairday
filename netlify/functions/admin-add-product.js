@@ -20,7 +20,7 @@ exports.handler = async (event) => {
         const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin');
         if (!roles || roles.length === 0) return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized' }) };
 
-        const { id, name, description, price, image_url, category_id, stripe_price_id, sort_order } = JSON.parse(event.body);
+        const { id, name, description, price, image_url, category_id, stripe_price_id, sort_order, model_id, case_style_id, case_color, option_choice } = JSON.parse(event.body);
         if (!id || !name || !category_id) {
             return { statusCode: 400, body: JSON.stringify({ error: 'id, name, and category_id are required' }) };
         }
@@ -29,7 +29,11 @@ exports.handler = async (event) => {
             id, name, description: description || '', price: price || 0,
             image_url: image_url || null, category_id,
             stripe_price_id: stripe_price_id || null,
-            sort_order: sort_order || 0
+            sort_order: sort_order || 0,
+            model_id: model_id || null,
+            case_style_id: case_style_id || null,
+            case_color: case_color || null,
+            option_choice: option_choice || null
         }).select().single();
 
         if (error) throw error;

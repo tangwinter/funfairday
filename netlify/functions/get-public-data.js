@@ -28,14 +28,16 @@ exports.handler = async (event) => {
             settingsResult,
             caseStylesResult,
             optionsResult,
-            categoryOptionsResult
+            categoryOptionsResult,
+            phoneModelsResult
         ] = await Promise.all([
             supabase.from('categories').select('*').order('id'),
             supabase.from('products').select('*').order('sort_order'),
             supabase.from('site_settings').select('*'),
             supabase.from('phone_case_styles').select('*').order('display_order'),
             supabase.from('options').select('*').order('key'),
-            supabase.from('category_options').select('*')
+            supabase.from('category_options').select('*'),
+            supabase.from('phone_models').select('*').order('display_order')
         ]);
 
         // Check for errors
@@ -45,6 +47,7 @@ exports.handler = async (event) => {
         if (caseStylesResult.error) throw caseStylesResult.error;
         if (optionsResult.error) throw optionsResult.error;
         if (categoryOptionsResult.error) throw categoryOptionsResult.error;
+        if (phoneModelsResult.error) throw phoneModelsResult.error;
 
         // Convert settings to key-value map
         const settings = {};
@@ -81,6 +84,7 @@ exports.handler = async (event) => {
                 products: productsResult.data,
                 settings: settings,
                 phoneCaseStyles: caseStylesResult.data,
+                phoneModels: phoneModelsResult.data,
                 options: optionsResult.data,
                 categoryCustomization: categoryCustomization
             })

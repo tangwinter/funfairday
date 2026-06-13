@@ -25,10 +25,6 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
                 <span>Products</span>
             </a>
-            <a href="case-styles.html" class="admin-nav-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-                <span>Case Styles</span>
-            </a>
             <a href="settings.html" class="admin-nav-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 <span>Site Settings</span>
@@ -109,6 +105,28 @@
                         <button type="button" class="admin-btn admin-btn-outline" id="uploadProdImageBtn">Upload</button>
                     </div>
                 </div>
+
+                <div class="admin-form-group" id="phoneCaseSection" style="display:none;border-top:2px solid var(--admin-border);padding-top:16px;margin-top:16px;">
+                    <h3 style="margin:0 0 12px 0;font-size:1rem;color:var(--admin-text);">Phone Case Customization</h3>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                        <div>
+                            <label for="prodModel">Phone Model</label>
+                            <select id="prodModel" class="admin-select"><option value="">-- Select Model --</option></select>
+                        </div>
+                        <div>
+                            <label for="prodStyle">Case Style</label>
+                            <select id="prodStyle" class="admin-select"><option value="">-- Select Style --</option></select>
+                        </div>
+                        <div>
+                            <label for="prodColor">Color</label>
+                            <select id="prodColor" class="admin-select"><option value="">-- Select Color --</option></select>
+                        </div>
+                        <div>
+                            <label>Options</label>
+                            <div id="optionsCheckboxes" style="display:flex;gap:12px;padding-top:4px;"></div>
+                        </div>
+                    </div>
+                </div>
                 <div class="admin-modal-actions">
                     <button type="button" class="admin-btn admin-btn-outline" id="cancelModal">Cancel</button>
                     <button type="submit" class="admin-btn admin-btn-primary" id="saveProductBtn">Save Product</button>
@@ -124,6 +142,9 @@
         let accessToken = '';
         let allProducts = [];
         let categories = [];
+        let phoneModels = [];
+        let phoneCaseStyles = [];
+        const phoneCaseCategories = ['diy-sticker-case', 'diy-paint-case', 'diy-epoxy-case'];
 
         async function init() {
             try {
@@ -159,10 +180,14 @@
                 const response = await fetch('/.netlify/functions/get-public-data');
                 const data = await response.json();
                 allProducts = data.products || [];
+                phoneModels = data.phoneModels || [];
+                phoneCaseStyles = data.phoneCaseStyles || [];
 
                 // Also store in window for other pages
                 window.__publicData = data;
 
+                // Populate model dropdown
+                populateModelDropdown();
                 renderProducts();
             } catch (e) {
                 // Fallback to direct Supabase
@@ -170,6 +195,68 @@
                 allProducts = data || [];
                 renderProducts();
             }
+        }
+
+        function populateModelDropdown() {
+            const sel = document.getElementById('prodModel');
+            sel.innerHTML = '<option value="">-- Select Model --</option>';
+            phoneModels.forEach(m => {
+                sel.innerHTML += '<option value="' + m.id + '">' + m.name + '</option>';
+            });
+        }
+
+        function togglePhoneCaseSection() {
+            const catId = document.getElementById('prodCategory').value;
+            const section = document.getElementById('phoneCaseSection');
+            if (phoneCaseCategories.includes(catId)) {
+                section.style.display = 'block';
+            } else {
+                section.style.display = 'none';
+            }
+        }
+
+        function populateStyles() {
+            const modelId = document.getElementById('prodModel').value;
+            const styleSel = document.getElementById('prodStyle');
+            styleSel.innerHTML = '<option value="">-- Select Style --</option>';
+            const colorSel = document.getElementById('prodColor');
+            colorSel.innerHTML = '<option value="">-- Select Color --</option>';
+            if (!modelId) return;
+            const filtered = phoneCaseStyles.filter(s => s.model_id === modelId);
+            filtered.forEach(s => {
+                styleSel.innerHTML += '<option value="' + s.id + '">' + s.name + '</option>';
+            });
+        }
+
+        function populateColors() {
+            const styleId = document.getElementById('prodStyle').value;
+            const colorSel = document.getElementById('prodColor');
+            colorSel.innerHTML = '<option value="">-- Select Color --</option>';
+            if (!styleId) return;
+            const style = phoneCaseStyles.find(s => s.id === styleId);
+            if (!style) return;
+            (style.colors || []).forEach(c => {
+                colorSel.innerHTML += '<option value="' + c.label + '">' + c.label + '</option>';
+            });
+        }
+
+        function populateOptions() {
+            const catId = document.getElementById('prodCategory').value;
+            const container = document.getElementById('optionsCheckboxes');
+            container.innerHTML = '';
+            if (!catId || !window.__publicData) return;
+            const cc = window.__publicData.categoryCustomization;
+            const opts = cc && cc[catId] ? cc[catId].options : [];
+            if (opts.length === 0) {
+                container.innerHTML = '<span style="color:#ccc;font-size:0.85rem;">No options for this category</span>';
+                return;
+            }
+            const allOptions = window.__publicData.options || [];
+            opts.forEach(key => {
+                const opt = allOptions.find(o => o.key === key) || { key: key, name: key };
+                container.innerHTML += '<label style="display:flex;align-items:center;gap:4px;cursor:pointer;">' +
+                    '<input type="checkbox" class="option-checkbox" value="' + key + '"> ' + opt.name + '</label>';
+            });
         }
 
         function renderProducts() {
@@ -217,6 +304,21 @@
             document.getElementById('prodDesc').value = product.description || '';
             document.getElementById('prodImage').value = product.image_url || '';
             updateProdPreview(product.image_url || '');
+
+            // Phone case fields
+            togglePhoneCaseSection();
+            document.getElementById('prodModel').value = product.model_id || '';
+            populateStyles();
+            document.getElementById('prodStyle').value = product.case_style_id || '';
+            populateColors();
+            document.getElementById('prodColor').value = product.case_color || '';
+            populateOptions();
+            // Set option checkboxes
+            const opts = (product.option_choice || '').split(',').filter(Boolean);
+            document.querySelectorAll('.option-checkbox').forEach(cb => {
+                cb.checked = opts.includes(cb.value);
+            });
+
             document.getElementById('productModal').classList.add('active');
         }
 
@@ -229,6 +331,15 @@
             document.getElementById('prodDesc').value = '';
             document.getElementById('prodImage').value = '';
             updateProdPreview('');
+
+            // Reset phone case fields
+            document.getElementById('prodModel').value = '';
+            document.getElementById('prodStyle').innerHTML = '<option value="">-- Select Style --</option>';
+            document.getElementById('prodColor').innerHTML = '<option value="">-- Select Color --</option>';
+            document.getElementById('optionsCheckboxes').innerHTML = '';
+            togglePhoneCaseSection();
+            populateOptions();
+
             document.getElementById('productModal').classList.add('active');
         }
 
@@ -294,6 +405,23 @@
         });
         document.getElementById('categoryFilter').addEventListener('change', renderProducts);
 
+        // Phone case cascade handlers
+        document.getElementById('prodCategory').addEventListener('change', function() {
+            togglePhoneCaseSection();
+            // Reset cascade
+            document.getElementById('prodModel').value = '';
+            document.getElementById('prodStyle').innerHTML = '<option value="">-- Select Style --</option>';
+            document.getElementById('prodColor').innerHTML = '<option value="">-- Select Color --</option>';
+            populateOptions();
+        });
+        document.getElementById('prodModel').addEventListener('change', function() {
+            populateStyles();
+            populateColors();
+        });
+        document.getElementById('prodStyle').addEventListener('change', function() {
+            populateColors();
+        });
+
         document.getElementById('productForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('saveProductBtn');
@@ -307,13 +435,21 @@
             const description = document.getElementById('prodDesc').value;
             const image_url = document.getElementById('prodImage').value || null;
 
+            // Phone case fields
+            const model_id = document.getElementById('prodModel').value || null;
+            const case_style_id = document.getElementById('prodStyle').value || null;
+            const case_color = document.getElementById('prodColor').value || null;
+            const checkedOpts = [];
+            document.querySelectorAll('.option-checkbox:checked').forEach(cb => checkedOpts.push(cb.value));
+            const option_choice = checkedOpts.join(',') || null;
+
             try {
                 if (editId) {
                     // Update existing product
                     const response = await fetch('/.netlify/functions/admin-update-product', {
                         method: 'POST',
                         headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: editId, name, description, price, image_url, category_id })
+                        body: JSON.stringify({ id: editId, name, description, price, image_url, category_id, model_id, case_style_id, case_color, option_choice })
                     });
                     if (!response.ok) throw new Error('Failed to update');
                     showToast('Product updated successfully', 'success');
@@ -323,7 +459,7 @@
                     const response = await fetch('/.netlify/functions/admin-add-product', {
                         method: 'POST',
                         headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: newId, name, description, price, image_url, category_id })
+                        body: JSON.stringify({ id: newId, name, description, price, image_url, category_id, model_id, case_style_id, case_color, option_choice })
                     });
                     if (!response.ok) throw new Error('Failed to add');
                     showToast('Product added successfully', 'success');

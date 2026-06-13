@@ -2,6 +2,18 @@
 -- Run this in the Supabase SQL Editor to set up all tables
 
 -- ============================================
+-- MIGRATIONS (run in order)
+-- ============================================
+
+-- 2026-06-08: Add phone-case customization fields to products
+ALTER TABLE products ADD COLUMN IF NOT EXISTS model_id TEXT REFERENCES phone_models(id);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS case_style_id TEXT REFERENCES phone_case_styles(id);
+ALTER TABLE products ADD COLUMN IF NOT EXISTS case_color TEXT;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS option_choice TEXT;
+-- Index for faster lookups by model
+CREATE INDEX IF NOT EXISTS idx_products_model ON products(model_id);
+
+-- ============================================
 -- TABLES
 -- ============================================
 
@@ -42,7 +54,11 @@ CREATE TABLE IF NOT EXISTS products (
     price DECIMAL(10,2) NOT NULL DEFAULT 0,
     image_url TEXT,
     stripe_price_id TEXT,
-    sort_order INTEGER DEFAULT 0
+    sort_order INTEGER DEFAULT 0,
+    model_id TEXT REFERENCES phone_models(id),
+    case_style_id TEXT REFERENCES phone_case_styles(id),
+    case_color TEXT,
+    option_choice TEXT
 );
 
 -- Phone models
