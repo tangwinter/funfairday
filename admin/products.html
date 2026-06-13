@@ -116,10 +116,14 @@
                         <div>
                             <label for="prodStyle">Case Style</label>
                             <select id="prodStyle" class="admin-select"><option value="">-- Select Style --</option></select>
+                            <div id="stylePreview" style="margin-top:8px;display:none;">
+                                <img id="stylePreviewImg" style="max-width:80px;max-height:80px;border-radius:8px;border:2px solid var(--admin-border);object-fit:cover;">
+                            </div>
                         </div>
                         <div>
-                            <label for="prodColor">Color</label>
-                            <select id="prodColor" class="admin-select"><option value="">-- Select Color --</option></select>
+                            <label>Color</label>
+                            <div id="colorImageGrid" style="display:flex;flex-wrap:wrap;gap:8px;padding-top:4px;min-height:40px;"></div>
+                            <select id="prodColor" style="display:none;"><option value="">-- Select Color --</option></select>
                         </div>
                         <div>
                             <label>Options</label>
@@ -221,6 +225,8 @@
             styleSel.innerHTML = '<option value="">-- Select Style --</option>';
             const colorSel = document.getElementById('prodColor');
             colorSel.innerHTML = '<option value="">-- Select Color --</option>';
+            document.getElementById('colorImageGrid').innerHTML = '';
+            document.getElementById('stylePreview').style.display = 'none';
             if (!modelId) return;
             const filtered = phoneCaseStyles.filter(s => s.model_id === modelId);
             filtered.forEach(s => {
@@ -231,12 +237,52 @@
         function populateColors() {
             const styleId = document.getElementById('prodStyle').value;
             const colorSel = document.getElementById('prodColor');
+            const grid = document.getElementById('colorImageGrid');
             colorSel.innerHTML = '<option value="">-- Select Color --</option>';
+            grid.innerHTML = '';
             if (!styleId) return;
             const style = phoneCaseStyles.find(s => s.id === styleId);
             if (!style) return;
             (style.colors || []).forEach(c => {
-                colorSel.innerHTML += '<option value="' + c.label + '">' + c.label + '</option>';
+                const label = typeof c === 'string' ? c : c.label;
+                const imgUrl = typeof c === 'string' ? null : c.value;
+                colorSel.innerHTML += '<option value="' + label + '">' + label + '</option>';
+                var div = document.createElement('div');
+                div.dataset.color = label;
+                div.title = label;
+                if (imgUrl) {
+                    div.style.cssText = 'width:56px;height:56px;border-radius:8px;border:2px solid var(--admin-border);cursor:pointer;overflow:hidden;position:relative;';
+                    div.innerHTML = '<img src="' + imgUrl + '" style="width:100%;height:100%;object-fit:cover;"><div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.5);color:white;font-size:9px;text-align:center;padding:1px;line-height:14px;">' + label + '</div>';
+                } else {
+                    div.style.cssText = 'width:36px;height:36px;border-radius:50%;border:2px solid var(--admin-border);cursor:pointer;';
+                    div.style.background = typeof getColorCSS !== 'undefined' ? getColorCSS(label) : '#ccc';
+                }
+                div.addEventListener('click', function() { selectColor(this, label); });
+                grid.appendChild(div);
+            });
+        }
+
+        function selectColor(el, label) {
+            document.querySelectorAll('#colorImageGrid > div').forEach(e => {
+                e.style.borderColor = 'var(--admin-border)';
+                e.style.outline = 'none';
+            });
+            el.style.borderColor = 'var(--admin-primary)';
+            el.style.outline = '2px solid var(--admin-primary)';
+            document.getElementById('prodColor').value = label;
+        }
+
+        function highlightSelectedColor() {
+            var val = document.getElementById('prodColor').value;
+            if (!val) return;
+            document.querySelectorAll('#colorImageGrid > div').forEach(el => {
+                if (el.dataset.color === val) {
+                    el.style.borderColor = 'var(--admin-primary)';
+                    el.style.outline = '2px solid var(--admin-primary)';
+                } else {
+                    el.style.borderColor = 'var(--admin-border)';
+                    el.style.outline = 'none';
+                }
             });
         }
 
@@ -313,6 +359,7 @@
             populateColors();
             document.getElementById('prodColor').value = product.case_color || '';
             populateOptions();
+            highlightSelectedColor();
             // Set option checkboxes
             const opts = (product.option_choice || '').split(',').filter(Boolean);
             document.querySelectorAll('.option-checkbox').forEach(cb => {
@@ -336,6 +383,8 @@
             document.getElementById('prodModel').value = '';
             document.getElementById('prodStyle').innerHTML = '<option value="">-- Select Style --</option>';
             document.getElementById('prodColor').innerHTML = '<option value="">-- Select Color --</option>';
+            document.getElementById('colorImageGrid').innerHTML = '';
+            document.getElementById('stylePreview').style.display = 'none';
             document.getElementById('optionsCheckboxes').innerHTML = '';
             togglePhoneCaseSection();
             populateOptions();
@@ -412,13 +461,30 @@
             document.getElementById('prodModel').value = '';
             document.getElementById('prodStyle').innerHTML = '<option value="">-- Select Style --</option>';
             document.getElementById('prodColor').innerHTML = '<option value="">-- Select Color --</option>';
+            document.getElementById('colorImageGrid').innerHTML = '';
+            document.getElementById('stylePreview').style.display = 'none';
             populateOptions();
         });
         document.getElementById('prodModel').addEventListener('change', function() {
             populateStyles();
             populateColors();
+            document.getElementById('stylePreview').style.display = 'none';
         });
         document.getElementById('prodStyle').addEventListener('change', function() {
+            const styleId = this.value;
+            const preview = document.getElementById('stylePreview');
+            const previewImg = document.getElementById('stylePreviewImg');
+            if (styleId) {
+                const style = phoneCaseStyles.find(s => s.id === styleId);
+                if (style && style.image_url) {
+                    previewImg.src = style.image_url;
+                    preview.style.display = 'block';
+                } else {
+                    preview.style.display = 'none';
+                }
+            } else {
+                preview.style.display = 'none';
+            }
             populateColors();
         });
 

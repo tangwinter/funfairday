@@ -153,6 +153,8 @@ const phoneCaseStyles = [
     { id: 'ultra-slim', name: 'Ultra Slim', price: 3, colors: ['Clear', 'Black', 'White', 'Pink', 'Blue', 'Purple', 'Green', 'Red'] }
 ];
 
+const phoneModels = [];
+
 // Available options per category
 const categoryCustomization = {
     'stickers': { hasCaseSelection: false, options: [] },
@@ -210,6 +212,11 @@ const optionDetails = {
         if (data.phoneCaseStyles && data.phoneCaseStyles.length > 0) {
             phoneCaseStyles.length = 0;
             data.phoneCaseStyles.forEach(s => phoneCaseStyles.push(s));
+        }
+
+        if (data.phoneModels && data.phoneModels.length > 0) {
+            phoneModels.length = 0;
+            data.phoneModels.forEach(m => phoneModels.push(m));
         }
 
         if (data.options && data.options.length > 0) {
