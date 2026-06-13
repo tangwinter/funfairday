@@ -596,7 +596,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Bind lightbox for style preview images
         document.querySelectorAll('.case-style-preview-img').forEach(function(img) {
             img.addEventListener('click', function(e) {
-                e.stopPropagation();
                 var styleCard = this.closest('.case-style-card');
                 if (styleCard) {
                     var styleId = styleCard.dataset.styleId;
@@ -611,7 +610,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Bind lightbox for color swatch images
         document.querySelectorAll('.color-swatch img').forEach(function(img) {
             img.addEventListener('click', function(e) {
-                e.stopPropagation();
                 var swatch = this.closest('.color-swatch');
                 if (swatch) {
                     window.openLightbox(this.src, swatch.title || 'Color');
