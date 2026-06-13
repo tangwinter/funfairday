@@ -1449,3 +1449,105 @@ ul {
         gap: 12px;
     }
 }
+
+/* --- Gift / Offer Popups --- */
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.45);
+    z-index: 11000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+}
+.popup-overlay.active {
+    display: flex;
+}
+.popup-card {
+    background: #fff;
+    border-radius: 20px;
+    padding: 32px 28px;
+    max-width: 430px;
+    width: 90%;
+    box-shadow: 0 16px 64px rgba(0,0,0,0.25);
+    text-align: center;
+    position: relative;
+    animation: popupIn 0.3s ease;
+}
+@keyframes popupIn {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+.popup-icon {
+    font-size: 2.8rem;
+    margin-bottom: 12px;
+    display: block;
+}
+.popup-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: var(--dark);
+    margin-bottom: 10px;
+    line-height: 1.3;
+}
+.popup-text {
+    font-size: 0.95rem;
+    color: var(--text);
+    margin-bottom: 20px;
+    line-height: 1.5;
+}
+.popup-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.popup-actions .btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 0.95rem;
+}
+.popup-actions .btn-secondary {
+    background: #f0f0f0;
+    color: var(--dark);
+}
+.popup-actions .btn-secondary:hover {
+    background: #e0e0e0;
+}
+.popup-actions .btn-danger {
+    background: #E74C3C;
+    color: #fff;
+}
+.popup-actions .btn-danger:hover {
+    background: #C0392B;
+}
+
+/* --- Discount Banner --- */
+.discount-banner {
+    background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+    color: #fff;
+    text-align: center;
+    padding: 10px 16px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    position: relative;
+    z-index: 100;
+}
+.discount-banner span {
+    opacity: 0.95;
+}
+
+/* --- Discounted Prices --- */
+.price-original {
+    text-decoration: line-through;
+    color: #999;
+    font-size: 0.85rem;
+    margin-right: 6px;
+}
+.price-discounted {
+    color: #E74C3C;
+    font-weight: 800;
+}

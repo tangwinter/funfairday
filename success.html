@@ -85,6 +85,20 @@
                         })
                     });
 
+                    // Mark gift as fulfilled if a gift code was used
+                    if (cartItems._giftCode) {
+                        try {
+                            await fetch('/.netlify/functions/claim-gift', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ code: cartItems._giftCode, fulfill: true })
+                            });
+                        } catch (e) {
+                            console.error('Gift fulfill error:', e);
+                        }
+                        localStorage.removeItem('funfairday_gift_code');
+                    }
+
                     sessionStorage.removeItem('checkout_cart');
                     sessionStorage.removeItem('checkout_total');
                     localStorage.removeItem('funfairday_cart');

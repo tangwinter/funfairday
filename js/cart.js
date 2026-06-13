@@ -28,8 +28,17 @@ const Cart = {
         return this.items.reduce((sum, item) => sum + item.quantity, 0);
     },
 
+    isDiscountActive() {
+        return localStorage.getItem('funfairday_discount30') === 'true';
+    },
+
+    getDiscountedPrice(price) {
+        return this.isDiscountActive() ? Math.round(price * 0.7 * 100) / 100 : price;
+    },
+
     getTotal() {
-        return this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        var total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+        return this.isDiscountActive() ? Math.round(total * 0.7 * 100) / 100 : total;
     },
 
     addItem(product, quantity = 1, customization = null) {

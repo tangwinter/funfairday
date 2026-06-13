@@ -13,7 +13,7 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { items, cartItems, total, successUrl, cancelUrl } = JSON.parse(event.body);
+        const { items, cartItems, total, successUrl, cancelUrl, useDynamicPrices } = JSON.parse(event.body);
 
         if (!items || items.length === 0) {
             return {
@@ -23,13 +23,41 @@ exports.handler = async (event) => {
         }
 
         // Build line items for Stripe
-        const lineItems = items.map(item => ({
-            price: item.priceId,
-            quantity: item.quantity
-        }));
+        // Filter out items without valid price IDs (free gifts, etc.)
+        // When useDynamicPrices is set, use price_data with custom amounts (for 30% discount)
+        const lineItems = items
+            .filter(function(item) { return item.priceId || useDynamicPrices; })
+            .map(function(item) {
+                if (useDynamicPrices && item.unitAmount) {
+                    return {
+                        price_data: {
+                            currency: 'usd',
+                            product_data: { name: item.name },
+                            unit_amount: item.unitAmount
+                        },
+                        quantity: item.quantity
+                    };
+                }
+                return {
+                    price: item.priceId,
+                    quantity: item.quantity
+                };
+            });
 
         // Generate a unique order reference
         const orderRef = 'ORD-' + Date.now().toString(36).toUpperCase();
+
+        // Add gift info to metadata if present
+        var metadata = {
+            order_ref: orderRef,
+            total: total || '0'
+        };
+        if (cartItems && cartItems._giftCode) {
+            metadata.gift_code = cartItems._giftCode;
+        }
+        if (cartItems && cartItems._discount30) {
+            metadata.discount30 = 'true';
+        }
 
         // Create Stripe Checkout Session
         const session = await stripe.checkout.sessions.create({
@@ -41,10 +69,7 @@ exports.handler = async (event) => {
             shipping_address_collection: {
                 allowed_countries: ['US', 'CA']
             },
-            metadata: {
-                order_ref: orderRef,
-                total: total || '0'
-            }
+            metadata: metadata
         });
 
         return {

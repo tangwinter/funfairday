@@ -158,14 +158,14 @@ document.addEventListener('DOMContentLoaded', function() {
                 customDetails += '</div>';
             }
 
-            return `
+             return `
                 <div class="cart-item" data-product-id="${item.id}">
                     <div class="cart-item-image ${colorClass}">
                         <span>${icon}</span>
                     </div>
                     <div class="cart-item-info">
                         <div class="cart-item-name">${item.name}</div>
-                        <div class="cart-item-price">$${item.price.toFixed(2)} each</div>
+                        <div class="cart-item-price">${Cart.isDiscountActive() ? '<span class="price-original">$' + item.price.toFixed(2) + '</span><span class="price-discounted">$' + Cart.getDiscountedPrice(item.price).toFixed(2) + '</span> each' : '$' + item.price.toFixed(2) + ' each'}</div>
                         ${customDetails}
                         <div class="cart-item-actions">
                             <button class="cart-qty-btn" data-action="decrease" data-id="${item.id}">-</button>
@@ -179,7 +179,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </button>
                         </div>
                     </div>
-                    <div class="cart-item-total">$${(item.price * item.quantity).toFixed(2)}</div>
+                    <div class="cart-item-total">${Cart.isDiscountActive() ? '<span class="price-original">$' + (item.price * item.quantity).toFixed(2) + '</span><span class="price-discounted">$' + Cart.getDiscountedPrice(item.price * item.quantity).toFixed(2) + '</span>' : '$' + (item.price * item.quantity).toFixed(2)}</div>
                 </div>
             `;
         }).join('');
@@ -240,60 +240,144 @@ document.addEventListener('DOMContentLoaded', function() {
         this.disabled = true;
         this.textContent = 'Processing...';
 
-        try {
-            // Collect customization data for each item
-            const cartItems = items.map(item => ({
-                id: item.id,
-                productId: item.productId || item.id,
-                name: item.name,
-                price: item.price,
-                quantity: item.quantity,
-                caseStyle: item.caseStyle || null,
-                caseColor: item.caseColor || null,
-                phoneModel: item.phoneModel || null,
-                optionsText: item.optionsText || null
-            }));
+        // Helper to proceed with actual checkout
+        var proceedCheckout = async function() {
+            try {
+                const updatedItems = Cart.getItems();
 
-            if (!CONFIG.stripeReady) {
-                showToast('Stripe payment not yet configured. Set up products in Stripe Dashboard first.');
+                // Collect customization data for each item
+                const cartItems = updatedItems.map(function(item) {
+                    return {
+                        id: item.id,
+                        productId: item.productId || item.id,
+                        name: item.name,
+                        price: item.price,
+                        quantity: item.quantity,
+                        caseStyle: item.caseStyle || null,
+                        caseColor: item.caseColor || null,
+                        phoneModel: item.phoneModel || null,
+                        optionsText: item.optionsText || null
+                    };
+                });
+
+                // Add gift code and discount info to cartItems for order tracking
+                var giftCode = localStorage.getItem('funfairday_gift_code');
+                if (giftCode) cartItems._giftCode = giftCode;
+                if (Cart.isDiscountActive()) cartItems._discount30 = 'true';
+
+                if (!CONFIG.stripeReady) {
+                    showToast('Stripe payment not yet configured. Set up products in Stripe Dashboard first.');
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.textContent = 'Checkout';
+                    return;
+                }
+
+                var discountActive = Cart.isDiscountActive();
+                var useDynamicPrices = discountActive;
+
+                // Build items for Stripe (exclude $0 free gift items without priceId)
+                var stripeItems = updatedItems
+                    .filter(function(item) {
+                        var prod = products.find(function(p) { return p.id === item.id; });
+                        return prod && (prod.stripePriceId || discountActive);
+                    })
+                    .map(function(item) {
+                        var prod = products.find(function(p) { return p.id === item.id; });
+                        var basePrice = prod ? prod.price : item.price;
+                        var unitAmount = discountActive ? Math.round(basePrice * 0.7 * 100) : null;
+                        return {
+                            priceId: prod ? prod.stripePriceId : null,
+                            name: item.name,
+                            unitAmount: unitAmount,
+                            quantity: item.quantity
+                        };
+                    });
+
+                if (stripeItems.length === 0) {
+                    showToast('No payable items in cart.');
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.textContent = 'Checkout';
+                    return;
+                }
+
+                var response = await fetch('/.netlify/functions/create-checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        items: stripeItems,
+                        cartItems: cartItems,
+                        total: Cart.getTotal(),
+                        successUrl: CONFIG.successUrl,
+                        cancelUrl: CONFIG.cancelUrl,
+                        useDynamicPrices: useDynamicPrices
+                    })
+                });
+
+                if (!response.ok) throw new Error('Checkout request failed');
+                var data = await response.json();
+
+                if (data.url) {
+                    // Store cart data in session for order creation after checkout
+                    sessionStorage.setItem('checkout_cart', JSON.stringify(cartItems));
+                    sessionStorage.setItem('checkout_total', Cart.getTotal().toString());
+                    window.location.href = data.url;
+                } else {
+                    throw new Error('No checkout URL');
+                }
+
+            } catch (error) {
+                console.error('Checkout error:', error);
+                showToast('Unable to process checkout. Please try again later.');
+                checkoutBtn.disabled = false;
+                checkoutBtn.textContent = 'Checkout';
+            }
+        };
+
+        // Check if bundle offer should be shown
+        var bundleInCart = items.some(function(i) { return i.id === 'bundle-5pcs-stick' || i.productId === 'bundle-5pcs-stick'; });
+
+        if (!bundleInCart) {
+            // Show bundle offer popup
+            var bundleProduct = products.find(function(p) { return p.id === 'bundle-5pcs-stick'; });
+            if (bundleProduct) {
+                var bundlePrice = Cart.isDiscountActive()
+                    ? '$' + Cart.getDiscountedPrice(bundleProduct.price).toFixed(2)
+                    : '$' + bundleProduct.price.toFixed(2);
+
+                showPopup({
+                    icon: '🎉',
+                    title: 'Special Offer for You!',
+                    text: 'Get 5pcs Stick Bundle Pack at ' + bundlePrice + ' only!\n(50% off - was US$16, now US$8)',
+                    buttons: [
+                        {
+                            label: 'Add to Cart',
+                            className: 'btn-primary',
+                            action: function() {
+                                Cart.addItem(bundleProduct, 1);
+                                showToast('5pcs Stick Bundle Pack added to cart!');
+                                updateCartUI();
+                                openCart();
+                                // Now proceed to checkout
+                                setTimeout(function() { proceedCheckout(); }, 500);
+                            }
+                        },
+                        {
+                            label: 'Keep Checkout',
+                            className: 'btn-secondary',
+                            action: function() {
+                                proceedCheckout();
+                            }
+                        }
+                    ]
+                });
                 this.disabled = false;
                 this.textContent = 'Checkout';
                 return;
             }
-
-            const response = await fetch('/.netlify/functions/create-checkout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    items: items.map(item => ({
-                        priceId: products.find(p => p.id === item.id)?.stripePriceId,
-                        quantity: item.quantity
-                    })),
-                    cartItems: cartItems,
-                    total: Cart.getTotal(),
-                    successUrl: CONFIG.successUrl,
-                    cancelUrl: CONFIG.cancelUrl
-                })
-            });
-
-            if (!response.ok) throw new Error('Checkout request failed');
-            const data = await response.json();
-
-            if (data.url) {
-                // Store cart data in session for order creation after checkout
-                sessionStorage.setItem('checkout_cart', JSON.stringify(cartItems));
-                sessionStorage.setItem('checkout_total', Cart.getTotal().toString());
-                window.location.href = data.url;
-            } else {
-                throw new Error('No checkout URL');
-            }
-
-        } catch (error) {
-            console.error('Checkout error:', error);
-            showToast('Unable to process checkout. Please try again later.');
-            this.disabled = false;
-            this.textContent = 'Checkout';
         }
+
+        // No bundle offer needed, proceed directly
+        proceedCheckout.call(this);
     });
 
     // --- Modal ---
@@ -693,6 +777,155 @@ document.addEventListener('DOMContentLoaded', function() {
             closeLightbox();
         }
     });
+
+    // ============================================
+    // Gift / Offer Popup System
+    // ============================================
+    var popupOverlay = document.createElement('div');
+    popupOverlay.className = 'popup-overlay';
+    popupOverlay.innerHTML = '<div class="popup-card"><span class="popup-icon"></span><div class="popup-title"></div><div class="popup-text"></div><div class="popup-actions"></div></div>';
+    document.body.appendChild(popupOverlay);
+    var popupCard = popupOverlay.querySelector('.popup-card');
+    var popupIcon = popupOverlay.querySelector('.popup-icon');
+    var popupTitle = popupOverlay.querySelector('.popup-title');
+    var popupText = popupOverlay.querySelector('.popup-text');
+    var popupActions = popupOverlay.querySelector('.popup-actions');
+
+    // Close popup when clicking overlay outside card
+    popupOverlay.addEventListener('click', function(e) {
+        if (e.target === popupOverlay) {
+            popupOverlay.classList.remove('active');
+        }
+    });
+
+    window.showPopup = function(opts) {
+        popupIcon.textContent = opts.icon || '🎉';
+        popupTitle.textContent = opts.title || '';
+        popupText.textContent = opts.text || '';
+        popupActions.innerHTML = '';
+        if (opts.buttons) {
+            opts.buttons.forEach(function(btn) {
+                var el = document.createElement('button');
+                el.className = 'btn ' + (btn.className || 'btn-primary');
+                el.textContent = btn.label;
+                el.addEventListener('click', function(e) {
+                    if (btn.action) btn.action(e);
+                    if (btn.closeOnClick !== false) {
+                        popupOverlay.classList.remove('active');
+                    }
+                });
+                popupActions.appendChild(el);
+            });
+        }
+        // Also close on Escape
+        popupOverlay._keyHandler = function(e) {
+            if (e.key === 'Escape') popupOverlay.classList.remove('active');
+        };
+        document.addEventListener('keydown', popupOverlay._keyHandler);
+        popupOverlay.classList.add('active');
+    };
+
+    window.closePopup = function() {
+        popupOverlay.classList.remove('active');
+        if (popupOverlay._keyHandler) {
+            document.removeEventListener('keydown', popupOverlay._keyHandler);
+        }
+    };
+
+    // Generate a simple session ID for gift claiming
+    var sessionId = localStorage.getItem('funfairday_session');
+    if (!sessionId) {
+        sessionId = 'sess_' + Math.random().toString(36).substr(2, 12);
+        localStorage.setItem('funfairday_session', sessionId);
+    }
+
+    // Gift code detection
+    var giftParams = new URLSearchParams(window.location.search);
+    var giftCode = giftParams.get('gift');
+
+    if (giftCode) {
+        // Wait for products to load, then claim
+        var claimGift = function() {
+            fetch('/.netlify/functions/claim-gift', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: giftCode, session: sessionId })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(result) {
+                if (result.success) {
+                    // Claim successful - add free gift to cart
+                    var freeGift = products.find(function(p) { return p.id === 'free-sticker-gift'; });
+                    if (freeGift) {
+                        Cart.addItem(freeGift, 1);
+                        // Store gift code for checkout tracking
+                        localStorage.setItem('funfairday_gift_code', giftCode);
+                        showPopup({
+                            icon: '🎁',
+                            title: 'Free Gift Claimed!',
+                            text: 'The free gift claim process will close after 30mins, please process the checkout now.',
+                            buttons: [
+                                { label: 'OK', className: 'btn-primary', action: function() {
+                                    openCart();
+                                }}
+                            ]
+                        });
+                    }
+                } else if (result.error === 'claimed') {
+                    // Gift is held by someone else - show 30% off offer
+                    if (!localStorage.getItem('funfairday_discount30')) {
+                        showPopup({
+                            icon: '😢',
+                            title: 'Sorry, claimed already!',
+                            text: 'Sorry the Free Gift has already been claimed, please wait for the new one! Good Luck',
+                            buttons: [
+                                {
+                                    label: 'Buy everything in 30% offer for your support',
+                                    className: 'btn-danger',
+                                    action: function() {
+                                        localStorage.setItem('funfairday_discount30', 'true');
+                                        showDiscountBanner();
+                                        updateCartUI();
+                                        showToast('30% discount applied to all products!');
+                                    }
+                                }
+                            ]
+                        });
+                    }
+                }
+            })
+            .catch(function(err) {
+                console.error('Gift claim error:', err);
+            });
+        };
+
+        // Run after products are loaded
+        if (window.__publicDataLoaded !== undefined) {
+            claimGift();
+        } else {
+            document.addEventListener('publicDataLoaded', function() { claimGift(); });
+        }
+    }
+
+    // Discount banner
+    window.showDiscountBanner = function() {
+        var existing = document.querySelector('.discount-banner');
+        if (existing) return;
+        var banner = document.createElement('div');
+        banner.className = 'discount-banner';
+        banner.innerHTML = '<span>30% OFF Applied - Special Support Offer</span>';
+        var header = document.querySelector('.header');
+        if (header) {
+            header.parentNode.insertBefore(banner, header);
+        } else {
+            document.body.insertBefore(banner, document.body.firstChild);
+        }
+    };
+
+    // Apply discount banner on page load if active
+    if (localStorage.getItem('funfairday_discount30') === 'true') {
+        showDiscountBanner();
+    }
 
     // --- Toast ---
     const toast = document.createElement('div');
