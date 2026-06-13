@@ -658,10 +658,10 @@ document.addEventListener('DOMContentLoaded', function() {
     // Keep old openProductModal as alias for backwards compatibility
     window.openProductModal = window.openCustomizationModal;
 
-    // --- Lightbox ---
+    // --- Lightbox (popup) ---
     const lightbox = document.createElement('div');
     lightbox.className = 'lightbox';
-    lightbox.innerHTML = '<span class="lightbox-close">&times;</span><img class="lightbox-img" src="" alt=""><div class="lightbox-caption"></div>';
+    lightbox.innerHTML = '<div class="lightbox-content"><span class="lightbox-close">&times;</span><img class="lightbox-img" src="" alt=""><div class="lightbox-caption"></div></div>';
     document.body.appendChild(lightbox);
     const lightboxImg = lightbox.querySelector('.lightbox-img');
     const lightboxCaption = lightbox.querySelector('.lightbox-caption');
@@ -673,20 +673,26 @@ document.addEventListener('DOMContentLoaded', function() {
         document.body.style.overflow = 'hidden';
     };
 
-    lightbox.addEventListener('click', function(e) {
-        if (e.target === lightbox || e.target === lightboxImg) {
-            lightbox.classList.remove('active');
-            document.body.style.overflow = '';
-        }
-    });
-    lightbox.querySelector('.lightbox-close').addEventListener('click', function() {
+    function closeLightbox() {
         lightbox.classList.remove('active');
         document.body.style.overflow = '';
+    }
+
+    // Click overlay (outside popup) to close
+    lightbox.addEventListener('click', function(e) {
+        if (e.target === lightbox) {
+            closeLightbox();
+        }
     });
+    // Close button
+    lightbox.querySelector('.lightbox-close').addEventListener('click', function(e) {
+        e.stopPropagation();
+        closeLightbox();
+    });
+    // Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && lightbox.classList.contains('active')) {
-            lightbox.classList.remove('active');
-            document.body.style.overflow = '';
+            closeLightbox();
         }
     });
 
