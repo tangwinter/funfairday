@@ -30,6 +30,10 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 <span>Site Settings</span>
             </a>
+            <a href="#customersSection" class="admin-nav-item" id="navCustomers">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span>Customers</span>
+            </a>
             <a href="#" class="admin-nav-item" id="navOrders">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
                 <span>Orders</span>
@@ -89,6 +93,27 @@
                 </tbody>
             </table>
         </div>
+
+        <!-- Registered Customers -->
+        <div class="admin-table-wrap" id="customersSection">
+            <div class="admin-table-header">
+                <h2>Registered Customers (<span id="customerCount">0</span>)</h2>
+                <button class="admin-btn admin-btn-outline admin-btn-sm" id="refreshCustomersBtn">Refresh</button>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Joined</th>
+                        <th>Last Login</th>
+                    </tr>
+                </thead>
+                <tbody id="customersTableBody">
+                    <tr><td colspan="4" style="text-align:center;color:#ccc;padding:32px;">Loading customers...</td></tr>
+                </tbody>
+            </table>
+        </div>
     </main>
 
     <div class="admin-toast" id="adminToast"></div>
@@ -113,6 +138,7 @@
                 document.getElementById('adminEmail').textContent = session.user.email;
 
                 loadDashboard();
+                loadCustomers();
             } catch(e) {
                 console.error('Init error:', e);
                 window.location.href = 'index.html';
@@ -164,6 +190,41 @@
             }
         }
 
+        async function loadCustomers() {
+            try {
+                const response = await fetch('/.netlify/functions/admin-get-users', {
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+
+                if (!response.ok) throw new Error('Failed to load customers');
+
+                const { users } = await response.json();
+                document.getElementById('customerCount').textContent = users.length;
+
+                const tbody = document.getElementById('customersTableBody');
+                if (users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#ccc;padding:32px;">No registered users yet</td></tr>';
+                } else {
+                    tbody.innerHTML = users.map(u => {
+                        const joined = new Date(u.created_at).toLocaleDateString();
+                        const lastLogin = u.last_sign_in_at ? new Date(u.last_sign_in_at).toLocaleDateString() : 'Never';
+                        const roles = (u.roles || ['customer']).join(', ');
+                        return '<tr>' +
+                            '<td>' + u.email + '</td>' +
+                            '<td><span class="admin-badge admin-badge-' + (roles === 'admin' ? 'processing' : 'pending') + '">' + roles + '</span></td>' +
+                            '<td>' + joined + '</td>' +
+                            '<td>' + lastLogin + '</td>' +
+                        '</tr>';
+                    }).join('');
+                }
+
+            } catch (e) {
+                console.error('Customers error:', e);
+                tbody = document.getElementById('customersTableBody');
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#e74c3c;padding:32px;">Failed to load customers</td></tr>';
+            }
+        }
+
         function showToast(msg, type) {
             const toast = document.getElementById('adminToast');
             toast.textContent = msg;
@@ -172,6 +233,7 @@
         }
 
         document.getElementById('refreshBtn').addEventListener('click', loadDashboard);
+        document.getElementById('refreshCustomersBtn').addEventListener('click', loadCustomers);
 
         document.getElementById('logoutBtn').addEventListener('click', async () => {
             await supabase.auth.signOut();
@@ -180,8 +242,14 @@
 
         document.getElementById('navOrders').addEventListener('click', (e) => {
             e.preventDefault();
-            document.getElementById('ordersTableBody').scrollIntoView({ behavior: 'smooth' });
+            document.querySelector('.admin-table-wrap').scrollIntoView({ behavior: 'smooth' });
             loadDashboard();
+        });
+
+        document.getElementById('navCustomers').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.getElementById('customersSection').scrollIntoView({ behavior: 'smooth' });
+            loadCustomers();
         });
 
         init();
