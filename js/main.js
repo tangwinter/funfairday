@@ -592,6 +592,32 @@ document.addEventListener('DOMContentLoaded', function() {
             updateCartUI();
             closeModal();
         });
+
+        // Bind lightbox for style preview images
+        document.querySelectorAll('.case-style-preview-img').forEach(function(img) {
+            img.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var styleCard = this.closest('.case-style-card');
+                if (styleCard) {
+                    var styleId = styleCard.dataset.styleId;
+                    var style = availableStyles.find(function(s) { return s.id === styleId; });
+                    if (style) {
+                        window.openLightbox(style.image_url, style.name);
+                    }
+                }
+            });
+        });
+
+        // Bind lightbox for color swatch images
+        document.querySelectorAll('.color-swatch img').forEach(function(img) {
+            img.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var swatch = this.closest('.color-swatch');
+                if (swatch) {
+                    window.openLightbox(this.src, swatch.title || 'Color');
+                }
+            });
+        });
     }
 
     function getColorCSS(color) {
@@ -631,6 +657,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Keep old openProductModal as alias for backwards compatibility
     window.openProductModal = window.openCustomizationModal;
+
+    // --- Lightbox ---
+    const lightbox = document.createElement('div');
+    lightbox.className = 'lightbox';
+    lightbox.innerHTML = '<span class="lightbox-close">&times;</span><img class="lightbox-img" src="" alt=""><div class="lightbox-caption"></div>';
+    document.body.appendChild(lightbox);
+    const lightboxImg = lightbox.querySelector('.lightbox-img');
+    const lightboxCaption = lightbox.querySelector('.lightbox-caption');
+
+    window.openLightbox = function(src, caption) {
+        lightboxImg.src = src;
+        lightboxCaption.textContent = caption || '';
+        lightbox.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+
+    lightbox.addEventListener('click', function(e) {
+        if (e.target === lightbox || e.target === lightboxImg) {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
+    lightbox.querySelector('.lightbox-close').addEventListener('click', function() {
+        lightbox.classList.remove('active');
+        document.body.style.overflow = '';
+    });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && lightbox.classList.contains('active')) {
+            lightbox.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+    });
 
     // --- Toast ---
     const toast = document.createElement('div');

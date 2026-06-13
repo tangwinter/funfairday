@@ -1044,6 +1044,7 @@ ul {
     margin-bottom: 6px;
     object-fit: cover;
     border: 1px solid rgba(0,0,0,0.06);
+    cursor: pointer;
 }
 
 .case-style-name {
@@ -1110,6 +1111,67 @@ ul {
 .color-swatch.selected {
     border-color: var(--dark);
     box-shadow: 0 0 0 2px white, 0 0 0 4px var(--dark);
+}
+
+/* --- Lightbox --- */
+.lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.85);
+    z-index: 10000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+.lightbox.active {
+    display: flex;
+}
+.lightbox-img {
+    max-width: 90%;
+    max-height: 85%;
+    border-radius: 12px;
+    object-fit: contain;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+    cursor: default;
+}
+.lightbox-close {
+    position: fixed;
+    top: 20px;
+    right: 30px;
+    color: #fff;
+    font-size: 2rem;
+    cursor: pointer;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.4);
+    border-radius: 50%;
+    transition: var(--transition);
+    z-index: 10001;
+    border: 2px solid rgba(255,255,255,0.2);
+}
+.lightbox-close:hover {
+    background: rgba(255,255,255,0.2);
+    transform: scale(1.1);
+}
+.lightbox-caption {
+    position: fixed;
+    bottom: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #fff;
+    font-size: 1rem;
+    background: rgba(0,0,0,0.6);
+    padding: 8px 20px;
+    border-radius: 20px;
+    text-align: center;
+    max-width: 80%;
 }
 
 .options-list {
