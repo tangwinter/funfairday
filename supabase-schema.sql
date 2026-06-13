@@ -45,14 +45,43 @@ CREATE TABLE IF NOT EXISTS products (
     sort_order INTEGER DEFAULT 0
 );
 
--- Phone case styles
-CREATE TABLE IF NOT EXISTS phone_case_styles (
+-- Phone models
+CREATE TABLE IF NOT EXISTS phone_models (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
+    display_order INTEGER DEFAULT 0
+);
+
+-- Insert phone models
+INSERT INTO phone_models (id, name, display_order) VALUES
+    ('iphone-15', 'iPhone 15', 1),
+    ('iphone-15-plus', 'iPhone 15 Plus', 2),
+    ('iphone-15-pro', 'iPhone 15 Pro', 3),
+    ('iphone-15-pro-max', 'iPhone 15 Pro Max', 4),
+    ('iphone-16', 'iPhone 16', 5),
+    ('iphone-16-plus', 'iPhone 16 Plus', 6),
+    ('iphone-16-pro', 'iPhone 16 Pro', 7),
+    ('iphone-16-pro-max', 'iPhone 16 Pro Max', 8),
+    ('iphone-17', 'iPhone 17', 9),
+    ('iphone-17-plus', 'iPhone 17 Plus', 10),
+    ('iphone-17-pro', 'iPhone 17 Pro', 11),
+    ('iphone-17-pro-max', 'iPhone 17 Pro Max', 12)
+ON CONFLICT (id) DO NOTHING;
+
+-- Phone case styles (updated with model_id and image_url)
+CREATE TABLE IF NOT EXISTS phone_case_styles (
+    id TEXT PRIMARY KEY,
+    model_id TEXT REFERENCES phone_models(id) ON DELETE CASCADE,
+    name TEXT NOT NULL,
     price DECIMAL(10,2) NOT NULL DEFAULT 0,
+    image_url TEXT,
     display_order INTEGER DEFAULT 0,
     colors JSONB NOT NULL DEFAULT '[]'::jsonb
 );
+
+-- Index for model_id lookup
+CREATE INDEX IF NOT EXISTS idx_case_styles_model ON phone_case_styles(model_id);
+
 
 -- Options (A, B, C)
 CREATE TABLE IF NOT EXISTS options (
@@ -160,6 +189,7 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================
 
 -- Enable RLS on all tables
+ALTER TABLE phone_models ENABLE ROW LEVEL SECURITY;
 ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE products ENABLE ROW LEVEL SECURITY;
@@ -171,6 +201,7 @@ ALTER TABLE order_items ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
 
 -- Public read access policies
+CREATE POLICY "Public read access" ON phone_models FOR SELECT USING (true);
 CREATE POLICY "Public read access" ON site_settings FOR SELECT USING (true);
 CREATE POLICY "Public read access" ON categories FOR SELECT USING (true);
 CREATE POLICY "Public read access" ON products FOR SELECT USING (true);
