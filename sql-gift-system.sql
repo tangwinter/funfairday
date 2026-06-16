@@ -13,18 +13,21 @@ CREATE TABLE IF NOT EXISTS free_gift_codes (
     fulfilled BOOLEAN DEFAULT false
 );
 
--- 10 gift codes for the promotion
+-- 10 random gift codes for the promotion
+-- Old sequential codes (STICKER-FREE-001 etc.) have been replaced with unguessable codes
+DELETE FROM free_gift_codes WHERE claimed = false;
+
 INSERT INTO free_gift_codes (code) VALUES
-    ('STICKER-FREE-001'),
-    ('STICKER-FREE-002'),
-    ('STICKER-FREE-003'),
-    ('STICKER-FREE-004'),
-    ('STICKER-FREE-005'),
-    ('STICKER-FREE-006'),
-    ('STICKER-FREE-007'),
-    ('STICKER-FREE-008'),
-    ('STICKER-FREE-009'),
-    ('STICKER-FREE-010')
+    ('GIFT-A7K2X9'),
+    ('GIFT-M4P8Q3'),
+    ('GIFT-R5T1W6'),
+    ('GIFT-H9J3L0'),
+    ('GIFT-C2V7N4'),
+    ('GIFT-B6K8X1'),
+    ('GIFT-D9F3M5'),
+    ('GIFT-P4R7T2'),
+    ('GIFT-W1Z6L8'),
+    ('GIFT-Q5N9J3')
 ON CONFLICT (code) DO NOTHING;
 
 -- Index for faster lookups

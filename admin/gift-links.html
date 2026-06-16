@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gift Links - FunFairDay Admin</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <style>
+        .gift-link-row .code-text {
+            font-family: 'Courier New', monospace;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--admin-dark);
+        }
+        .gift-link-row .link-url {
+            font-size: 0.78rem;
+            color: var(--admin-text);
+            max-width: 280px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .gift-status {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .gift-status-available { background: #e8f5e9; color: #2e7d32; }
+        .gift-status-claimed { background: #fff3e0; color: #e65100; }
+        .gift-status-fulfilled { background: #fce4ec; color: #c62828; }
+        .gift-expired { opacity: 0.5; }
+        .gift-actions { display: flex; gap: 6px; }
+        .gift-stats {
+            display: flex; gap: 24px; margin-bottom: 20px;
+        }
+        .gift-stat {
+            background: var(--admin-card);
+            border-radius: var(--admin-radius);
+            padding: 16px 24px;
+            box-shadow: var(--admin-shadow);
+            text-align: center;
+            flex: 1;
+        }
+        .gift-stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--admin-dark);
+        }
+        .gift-stat-label {
+            font-size: 0.8rem;
+            color: var(--admin-text);
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <h2>FunFairDay</h2>
+            <span>Admin Dashboard</span>
+        </div>
+        <nav class="admin-nav">
+            <a href="dashboard.html" class="admin-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="products.html" class="admin-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <span>Products</span>
+            </a>
+            <a href="gift-links.html" class="admin-nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <span>Gift Links</span>
+            </a>
+            <a href="settings.html" class="admin-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>Site Settings</span>
+            </a>
+            <a href="customers.html" class="admin-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span>Customers</span>
+            </a>
+        </nav>
+        <div class="admin-sidebar-footer">
+            <button class="admin-logout-btn" id="logoutBtn">Logout</button>
+        </div>
+    </aside>
+
+    <main class="admin-main">
+        <div class="admin-header">
+            <h1>Gift Links</h1>
+            <div class="admin-header-actions">
+                <button class="admin-btn admin-btn-primary" id="generateBtn">+ Generate New Code</button>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="gift-stats" id="giftStats">
+            <div class="gift-stat">
+                <div class="gift-stat-value" id="statTotal">0</div>
+                <div class="gift-stat-label">Total Codes</div>
+            </div>
+            <div class="gift-stat">
+                <div class="gift-stat-value" id="statAvailable">0</div>
+                <div class="gift-stat-label">Available</div>
+            </div>
+            <div class="gift-stat">
+                <div class="gift-stat-value" id="statClaimed">0</div>
+                <div class="gift-stat-label">Claimed (Active)</div>
+            </div>
+            <div class="gift-stat">
+                <div class="gift-stat-value" id="statFulfilled">0</div>
+                <div class="gift-stat-label">Fulfilled</div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="admin-table-wrap">
+            <div class="admin-table-header">
+                <h2>All Gift Codes (<span id="codeCount">0</span>)</h2>
+                <button class="admin-btn admin-btn-sm admin-btn-outline" id="refreshBtn" title="Refresh list">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                    Refresh
+                </button>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Status</th>
+                        <th>Link</th>
+                        <th>Claimed At</th>
+                        <th>Expires At</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="codesTableBody">
+                    <tr><td colspan="6" style="text-align:center;color:#ccc;padding:32px;">Loading gift codes...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <div class="admin-toast" id="adminToast"></div>
+
+    <script>
+        let supabase = null;
+        let accessToken = '';
+
+        async function init() {
+            try {
+                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const config = await res.json();
+                if (!config.configured) { throw new Error('Not configured'); }
+                supabase = window.supabase.createClient(config.url, config.anonKey);
+
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error || !session) { window.location.href = 'index.html'; return; }
+                accessToken = session.access_token;
+
+                await loadGiftCodes();
+            } catch(e) {
+                window.location.href = 'index.html';
+            }
+        }
+
+        async function loadGiftCodes() {
+            try {
+                const response = await fetch('/.netlify/functions/admin-get-gift-codes', {
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+                if (!response.ok) throw new Error('Failed to load');
+                const data = await response.json();
+                renderCodes(data.codes || []);
+            } catch (e) {
+                document.getElementById('codesTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#e74c3c;padding:32px;">Error loading codes: ' + e.message + '</td></tr>';
+            }
+        }
+
+        function renderCodes(codes) {
+            var total = codes.length;
+            var available = 0;
+            var claimed = 0;
+            var fulfilled = 0;
+
+            document.getElementById('codeCount').textContent = total;
+
+            var now = Date.now();
+
+            codes.forEach(function(c) {
+                if (c.fulfilled) fulfilled++;
+                else if (c.claimed) {
+                    var exp = new Date(c.expires_at).getTime();
+                    if (now < exp) claimed++;
+                    else available++; // expired claim = available
+                }
+                else available++;
+            });
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statAvailable').textContent = available;
+            document.getElementById('statClaimed').textContent = claimed;
+            document.getElementById('statFulfilled').textContent = fulfilled;
+
+            var baseUrl = window.location.protocol + '//' + window.location.host;
+
+            if (codes.length === 0) {
+                document.getElementById('codesTableBody').innerHTML = '<tr><td colspan="6" style="text-align:center;color:#ccc;padding:32px;">No gift codes yet. Click "Generate New Code" to create one.</td></tr>';
+                return;
+            }
+
+            document.getElementById('codesTableBody').innerHTML = codes.map(function(c) {
+                var isExpired = c.claimed && !c.fulfilled && new Date(c.expires_at).getTime() < now;
+                var rowClass = isExpired ? ' gift-expired' : '';
+
+                var statusClass = c.fulfilled ? 'gift-status-fulfilled' : (c.claimed ? (isExpired ? 'gift-status-available' : 'gift-status-claimed') : 'gift-status-available');
+                var statusText = c.fulfilled ? 'Fulfilled' : (c.claimed ? (isExpired ? 'Expired' : 'Claimed') : 'Available');
+
+                var linkUrl = baseUrl + '/?gift=' + c.code;
+                var claimedAt = c.claimed_at ? new Date(c.claimed_at).toLocaleString() : '-';
+                var expiresAt = c.expires_at ? new Date(c.expires_at).toLocaleString() : '-';
+
+                return '<tr class="gift-link-row' + rowClass + '">' +
+                    '<td class="code-text">' + c.code + '</td>' +
+                    '<td><span class="gift-status ' + statusClass + '">' + statusText + '</span></td>' +
+                    '<td><div class="link-url" title="' + linkUrl + '">' + linkUrl + '</div></td>' +
+                    '<td style="font-size:0.8rem;">' + claimedAt + '</td>' +
+                    '<td style="font-size:0.8rem;">' + expiresAt + '</td>' +
+                    '<td><div class="gift-actions">' +
+                        '<button class="admin-btn admin-btn-sm admin-btn-outline copy-btn" data-link="' + linkUrl + '">Copy</button>' +
+                    '</div></td>' +
+                '</tr>';
+            }).join('');
+
+            // Copy button handlers
+            document.querySelectorAll('.copy-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var link = this.dataset.link;
+                    navigator.clipboard.writeText(link).then(function() {
+                        showToast('Link copied to clipboard!', 'success');
+                    }).catch(function() {
+                        // Fallback
+                        var ta = document.createElement('textarea');
+                        ta.value = link;
+                        document.body.appendChild(ta);
+                        ta.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(ta);
+                        showToast('Link copied to clipboard!', 'success');
+                    });
+                });
+            });
+        }
+
+        document.getElementById('generateBtn').addEventListener('click', async function() {
+            var btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Generating...';
+
+            try {
+                var response = await fetch('/.netlify/functions/admin-add-gift-code', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({})
+                });
+                if (!response.ok) throw new Error('Failed to generate');
+                var data = await response.json();
+                if (data.success) {
+                    showToast('New code generated: ' + data.code.code, 'success');
+                    await loadGiftCodes();
+                }
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = '+ Generate New Code';
+        });
+
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            loadGiftCodes();
+            showToast('List refreshed', 'success');
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = 'index.html';
+        });
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('adminToast');
+            toast.textContent = msg;
+            toast.className = 'admin-toast active ' + (type || '');
+            setTimeout(() => toast.classList.remove('active'), 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>
