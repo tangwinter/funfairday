@@ -31,7 +31,7 @@ exports.handler = async (event) => {
             categoryOptionsResult,
             phoneModelsResult
         ] = await Promise.all([
-            supabase.from('categories').select('*').order('id'),
+            supabase.from('categories').select('*').eq('hidden', false).order('id'),
             supabase.from('products').select('*').order('sort_order'),
             supabase.from('site_settings').select('*'),
             supabase.from('phone_case_styles').select('*').order('display_order'),

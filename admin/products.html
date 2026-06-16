@@ -50,6 +50,15 @@
             </div>
         </div>
 
+        <!-- Category visibility management -->
+        <div class="admin-category-section">
+            <div class="admin-category-header">
+                <h3>Category Visibility</h3>
+                <span class="admin-category-hint">Click eye icon to show/hide category on customer website</span>
+            </div>
+            <div class="admin-category-toggles" id="categoryToggles"></div>
+        </div>
+
         <div class="admin-table-wrap">
             <div class="admin-table-header">
                 <h2>All Products (<span id="productCount">0</span>)</h2>
@@ -169,13 +178,39 @@
         }
 
         async function loadCategories() {
-            const { data } = await supabase.from('categories').select('*');
+            const { data } = await supabase.from('categories').select('*').order('id');
             categories = data || [];
+
+            // Update filter and category dropdowns
             const filterSel = document.getElementById('categoryFilter');
             const catSel = document.getElementById('prodCategory');
+            filterSel.innerHTML = '<option value="all">All Categories</option>';
+            catSel.innerHTML = '';
+
+            // Render category toggle pills
+            const toggleContainer = document.getElementById('categoryToggles');
+            toggleContainer.innerHTML = '';
+
             categories.forEach(c => {
                 filterSel.innerHTML += '<option value="' + c.id + '">' + c.name + '</option>';
                 catSel.innerHTML += '<option value="' + c.id + '">' + c.name + '</option>';
+
+                // Create toggle pill
+                var pill = document.createElement('button');
+                pill.className = 'admin-cat-pill' + (c.hidden ? ' hidden' : '');
+                pill.dataset.categoryId = c.id;
+                pill.title = (c.hidden ? 'Show' : 'Hide') + ' \"' + c.name + '\" on website';
+
+                var eyeOpen = '<svg class="cat-vis-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+                var eyeClosed = '<svg class="cat-vis-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+                pill.innerHTML = (c.hidden ? eyeClosed : eyeOpen) + ' ' + c.name;
+
+                pill.addEventListener('click', function() {
+                    toggleCategory(this.dataset.categoryId);
+                });
+
+                toggleContainer.appendChild(pill);
             });
         }
 
@@ -552,6 +587,21 @@
                 if (!response.ok) throw new Error('Failed to delete');
                 showToast('Product deleted', 'success');
                 await loadProducts();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
+        async function toggleCategory(categoryId) {
+            try {
+                const response = await fetch('/.netlify/functions/admin-toggle-category', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ category_id: categoryId })
+                });
+                if (!response.ok) throw new Error('Failed to toggle category');
+                await loadCategories();
+                showToast('Category visibility updated', 'success');
             } catch (e) {
                 showToast(e.message, 'error');
             }

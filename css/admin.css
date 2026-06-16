@@ -508,6 +508,76 @@ body {
     border-bottom: 1px solid var(--admin-border);
 }
 
+/* --- Category Visibility Toggles --- */
+.admin-category-section {
+    background: var(--admin-card);
+    border-radius: var(--admin-radius);
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    box-shadow: var(--admin-shadow);
+}
+
+.admin-category-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.admin-category-header h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--admin-dark);
+    margin: 0;
+}
+
+.admin-category-hint {
+    font-size: 0.75rem;
+    color: var(--admin-text);
+}
+
+.admin-category-toggles {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.admin-cat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid var(--admin-border);
+    background: white;
+    color: var(--admin-dark);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    user-select: none;
+    font-family: 'Nunito', sans-serif;
+}
+
+.admin-cat-pill:hover {
+    border-color: var(--admin-primary);
+}
+
+.admin-cat-pill.hidden {
+    opacity: 0.5;
+    background: #f5f5f5;
+}
+
+.admin-cat-pill .cat-vis-icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.admin-cat-pill.hidden .cat-vis-icon {
+    opacity: 0.4;
+}
+
 /* --- Responsive --- */
 @media (max-width: 768px) {
     .admin-sidebar {
