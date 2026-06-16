@@ -13,7 +13,7 @@ exports.handler = async (event) => {
     }
 
     try {
-        const { items, cartItems, total, successUrl, cancelUrl, useDynamicPrices } = JSON.parse(event.body);
+        const { items, cartItems, total, shippingFee, shippingMethod, successUrl, cancelUrl, useDynamicPrices } = JSON.parse(event.body);
 
         if (!items || items.length === 0) {
             return {
@@ -25,7 +25,7 @@ exports.handler = async (event) => {
         // Build line items for Stripe
         // Filter out items without valid price IDs (free gifts, etc.)
         // When useDynamicPrices is set, use price_data with custom amounts (for 30% discount)
-        const lineItems = items
+        var lineItems = items
             .filter(function(item) { return item.priceId || useDynamicPrices; })
             .map(function(item) {
                 if (useDynamicPrices && item.unitAmount) {
@@ -43,6 +43,18 @@ exports.handler = async (event) => {
                     quantity: item.quantity
                 };
             });
+
+        // Add shipping fee as a line item if present
+        if (shippingFee && shippingFee > 0) {
+            lineItems.push({
+                price_data: {
+                    currency: 'usd',
+                    product_data: { name: shippingMethod || 'HK Post Airmail Shipping' },
+                    unit_amount: Math.round(shippingFee * 100)
+                },
+                quantity: 1
+            });
+        }
 
         // Generate a unique order reference
         const orderRef = 'ORD-' + Date.now().toString(36).toUpperCase();
@@ -67,7 +79,7 @@ exports.handler = async (event) => {
             success_url: (successUrl || (event.headers.referer || 'https://funfairday.com') + '/success.html') + '?session_id={CHECKOUT_SESSION_ID}&order_ref=' + orderRef,
             cancel_url: cancelUrl || (event.headers.referer || 'https://funfairday.com'),
             shipping_address_collection: {
-                allowed_countries: ['US', 'CA']
+                allowed_countries: ['US', 'CA', 'GB', 'AU', 'NZ', 'FR', 'DE', 'IT', 'ES', 'NL', 'CH', 'SE', 'NO', 'DK', 'BE', 'AT', 'IE', 'PT', 'GR', 'PL', 'CZ', 'JP', 'KR', 'SG', 'MY', 'TH', 'PH', 'ID', 'VN', 'CN', 'TW', 'AE', 'SA', 'ZA', 'MX', 'BR', 'AR']
             },
             metadata: metadata
         });

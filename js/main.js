@@ -184,7 +184,12 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
         }).join('');
 
-        cartTotal.textContent = '$' + Cart.getTotal().toFixed(2);
+        var subtotal = Cart.getTotal();
+        var shipCost = window._shippingCost || 0;
+        var totalWithShipping = subtotal + shipCost;
+        cartTotal.textContent = '$' + totalWithShipping.toFixed(2);
+        var subEl = document.getElementById('cartSubtotal');
+        if (subEl) subEl.textContent = '$' + subtotal.toFixed(2);
 
         document.querySelectorAll('.cart-qty-btn').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -236,6 +241,29 @@ document.addEventListener('DOMContentLoaded', function() {
     checkoutBtn.addEventListener('click', async function() {
         const items = Cart.getItems();
         if (items.length === 0) return;
+
+        // Require shipping destination selection
+        var countrySelect = document.getElementById('shippingCountry');
+        var selectedCountry = countrySelect ? countrySelect.value : '';
+        if (!selectedCountry) {
+            showToast('Please select a shipping destination first.');
+            this.disabled = false;
+            this.textContent = 'Checkout';
+            if (countrySelect) countrySelect.focus();
+            return;
+        }
+
+        // Auto-calculate shipping if not yet done
+        if (window._shippingCost === undefined) {
+            try {
+                await window._calculateShipping(selectedCountry);
+            } catch(e) {
+                showToast('Failed to calculate shipping. Please try again.');
+                this.disabled = false;
+                this.textContent = 'Checkout';
+                return;
+            }
+        }
 
         this.disabled = true;
         this.textContent = 'Processing...';
@@ -307,6 +335,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         items: stripeItems,
                         cartItems: cartItems,
                         total: Cart.getTotal(),
+                        shippingFee: window._shippingCost || 0,
+                        shippingMethod: window._shippingMethod || '',
                         successUrl: CONFIG.successUrl,
                         cancelUrl: CONFIG.cancelUrl,
                         useDynamicPrices: useDynamicPrices
@@ -320,6 +350,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     // Store cart data in session for order creation after checkout
                     sessionStorage.setItem('checkout_cart', JSON.stringify(cartItems));
                     sessionStorage.setItem('checkout_total', Cart.getTotal().toString());
+                    sessionStorage.setItem('checkout_shipping', JSON.stringify({
+                        cost: window._shippingCost || 0,
+                        method: window._shippingMethod || '',
+                        country: selectedCountry
+                    }));
                     window.location.href = data.url;
                 } else {
                     throw new Error('No checkout URL');
@@ -379,6 +414,145 @@ document.addEventListener('DOMContentLoaded', function() {
         // No bundle offer needed, proceed directly
         proceedCheckout.call(this);
     });
+
+    // --- HK Post Airmail Shipping ---
+    var SHIPPING_COUNTRIES = [
+        { code: 'US', name: 'United States' },
+        { code: 'CA', name: 'Canada' },
+        { code: 'GB', name: 'United Kingdom' },
+        { code: 'AU', name: 'Australia' },
+        { code: 'NZ', name: 'New Zealand' },
+        { code: 'FR', name: 'France' },
+        { code: 'DE', name: 'Germany' },
+        { code: 'IT', name: 'Italy' },
+        { code: 'ES', name: 'Spain' },
+        { code: 'NL', name: 'Netherlands' },
+        { code: 'CH', name: 'Switzerland' },
+        { code: 'SE', name: 'Sweden' },
+        { code: 'NO', name: 'Norway' },
+        { code: 'DK', name: 'Denmark' },
+        { code: 'BE', name: 'Belgium' },
+        { code: 'AT', name: 'Austria' },
+        { code: 'IE', name: 'Ireland' },
+        { code: 'PT', name: 'Portugal' },
+        { code: 'GR', name: 'Greece' },
+        { code: 'PL', name: 'Poland' },
+        { code: 'CZ', name: 'Czech Republic' },
+        { code: 'JP', name: 'Japan' },
+        { code: 'KR', name: 'South Korea' },
+        { code: 'SG', name: 'Singapore' },
+        { code: 'MY', name: 'Malaysia' },
+        { code: 'TH', name: 'Thailand' },
+        { code: 'PH', name: 'Philippines' },
+        { code: 'ID', name: 'Indonesia' },
+        { code: 'VN', name: 'Vietnam' },
+        { code: 'CN', name: 'China' },
+        { code: 'TW', name: 'Taiwan' },
+        { code: 'AE', name: 'United Arab Emirates' },
+        { code: 'SA', name: 'Saudi Arabia' },
+        { code: 'ZA', name: 'South Africa' },
+        { code: 'MX', name: 'Mexico' },
+        { code: 'BR', name: 'Brazil' },
+        { code: 'AR', name: 'Argentina' }
+    ];
+
+    // Populate country dropdown
+    (function populateCountries() {
+        var select = document.getElementById('shippingCountry');
+        if (!select) return;
+        SHIPPING_COUNTRIES.forEach(function(c) {
+            var opt = document.createElement('option');
+            opt.value = c.code;
+            opt.textContent = c.name;
+            select.appendChild(opt);
+        });
+        // Restore previously selected country
+        var saved = localStorage.getItem('funfairday_shipping_country');
+        if (saved) {
+            select.value = saved;
+            if (select.value) {
+                // Trigger shipping calculation after a short delay
+                setTimeout(function() {
+                    var evt = new Event('change');
+                    select.dispatchEvent(evt);
+                }, 100);
+            }
+        }
+    })();
+
+    // Calculate shipping via API
+    window._calculateShipping = function(country) {
+        var items = Cart.getItems();
+        return fetch('/.netlify/functions/calculate-shipping', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: items, country: country })
+        })
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            window._shippingCost = data.cost;
+            window._shippingMethod = data.method;
+
+            var infoEl = document.getElementById('shippingInfo');
+            var freeEl = document.getElementById('shippingFree');
+            var lineEl = document.getElementById('shippingLine');
+            var lineCostEl = document.getElementById('shippingLineCost');
+
+            if (data.freeGift) {
+                if (freeEl) freeEl.style.display = 'block';
+                if (infoEl) infoEl.style.display = 'none';
+            } else {
+                if (freeEl) freeEl.style.display = 'none';
+                if (infoEl) {
+                    infoEl.style.display = 'flex';
+                    document.getElementById('shippingMethod').textContent = data.method;
+                    document.getElementById('shippingCost').textContent = '$' + data.cost.toFixed(2);
+                }
+            }
+            if (lineEl) {
+                lineEl.style.display = 'flex';
+                if (lineCostEl) lineCostEl.textContent = '$' + data.cost.toFixed(2);
+            }
+
+            // Save country preference
+            localStorage.setItem('funfairday_shipping_country', country);
+
+            // Update total display
+            updateCartUI();
+            return data;
+        })
+        .catch(function(err) {
+            console.error('Shipping calc error:', err);
+            throw err;
+        });
+    };
+
+    // Listen for country dropdown changes
+    document.addEventListener('change', function(e) {
+        if (e.target && e.target.id === 'shippingCountry') {
+            var country = e.target.value;
+            if (country) {
+                window._calculateShipping(country);
+            } else {
+                window._shippingCost = 0;
+                window._shippingMethod = '';
+                var lineEl = document.getElementById('shippingLine');
+                if (lineEl) lineEl.style.display = 'none';
+                updateCartUI();
+            }
+        }
+    });
+
+    // Also recalculate shipping when cart changes items
+    Cart.onUpdate = (function(original) {
+        return function() {
+            if (typeof original === 'function') original();
+            var countrySelect = document.getElementById('shippingCountry');
+            if (countrySelect && countrySelect.value) {
+                window._calculateShipping(countrySelect.value);
+            }
+        };
+    })(Cart.onUpdate);
 
     // --- Modal ---
     const modalOverlay = document.getElementById('modalOverlay');

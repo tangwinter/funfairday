@@ -105,6 +105,36 @@
             </div>
         </div>
         <div class="cart-footer" id="cartFooter" style="display: none;">
+            <!-- Shipping Section -->
+            <div class="cart-shipping" id="cartShipping">
+                <div class="cart-shipping-header">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="3 11 8 11 10 13 14 13 16 11 21 11"/></svg>
+                    <span>Shipping via HK Post Airmail</span>
+                </div>
+                <div class="cart-shipping-row">
+                    <label class="cart-shipping-label" for="shippingCountry">Destination:</label>
+                    <select id="shippingCountry" class="cart-shipping-select">
+                        <option value="">Select country</option>
+                    </select>
+                </div>
+                <div class="cart-shipping-info" id="shippingInfo" style="display:none;">
+                    <span class="cart-shipping-method" id="shippingMethod"></span>
+                    <span class="cart-shipping-cost" id="shippingCost"></span>
+                </div>
+                <div class="cart-shipping-free" id="shippingFree" style="display:none;">
+                    🎉 Free Shipping (Free Gift in cart!)
+                </div>
+            </div>
+            <div class="cart-total-row">
+                <div class="cart-subtotal">
+                    <span>Subtotal:</span>
+                    <span id="cartSubtotal">$0.00</span>
+                </div>
+                <div class="cart-shipping-line" id="shippingLine" style="display:none;">
+                    <span>Shipping:</span>
+                    <span id="shippingLineCost">$0.00</span>
+                </div>
+            </div>
             <div class="cart-total">
                 <span>Total:</span>
                 <span class="cart-total-price" id="cartTotal">$0.00</span>
