@@ -20,7 +20,7 @@ exports.handler = async (event) => {
         }
 
         const supabase = createClient(supabaseUrl, supabaseKey);
-        const { customer_id, customer_email, items, total, shipping_address, stripe_session_id } = JSON.parse(event.body);
+        const { customer_id, customer_email, items, total, shipping_address, stripe_session_id, shipping_method, shipping_cost, shipping_method_id } = JSON.parse(event.body);
 
         if (!items || items.length === 0) {
             return {
@@ -28,6 +28,11 @@ exports.handler = async (event) => {
                 body: JSON.stringify({ error: 'No items provided' })
             };
         }
+
+        // Calculate total weight from items
+        var totalWeight = items.reduce(function(sum, item) {
+            return sum + ((item.weight || 50) * (item.quantity || 1));
+        }, 0);
 
         // Create the order
         const { data: order, error: orderError } = await supabase
@@ -38,7 +43,10 @@ exports.handler = async (event) => {
                 status: 'pending',
                 total: total,
                 shipping_address: shipping_address || null,
-                stripe_session_id: stripe_session_id || null
+                stripe_session_id: stripe_session_id || null,
+                shipping_method: shipping_method || null,
+                shipping_cost: shipping_cost || 0,
+                weight_grams: totalWeight
             })
             .select()
             .single();

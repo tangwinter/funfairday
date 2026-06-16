@@ -1,8 +1,7 @@
-// Netlify Function: Calculate HK Post Airmail Shipping
-// Based on Hongkong Post published airmail rates for small packets (up to 2kg)
+// Netlify Function: Calculate Shipping (HK Post Normal, Registered, FedEx)
+// Based on Hongkong Post published airmail rates with 15% markup
 
-// HK Post Airmail Zones for small packets
-// Rates in USD (approximate, based on HKD rates ÷ 7.8)
+// HK Post Airmail Zones
 var ZONES = {
     'zone1': { name: 'Asia', countries: ['JP','KR','TW','SG','MY','TH','PH','ID','VN','BN','KH','LA','MM','MN','CN','MO'] },
     'zone2': { name: 'Oceania & Middle East', countries: ['AU','NZ','PG','FJ','SB','VU','AE','SA','QA','KW','BH','OM','IL','TR','CY'] },
@@ -10,54 +9,60 @@ var ZONES = {
     'zone4': { name: 'Americas', countries: ['US','CA','MX','BR','AR','CL','CO','PE','EC','VE','CR','PA','DO','PR','JM','TT','BS','BB','GY','SR','BO','PY','UY','GT','SV','HN','NI','BZ'] }
 };
 
-// Rate table: [weight_band_g, zone1, zone2, zone3, zone4]
-var RATES = [
-    { maxG: 50,  z1: 2.00, z2: 2.50, z3: 3.00, z4: 3.50 },
-    { maxG: 100, z1: 3.00, z2: 3.80, z3: 4.50, z4: 5.00 },
-    { maxG: 200, z1: 4.00, z2: 5.00, z3: 6.00, z4: 6.50 },
-    { maxG: 500, z1: 5.50, z2: 7.00, z3: 8.00, z4: 9.00 }
+// Base rates (normal airmail small packet) — before 15% markup
+var BASE_RATES = [
+    { maxG: 50,  z1: 1.74, z2: 2.17, z3: 2.61, z4: 3.04 },
+    { maxG: 100, z1: 2.61, z2: 3.30, z3: 3.91, z4: 4.35 },
+    { maxG: 200, z1: 3.48, z2: 4.35, z3: 5.22, z4: 5.65 },
+    { maxG: 500, z1: 4.78, z2: 6.09, z3: 6.96, z4: 7.83 }
 ];
 
-// Estimated weight per item type (in grams)
-var ITEM_WEIGHTS = {
-    'free-sticker-gift': 10,
-    'bundle-5pcs-stick': 30,
-    'stick-*': 20,        // generic stickers
-    'case-*': 60,         // phone cases with packaging
-    'magnet-*': 30,
-    'default': 50
-};
+// Registered mail surcharge (before markup)
+var REGISTERED_FEE = 2.60; // ~HK$20
 
-function getItemWeight(itemId) {
-    for (var key in ITEM_WEIGHTS) {
-        if (key.endsWith('*')) {
-            var prefix = key.slice(0, -1);
-            if (itemId.startsWith(prefix)) return ITEM_WEIGHTS[key];
-        } else {
-            if (itemId === key) return ITEM_WEIGHTS[key];
-        }
-    }
-    return ITEM_WEIGHTS['default'];
-}
+// FedEx rates (before markup) — estimated for small packets from HK
+var FEDEX_RATES = [
+    { maxG: 50,  z1: 18.00, z2: 22.00, z3: 26.00, z4: 30.00 },
+    { maxG: 100, z1: 22.00, z2: 27.00, z3: 32.00, z4: 36.00 },
+    { maxG: 200, z1: 28.00, z2: 34.00, z3: 40.00, z4: 45.00 },
+    { maxG: 500, z1: 36.00, z2: 44.00, z3: 52.00, z4: 58.00 }
+];
+
+var MARKUP = 0.15; // 15% safety markup
+
+// Delivery time estimates
+var DELIVERY = {
+    'hk-post-normal': { z1: '7-14 days', z2: '7-21 days', z3: '7-21 days', z4: '10-21 days' },
+    'hk-post-registered': { z1: '7-14 days with tracking', z2: '7-21 days with tracking', z3: '7-21 days with tracking', z4: '10-21 days with tracking' },
+    'fedex': { z1: '2-4 business days', z2: '2-5 business days', z3: '2-5 business days', z4: '3-5 business days' }
+};
 
 function getZone(country) {
     var code = country.toUpperCase();
     for (var zone in ZONES) {
         if (ZONES[zone].countries.indexOf(code) !== -1) return zone;
     }
-    return 'zone4'; // default to most expensive (Americas)
+    return 'zone4';
 }
 
-function calculateShipping(totalGrams, zone) {
-    for (var i = 0; i < RATES.length; i++) {
-        if (totalGrams <= RATES[i].maxG) {
-            var r = RATES[i];
+function getBaseRate(rates, totalGrams, zone) {
+    for (var i = 0; i < rates.length; i++) {
+        if (totalGrams <= rates[i].maxG) {
+            var r = rates[i];
             var rateMap = { 'zone1': r.z1, 'zone2': r.z2, 'zone3': r.z3, 'zone4': r.z4 };
             return rateMap[zone] || r.z4;
         }
     }
-    // Over 500g — use flat rate
-    return 12.00;
+    return rates[rates.length - 1][zone]; // largest band
+}
+
+function getDelivery(method, zone) {
+    if (DELIVERY[method] && DELIVERY[method][zone]) return DELIVERY[method][zone];
+    return '7-21 days';
+}
+
+function applyMarkup(cost) {
+    return Math.round(cost * (1 + MARKUP) * 100) / 100;
 }
 
 exports.handler = async (event) => {
@@ -66,7 +71,7 @@ exports.handler = async (event) => {
         var items = body.items || [];
         var country = body.country || 'US';
 
-        // Check if free sticker is in cart → free shipping
+        // Check if free sticker is in cart
         var hasFreeGift = items.some(function(item) {
             return item.id === 'free-sticker-gift' || item.productId === 'free-sticker-gift';
         });
@@ -76,32 +81,65 @@ exports.handler = async (event) => {
                 statusCode: 200,
                 headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
                 body: JSON.stringify({
-                    cost: 0,
-                    method: 'Free HK Post Airmail (Free Gift in cart)',
+                    methods: [
+                        { id: 'hk-post-normal', name: 'HK Post Normal Airmail', cost: 0, deliveryTime: 'Free (Gift)', originalCost: 0, markupPercent: 0 },
+                        { id: 'hk-post-registered', name: 'HK Post Registered Airmail', cost: 0, deliveryTime: 'Free (Gift)', originalCost: 0, markupPercent: 0 },
+                        { id: 'fedex', name: 'FedEx International Priority', cost: 0, deliveryTime: 'Free (Gift)', originalCost: 0, markupPercent: 0 }
+                    ],
+                    freeGift: true,
                     weight: 0,
-                    zone: 'N/A',
-                    freeGift: true
+                    zone: 'N/A'
                 })
             };
         }
 
         // Calculate total weight
         var totalGrams = items.reduce(function(sum, item) {
-            return sum + (getItemWeight(item.productId || item.id) * (item.quantity || 1));
+            return sum + ((item.weight || 50) * (item.quantity || 1));
         }, 0);
 
         var zone = getZone(country);
-        var cost = calculateShipping(totalGrams, zone);
+
+        // Calculate each method
+        var baseNormal = getBaseRate(BASE_RATES, totalGrams, zone);
+        var baseRegistered = baseNormal + REGISTERED_FEE;
+        var baseFedex = getBaseRate(FEDEX_RATES, totalGrams, zone);
+
+        var methods = [
+            {
+                id: 'hk-post-normal',
+                name: 'HK Post Normal Airmail',
+                cost: applyMarkup(baseNormal),
+                deliveryTime: getDelivery('hk-post-normal', zone),
+                originalCost: Math.round(baseNormal * 100) / 100,
+                markupPercent: 15
+            },
+            {
+                id: 'hk-post-registered',
+                name: 'HK Post Registered Airmail',
+                cost: applyMarkup(baseRegistered),
+                deliveryTime: getDelivery('hk-post-registered', zone),
+                originalCost: Math.round(baseRegistered * 100) / 100,
+                markupPercent: 15
+            },
+            {
+                id: 'fedex',
+                name: 'FedEx International Priority',
+                cost: applyMarkup(baseFedex),
+                deliveryTime: getDelivery('fedex', zone),
+                originalCost: Math.round(baseFedex * 100) / 100,
+                markupPercent: 15
+            }
+        ];
 
         return {
             statusCode: 200,
             headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
             body: JSON.stringify({
-                cost: cost,
-                method: 'HK Post Airmail (' + ZONES[zone].name + ')',
+                methods: methods,
+                freeGift: false,
                 weight: totalGrams,
-                zone: zone,
-                freeGift: false
+                zone: zone
             })
         };
 

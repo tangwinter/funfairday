@@ -353,6 +353,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     sessionStorage.setItem('checkout_shipping', JSON.stringify({
                         cost: window._shippingCost || 0,
                         method: window._shippingMethod || '',
+                        methodId: window._selectedMethodId || '',
                         country: selectedCountry
                     }));
                     window.location.href = data.url;
@@ -456,6 +457,12 @@ document.addEventListener('DOMContentLoaded', function() {
         { code: 'AR', name: 'Argentina' }
     ];
 
+    // Global shipping state
+    window._shippingMethods = [];
+    window._selectedMethodId = 'hk-post-normal';
+    window._shippingCost = 0;
+    window._shippingMethod = '';
+
     // Populate country dropdown
     (function populateCountries() {
         var select = document.getElementById('shippingCountry');
@@ -466,12 +473,10 @@ document.addEventListener('DOMContentLoaded', function() {
             opt.textContent = c.name;
             select.appendChild(opt);
         });
-        // Restore previously selected country
         var saved = localStorage.getItem('funfairday_shipping_country');
         if (saved) {
             select.value = saved;
             if (select.value) {
-                // Trigger shipping calculation after a short delay
                 setTimeout(function() {
                     var evt = new Event('change');
                     select.dispatchEvent(evt);
@@ -480,9 +485,79 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     })();
 
+    // Render shipping method radio buttons
+    function renderShippingMethods(methods, freeGift) {
+        var container = document.getElementById('shippingMethods');
+        var freeEl = document.getElementById('shippingFree');
+        if (!container) return;
+
+        if (freeGift || !methods || methods.length === 0) {
+            container.style.display = 'none';
+            return;
+        }
+
+        container.style.display = 'block';
+        container.innerHTML = '<div class="ship-methods-label">Shipping Method:</div>' +
+            methods.map(function(m, idx) {
+                var checked = idx === 0 ? ' checked' : '';
+                return '<label class="ship-method-option' + (idx === 0 ? ' selected' : '') + '">' +
+                    '<input type="radio" name="shippingMethod" value="' + m.id + '" data-cost="' + m.cost + '" data-name="' + m.name + '"' + checked + '>' +
+                    '<div class="ship-method-info">' +
+                        '<span class="ship-method-name">' + m.name + '</span>' +
+                        '<span class="ship-method-cost">$' + m.cost.toFixed(2) + '</span>' +
+                        '<span class="ship-method-time">' + m.deliveryTime + '</span>' +
+                    '</div>' +
+                '</label>';
+            }).join('');
+
+        // Auto-select first method
+        var firstRadio = container.querySelector('input[type="radio"]');
+        if (firstRadio) {
+            firstRadio.checked = true;
+            window._selectedMethodId = firstRadio.value;
+            window._shippingCost = parseFloat(firstRadio.dataset.cost);
+            window._shippingMethod = firstRadio.dataset.name;
+            updateShippingLine();
+        }
+
+        // Listen for radio changes
+        container.querySelectorAll('input[type="radio"]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                if (!this.checked) return;
+                window._selectedMethodId = this.value;
+                window._shippingCost = parseFloat(this.dataset.cost);
+                window._shippingMethod = this.dataset.name;
+                // Highlight selected
+                container.querySelectorAll('.ship-method-option').forEach(function(lbl) {
+                    lbl.classList.remove('selected');
+                });
+                this.closest('.ship-method-option').classList.add('selected');
+                updateShippingLine();
+            });
+        });
+    }
+
+    function updateShippingLine() {
+        var lineEl = document.getElementById('shippingLine');
+        var lineCostEl = document.getElementById('shippingLineCost');
+        if (!lineEl) return;
+        lineEl.style.display = 'flex';
+        if (lineCostEl) lineCostEl.textContent = '$' + (window._shippingCost || 0).toFixed(2);
+        updateCartUI();
+    }
+
     // Calculate shipping via API
     window._calculateShipping = function(country) {
-        var items = Cart.getItems();
+        var items = Cart.getItems().map(function(item) {
+            var prod = products.find(function(p) { return p.id === item.id; });
+            return {
+                id: item.id,
+                productId: item.productId || item.id,
+                quantity: item.quantity,
+                weight: (prod && prod.weight_grams) ? prod.weight_grams : 50
+            };
+        });
+
         return fetch('/.netlify/functions/calculate-shipping', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -490,35 +565,24 @@ document.addEventListener('DOMContentLoaded', function() {
         })
         .then(function(r) { return r.json(); })
         .then(function(data) {
-            window._shippingCost = data.cost;
-            window._shippingMethod = data.method;
+            window._shippingMethods = data.methods || [];
 
-            var infoEl = document.getElementById('shippingInfo');
             var freeEl = document.getElementById('shippingFree');
-            var lineEl = document.getElementById('shippingLine');
-            var lineCostEl = document.getElementById('shippingLineCost');
-
             if (data.freeGift) {
                 if (freeEl) freeEl.style.display = 'block';
-                if (infoEl) infoEl.style.display = 'none';
+                // All methods are $0
+                var zeroMethods = (data.methods || []).map(function(m) {
+                    return { id: m.id, name: m.name, cost: 0, deliveryTime: m.deliveryTime };
+                });
+                renderShippingMethods(zeroMethods, false);
+                window._shippingCost = 0;
+                window._shippingMethod = 'Free (Gift)';
             } else {
                 if (freeEl) freeEl.style.display = 'none';
-                if (infoEl) {
-                    infoEl.style.display = 'flex';
-                    document.getElementById('shippingMethod').textContent = data.method;
-                    document.getElementById('shippingCost').textContent = '$' + data.cost.toFixed(2);
-                }
-            }
-            if (lineEl) {
-                lineEl.style.display = 'flex';
-                if (lineCostEl) lineCostEl.textContent = '$' + data.cost.toFixed(2);
+                renderShippingMethods(data.methods, false);
             }
 
-            // Save country preference
             localStorage.setItem('funfairday_shipping_country', country);
-
-            // Update total display
-            updateCartUI();
             return data;
         })
         .catch(function(err) {
@@ -527,13 +591,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     };
 
-    // Listen for country dropdown changes
+    // Country dropdown change
     document.addEventListener('change', function(e) {
         if (e.target && e.target.id === 'shippingCountry') {
             var country = e.target.value;
+            var methodsEl = document.getElementById('shippingMethods');
+            var freeEl = document.getElementById('shippingFree');
             if (country) {
+                methodsEl.style.display = 'none';
                 window._calculateShipping(country);
             } else {
+                methodsEl.style.display = 'none';
+                if (freeEl) freeEl.style.display = 'none';
                 window._shippingCost = 0;
                 window._shippingMethod = '';
                 var lineEl = document.getElementById('shippingLine');
@@ -543,7 +612,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Also recalculate shipping when cart changes items
+    // Recalculate shipping when cart changes
     Cart.onUpdate = (function(original) {
         return function() {
             if (typeof original === 'function') original();

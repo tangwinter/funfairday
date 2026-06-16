@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orders - FunFairDay Admin</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+    <aside class="admin-sidebar">
+        <div class="admin-sidebar-header">
+            <h2>FunFairDay</h2>
+            <span>Admin Dashboard</span>
+        </div>
+        <nav class="admin-nav">
+            <a href="dashboard.html" class="admin-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="products.html" class="admin-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <span>Products</span>
+            </a>
+            <a href="orders.html" class="admin-nav-item active">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2M9 5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2M9 5h6"/><polyline points="9 14 11 16 15 12"/></svg>
+                <span>Orders</span>
+            </a>
+            <a href="gift-links.html" class="admin-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <span>Gift Links</span>
+            </a>
+            <a href="settings.html" class="admin-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>Site Settings</span>
+            </a>
+            <a href="customers.html" class="admin-nav-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span>Customers</span>
+            </a>
+        </nav>
+        <div class="admin-sidebar-footer">
+            <button class="admin-logout-btn" id="logoutBtn">Logout</button>
+        </div>
+    </aside>
+
+    <main class="admin-main">
+        <div class="admin-header">
+            <h1>Orders</h1>
+            <div class="admin-header-actions">
+                <select id="statusFilter" class="admin-select" style="width:160px;">
+                    <option value="all">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                    <option value="delivered">Delivered</option>
+                    <option value="cancelled">Cancelled</option>
+                </select>
+                <button class="admin-btn admin-btn-outline" id="refreshBtn">↻ Refresh</button>
+            </div>
+        </div>
+
+        <div class="admin-table-wrap">
+            <div class="admin-table-header">
+                <h2>All Orders (<span id="orderCount">0</span>)</h2>
+            </div>
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Shipping</th>
+                        <th>Status</th>
+                        <th>Tracking</th>
+                        <th style="width:120px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody">
+                    <tr><td colspan="9" style="text-align:center;color:#ccc;padding:32px;">Loading orders...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <!-- Edit Tracking Modal -->
+    <div class="admin-modal-overlay" id="trackingModal">
+        <div class="admin-modal" style="max-width:450px;">
+            <h2>Update Shipping / Tracking</h2>
+            <form id="trackingForm">
+                <input type="hidden" id="trackOrderId">
+                <div class="admin-form-group">
+                    <label for="trackOrderRef">Order</label>
+                    <input type="text" id="trackOrderRef" class="admin-input" readonly style="font-weight:700;">
+                </div>
+                <div class="admin-form-group">
+                    <label for="trackStatus">Status</label>
+                    <select id="trackStatus" class="admin-select">
+                        <option value="pending">Pending</option>
+                        <option value="processing">Processing</option>
+                        <option value="shipped">Shipped</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="admin-form-group">
+                    <label for="trackNumber">Courier / Tracking Number</label>
+                    <input type="text" id="trackNumber" class="admin-input" placeholder="e.g. RR123456789HK, 1Z999AA10123456784">
+                </div>
+                <div class="admin-form-group">
+                    <label for="trackUrl">Tracking URL <span style="color:#999;font-weight:400;">(optional)</span></label>
+                    <input type="url" id="trackUrl" class="admin-input" placeholder="https://www.hongkongpost.hk/track/...">
+                </div>
+                <div class="admin-modal-actions">
+                    <button type="button" class="admin-btn admin-btn-outline" id="cancelTracking">Cancel</button>
+                    <button type="submit" class="admin-btn admin-btn-primary" id="saveTrackingBtn">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="admin-toast" id="adminToast"></div>
+
+    <style>
+        .order-status { display:inline-block; padding:3px 10px; border-radius:12px; font-size:0.75rem; font-weight:700; }
+        .order-status-pending { background:#fff3e0; color:#e65100; }
+        .order-status-processing { background:#e3f2fd; color:#1565c0; }
+        .order-status-shipped { background:#e8f5e9; color:#2e7d32; }
+        .order-status-delivered { background:#f3e5f5; color:#6a1b9a; }
+        .order-status-cancelled { background:#fce4ec; color:#c62828; }
+        .order-customer { font-size:0.85rem; }
+        .order-customer-email { color:var(--admin-text); }
+        .tracking-num { font-size:0.8rem; font-family:monospace; background:#f5f5f5; padding:2px 6px; border-radius:4px; }
+        .tracking-link { font-size:0.75rem; }
+        .order-expand { cursor:pointer; color:var(--admin-primary); font-size:0.85rem; }
+        .order-items-popup { max-height:200px; overflow-y:auto; font-size:0.8rem; }
+        .order-items-popup p { padding:4px 0; border-bottom:1px solid #eee; margin:0; }
+    </style>
+
+    <script>
+        let supabase = null;
+        let accessToken = '';
+        let allOrders = [];
+
+        async function init() {
+            try {
+                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const config = await res.json();
+                if (!config.configured) { throw new Error('Not configured'); }
+                supabase = window.supabase.createClient(config.url, config.anonKey);
+
+                const { data: { session }, error } = await supabase.auth.getSession();
+                if (error || !session) { window.location.href = 'index.html'; return; }
+                accessToken = session.access_token;
+
+                await loadOrders();
+            } catch(e) {
+                window.location.href = 'index.html';
+            }
+        }
+
+        async function loadOrders() {
+            try {
+                const response = await fetch('/.netlify/functions/admin-get-orders', {
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+                const data = await response.json();
+                allOrders = data.orders || [];
+                renderOrders();
+            } catch (e) {
+                showToast('Failed to load orders', 'error');
+            }
+        }
+
+        function renderOrders() {
+            const filter = document.getElementById('statusFilter').value;
+            var filtered = filter === 'all' ? allOrders : allOrders.filter(o => o.status === filter);
+            document.getElementById('orderCount').textContent = filtered.length;
+
+            const tbody = document.getElementById('ordersTableBody');
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#ccc;padding:32px;">No orders found</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(function(order) {
+                var orderRef = order.stripe_session_id ? '#' + order.stripe_session_id.substr(-8).toUpperCase() : '#' + (order.id || '').toString().slice(-6);
+                var date = order.created_at ? new Date(order.created_at).toLocaleDateString() : '-';
+                var customer = order.customer_email || '<em>Guest</em>';
+                var itemSummary = (order.order_items || []).map(function(oi) {
+                    return oi.product_name + ' x' + oi.quantity;
+                }).join(', ') || 'N/A';
+                var total = '$' + parseFloat(order.total || 0).toFixed(2);
+                var shippingInfo = order.shipping_method || '-';
+                if (order.shipping_cost > 0) {
+                    shippingInfo += ' ($' + parseFloat(order.shipping_cost).toFixed(2) + ')';
+                }
+
+                var statusClass = 'order-status-' + (order.status || 'pending');
+                var statusText = (order.status || 'pending').charAt(0).toUpperCase() + (order.status || 'pending').slice(1);
+
+                var trackingHtml = '-';
+                if (order.tracking_number) {
+                    trackingHtml = '<span class="tracking-num">' + order.tracking_number + '</span>';
+                    if (order.tracking_url) {
+                        trackingHtml += '<br><a href="' + order.tracking_url + '" target="_blank" class="tracking-link">Track Parcel</a>';
+                    }
+                }
+
+                var shippingDisplay = order.shipping_cost > 0
+                    ? (order.shipping_method || 'Shipping') + ' $' + parseFloat(order.shipping_cost).toFixed(2)
+                    : (order.shipping_method || '-');
+
+                return '<tr data-id="' + order.id + '">' +
+                    '<td style="font-weight:700;font-family:monospace;font-size:0.85rem;">' + orderRef + '</td>' +
+                    '<td style="font-size:0.8rem;">' + date + '</td>' +
+                    '<td class="order-customer"><span class="order-customer-email">' + customer + '</span></td>' +
+                    '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:0.8rem;" title="' + itemSummary + '">' + itemSummary + '</td>' +
+                    '<td style="font-weight:700;">' + total + '</td>' +
+                    '<td style="font-size:0.8rem;">' + shippingDisplay + '</td>' +
+                    '<td><span class="order-status ' + statusClass + '">' + statusText + '</span></td>' +
+                    '<td>' + trackingHtml + '</td>' +
+                    '<td>' +
+                        '<button class="admin-btn admin-btn-sm admin-btn-outline track-btn" data-id="' + order.id + '">Update</button>' +
+                    '</td>' +
+                '</tr>';
+            }).join('');
+
+            document.querySelectorAll('.track-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() { openTrackingModal(this.dataset.id); });
+            });
+        }
+
+        function openTrackingModal(orderId) {
+            var order = allOrders.find(function(o) { return o.id == orderId; });
+            if (!order) return;
+
+            document.getElementById('trackOrderId').value = order.id;
+            document.getElementById('trackOrderRef').value = 'Order #' + (order.stripe_session_id ? order.stripe_session_id.substr(-8).toUpperCase() : order.id.toString().slice(-6));
+            document.getElementById('trackStatus').value = order.status || 'pending';
+            document.getElementById('trackNumber').value = order.tracking_number || '';
+            document.getElementById('trackUrl').value = order.tracking_url || '';
+
+            document.getElementById('trackingModal').classList.add('active');
+        }
+
+        document.getElementById('cancelTracking').addEventListener('click', function() {
+            document.getElementById('trackingModal').classList.remove('active');
+        });
+
+        document.getElementById('trackingForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            var btn = document.getElementById('saveTrackingBtn');
+            btn.disabled = true;
+            btn.textContent = 'Saving...';
+
+            try {
+                var orderId = document.getElementById('trackOrderId').value;
+                var status = document.getElementById('trackStatus').value;
+                var tracking_number = document.getElementById('trackNumber').value.trim() || null;
+                var tracking_url = document.getElementById('trackUrl').value.trim() || null;
+
+                var response = await fetch('/.netlify/functions/admin-update-order', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order_id: orderId, status: status, tracking_number: tracking_number, tracking_url: tracking_url })
+                });
+
+                if (!response.ok) throw new Error('Failed to update');
+                showToast('Order updated successfully', 'success');
+                document.getElementById('trackingModal').classList.remove('active');
+                await loadOrders();
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Save';
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', renderOrders);
+        document.getElementById('refreshBtn').addEventListener('click', function() {
+            this.textContent = '↻ Loading...';
+            loadOrders().then(function() {
+                document.getElementById('refreshBtn').textContent = '↻ Refresh';
+            });
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', async function() {
+            await supabase.auth.signOut();
+            window.location.href = 'index.html';
+        });
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('adminToast');
+            toast.textContent = msg;
+            toast.className = 'admin-toast active ' + (type || '');
+            setTimeout(function() { toast.classList.remove('active'); }, 3000);
+        }
+
+        init();
+    </script>
+</body>
+</html>

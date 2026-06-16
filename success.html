@@ -59,6 +59,10 @@
                     const cartItems = JSON.parse(cartJson);
                     const total = parseFloat(totalStr);
 
+                    // Read shipping info from session
+                    const shippingJson = sessionStorage.getItem('checkout_shipping');
+                    var shippingInfo = shippingJson ? JSON.parse(shippingJson) : null;
+
                     // Display order summary
                     document.getElementById('orderDetails').style.display = 'block';
                     document.getElementById('orderTotal').textContent = '$' + total.toFixed(2);
@@ -73,16 +77,22 @@
                     ).join('');
 
                     // Save order to Supabase
+                    var orderPayload = {
+                        customer_id: session ? session.user.id : null,
+                        customer_email: session ? session.user.email : null,
+                        items: cartItems,
+                        total: total,
+                        stripe_session_id: sessionId || ''
+                    };
+                    if (shippingInfo) {
+                        orderPayload.shipping_method = shippingInfo.method;
+                        orderPayload.shipping_cost = shippingInfo.cost;
+                    }
+
                     await fetch('/.netlify/functions/create-order', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            customer_id: session ? session.user.id : null,
-                            customer_email: session ? session.user.email : null,
-                            items: cartItems,
-                            total: total,
-                            stripe_session_id: sessionId || ''
-                        })
+                        body: JSON.stringify(orderPayload)
                     });
 
                     // Mark gift as fulfilled if a gift code was used

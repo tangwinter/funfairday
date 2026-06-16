@@ -205,7 +205,7 @@
             <div class="cart-shipping" id="cartShipping">
                 <div class="cart-shipping-header">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="3 11 8 11 10 13 14 13 16 11 21 11"/></svg>
-                    <span>Shipping via HK Post Airmail</span>
+                    <span>Shipping</span>
                 </div>
                 <div class="cart-shipping-row">
                     <label class="cart-shipping-label" for="shippingCountry">Destination:</label>
@@ -213,10 +213,7 @@
                         <option value="">Select country</option>
                     </select>
                 </div>
-                <div class="cart-shipping-info" id="shippingInfo" style="display:none;">
-                    <span class="cart-shipping-method" id="shippingMethod"></span>
-                    <span class="cart-shipping-cost" id="shippingCost"></span>
-                </div>
+                <div class="cart-shipping-methods" id="shippingMethods"></div>
                 <div class="cart-shipping-free" id="shippingFree" style="display:none;">
                     🎉 Free Shipping (Free Gift in cart!)
                 </div>
@@ -304,21 +301,43 @@
                     return;
                 }
 
-                container.innerHTML = orders.map(order => {
-                    const date = new Date(order.created_at).toLocaleDateString('en-US', {
+                container.innerHTML = orders.map(function(order) {
+                    var date = new Date(order.created_at).toLocaleDateString('en-US', {
                         year: 'numeric', month: 'long', day: 'numeric'
                     });
 
-                    const itemsHtml = (order.order_items || []).map(item => {
-                        const details = [];
+                    var itemsHtml = (order.order_items || []).map(function(item) {
+                        var details = [];
                         if (item.case_style) details.push('Case: ' + item.case_style + (item.case_color ? ' (' + item.case_color + ')' : ''));
                         if (item.options_text) details.push('Options: ' + item.options_text);
-                        const detailStr = details.length > 0 ? '<br><span class="order-item-detail">' + details.join(' | ') + '</span>' : '';
+                        var detailStr = details.length > 0 ? '<br><span class="order-item-detail">' + details.join(' | ') + '</span>' : '';
                         return '<div class="order-item">' +
                             '<div><span class="order-item-name">' + item.product_name + '</span> x' + item.quantity + detailStr + '</div>' +
                             '<span class="order-item-price">$' + parseFloat(item.price).toFixed(2) + '</span>' +
                         '</div>';
                     }).join('');
+
+                    var shippingHtml = '';
+                    if (order.shipping_method) {
+                        shippingHtml += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.06);font-size:0.85rem;">';
+                        shippingHtml += '<span style="color:var(--text-light);">Shipping: </span>';
+                        shippingHtml += '<span style="font-weight:600;">' + order.shipping_method + '</span>';
+                        if (order.shipping_cost > 0) {
+                            shippingHtml += ' <span style="color:var(--primary);font-weight:700;">($' + parseFloat(order.shipping_cost).toFixed(2) + ')</span>';
+                        }
+                        shippingHtml += '</div>';
+                    }
+
+                    var trackingHtml = '';
+                    if (order.tracking_number) {
+                        trackingHtml += '<div style="margin-top:8px;padding:10px 14px;background:#e8f5e9;border-radius:8px;font-size:0.85rem;display:flex;justify-content:space-between;align-items:center;">' +
+                            '<div><span style="font-weight:700;color:#2e7d32;">📦 Tracking: </span>' +
+                            '<span style="font-family:monospace;font-weight:600;">' + order.tracking_number + '</span></div>';
+                        if (order.tracking_url) {
+                            trackingHtml += '<a href="' + order.tracking_url + '" target="_blank" class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;text-decoration:none;">Track Parcel</a>';
+                        }
+                        trackingHtml += '</div>';
+                    }
 
                     return '<div class="order-card">' +
                         '<div class="order-header">' +
@@ -327,6 +346,8 @@
                         '</div>' +
                         '<span class="order-status order-status-' + order.status + '">' + order.status + '</span>' +
                         '<div class="order-items">' + itemsHtml + '</div>' +
+                        shippingHtml +
+                        trackingHtml +
                         '<div style="text-align:right;margin-top:12px;padding-top:12px;border-top:1px solid rgba(0,0,0,0.06);">' +
                             '<span style="font-size:0.85rem;color:var(--text-light);">Total: </span>' +
                             '<span class="order-total">$' + parseFloat(order.total).toFixed(2) + '</span>' +

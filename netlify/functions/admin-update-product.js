@@ -20,7 +20,7 @@ exports.handler = async (event) => {
         const { data: roles } = await supabase.from('user_roles').select('role').eq('user_id', user.id).eq('role', 'admin');
         if (!roles || roles.length === 0) return { statusCode: 403, body: JSON.stringify({ error: 'Not authorized' }) };
 
-        const { id, name, description, price, image_url, category_id, sort_order, model_id, case_style_id, case_color, option_choice } = JSON.parse(event.body);
+        const { id, name, description, price, image_url, category_id, sort_order, model_id, case_style_id, case_color, option_choice, weight_grams } = JSON.parse(event.body);
         if (!id) return { statusCode: 400, body: JSON.stringify({ error: 'Product ID required' }) };
 
         const updateData = {};
@@ -34,6 +34,7 @@ exports.handler = async (event) => {
         if (case_style_id !== undefined) updateData.case_style_id = case_style_id;
         if (case_color !== undefined) updateData.case_color = case_color;
         if (option_choice !== undefined) updateData.option_choice = option_choice;
+        if (weight_grams !== undefined) updateData.weight_grams = weight_grams;
 
         const { data, error } = await supabase.from('products').update(updateData).eq('id', id).select().single();
         if (error) throw error;
