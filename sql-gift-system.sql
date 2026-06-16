@@ -49,16 +49,8 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================
 ALTER TABLE categories ADD COLUMN IF NOT EXISTS hidden BOOLEAN DEFAULT false;
 
--- Insert "Free Sticker" category for the gift product
-INSERT INTO categories (id, name, short_name, description, long_description, emoji, hidden) VALUES
-    ('free-sticker', '🎁 Free Sticker', 'Free Sticker',
-     'Claim your free random sticker gift',
-     'Free random sticker gift for our valued customers - no purchase necessary!',
-     '🎁', false)
-ON CONFLICT (id) DO NOTHING;
-
--- Move the free-sticker-gift product from 'stickers' to 'free-sticker' category
-UPDATE products SET category_id = 'free-sticker' WHERE id = 'free-sticker-gift';
+-- Delete the Free Sticker category (gift links work directly without it)
+DELETE FROM categories WHERE id = 'free-sticker';
 
 -- Update the free sticker product name and description (no image needed, just text)
 UPDATE products SET name = 'FREE RANDOM STICKER', description = 'Free random sticker gift - claim now! No purchase necessary!' WHERE id = 'free-sticker-gift';
