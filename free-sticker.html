@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Sticker Gift - FunFairDay</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .gift-page {
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            background: linear-gradient(135deg, #fff9f0 0%, #fff0f6 100%);
+        }
+        .gift-card {
+            background: white;
+            border-radius: 24px;
+            padding: 48px 40px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        }
+        .gift-icon {
+            font-size: 5rem;
+            margin-bottom: 16px;
+            display: block;
+        }
+        .gift-card h1 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin: 0 0 8px 0;
+        }
+        .gift-price {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin: 8px 0;
+        }
+        .gift-desc {
+            color: var(--text);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 12px 0 24px 0;
+        }
+        .gift-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.1rem;
+            border-radius: 12px;
+        }
+        .gift-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .gift-message {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: none;
+        }
+        .gift-message.error {
+            display: block;
+            background: #fce4ec;
+            color: #c62828;
+        }
+        .gift-message.info {
+            display: block;
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        .gift-loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+            vertical-align: middle;
+            margin-right: 8px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .gift-footer-text {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: #aaa;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container header-inner">
+            <a href="index.html" class="logo">
+                <img src="images/FFD Logo.jpeg" alt="FunFairDay Logo" class="logo-img">
+                <span class="logo-text">FunFairDay</span>
+            </a>
+            <nav class="nav">
+                <a href="index.html#categories" class="nav-link">Shop</a>
+                <a href="index.html#about" class="nav-link">About</a>
+                <a href="index.html#contact" class="nav-link">Contact</a>
+            </nav>
+            <button class="cart-btn" id="cartBtn" aria-label="Open Cart">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="9" cy="21" r="1"></circle>
+                    <circle cx="20" cy="21" r="1"></circle>
+                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+                </svg>
+                <span class="cart-badge" id="cartBadge">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Gift Content -->
+    <section class="gift-page" id="giftPage">
+        <div class="gift-card">
+            <span class="gift-icon">🎁</span>
+            <h1>FREE RANDOM STICKER</h1>
+            <div class="gift-price">$0.00</div>
+            <p class="gift-desc">Free random sticker gift — claim now! No purchase necessary. Just add to cart and checkout to receive your free sticker.</p>
+            <button class="btn btn-primary gift-btn" id="claimBtn">Add to Cart</button>
+            <div class="gift-message" id="giftMessage"></div>
+            <div class="gift-footer-text">Only one free gift per person • 30min to checkout</div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container footer-content">
+            <div class="footer-section">
+                <h4>FunFairDay</h4>
+                <p>Creative DIY phone accessories made with love.</p>
+            </div>
+            <div class="footer-section">
+                <h4>Quick Links</h4>
+                <ul class="footer-links">
+                    <li><a href="index.html#categories">Shop</a></li>
+                    <li><a href="index.html#about">About Us</a></li>
+                    <li><a href="index.html#contact">Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-section">
+                <h4>Contact Us</h4>
+                <p>Email: hello@funfairday.com</p>
+                <p>Follow us on social media for updates!</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <div class="container">
+                <p>&copy; 2024 FunFairDay. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        var giftCode = new URLSearchParams(window.location.search).get('code');
+
+        if (!giftCode) {
+            document.getElementById('giftMessage').className = 'gift-message error';
+            document.getElementById('giftMessage').textContent = 'Invalid gift link. No gift code provided.';
+            document.getElementById('claimBtn').disabled = true;
+        }
+
+        function showGiftMessage(text, type) {
+            var el = document.getElementById('giftMessage');
+            el.textContent = text;
+            el.className = 'gift-message ' + type;
+        }
+
+        function getSessionId() {
+            var sid = localStorage.getItem('funfairday_session');
+            if (!sid) {
+                sid = 'sess_' + Math.random().toString(36).substr(2, 12);
+                localStorage.setItem('funfairday_session', sid);
+            }
+            return sid;
+        }
+
+        document.getElementById('claimBtn').addEventListener('click', function() {
+            var btn = this;
+            if (btn.disabled) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="gift-loading"></span> Claiming...';
+
+            fetch('/.netlify/functions/claim-gift', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code: giftCode, session: getSessionId() })
+            })
+            .then(function(r) { return r.json(); })
+            .then(function(result) {
+                if (result.success) {
+                    // Add free gift to cart
+                    var freeGift = {
+                        id: 'free-sticker-gift',
+                        productId: 'free-sticker-gift',
+                        name: 'FREE RANDOM STICKER',
+                        price: 0,
+                        description: 'Free random sticker gift - claim now!'
+                    };
+                    var cart = JSON.parse(localStorage.getItem('funfairday_cart') || '[]');
+                    var existing = cart.find(function(i) { return i.id === 'free-sticker-gift'; });
+                    if (existing) {
+                        existing.quantity += 1;
+                    } else {
+                        cart.push({ id: 'free-sticker-gift', productId: 'free-sticker-gift', name: 'FREE RANDOM STICKER', price: 0, quantity: 1 });
+                    }
+                    localStorage.setItem('funfairday_cart', JSON.stringify(cart));
+                    localStorage.setItem('funfairday_gift_code', giftCode);
+                    // Set flag so homepage shows the popup
+                    localStorage.setItem('funfairday_gift_claimed', 'true');
+
+                    // Redirect to homepage
+                    window.location.href = 'index.html';
+                } else if (result.error === 'claimed') {
+                    // Already claimed - offer 30% discount
+                    showGiftMessage('This gift has already been claimed!', 'error');
+                    btn.innerHTML = 'Try Again Later';
+                    btn.disabled = true;
+
+                    // Still set 30% discount option
+                    if (!localStorage.getItem('funfairday_discount30')) {
+                        setTimeout(function() {
+                            if (confirm('Sorry, this gift was already claimed. Would you like a 30% discount on everything instead?')) {
+                                localStorage.setItem('funfairday_discount30', 'true');
+                                window.location.href = 'index.html';
+                            }
+                        }, 500);
+                    }
+                } else {
+                    showGiftMessage(result.message || 'Failed to claim gift. Please try again.', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Add to Cart';
+                }
+            })
+            .catch(function(err) {
+                showGiftMessage('Network error. Please try again.', 'error');
+                btn.disabled = false;
+                btn.textContent = 'Add to Cart';
+            });
+        });
+    </script>
+</body>
+</html>

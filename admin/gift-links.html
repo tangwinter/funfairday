@@ -223,7 +223,7 @@
                 var statusClass = c.fulfilled ? 'gift-status-fulfilled' : (c.claimed ? (isExpired ? 'gift-status-available' : 'gift-status-claimed') : 'gift-status-available');
                 var statusText = c.fulfilled ? 'Fulfilled' : (c.claimed ? (isExpired ? 'Expired' : 'Claimed') : 'Available');
 
-                var linkUrl = baseUrl + '/?gift=' + c.code;
+                var linkUrl = baseUrl + '/free-sticker.html?code=' + c.code;
                 var claimedAt = c.claimed_at ? new Date(c.claimed_at).toLocaleString() : '-';
                 var expiresAt = c.expires_at ? new Date(c.expires_at).toLocaleString() : '-';
 

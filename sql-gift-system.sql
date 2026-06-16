@@ -18,16 +18,16 @@ CREATE TABLE IF NOT EXISTS free_gift_codes (
 DELETE FROM free_gift_codes WHERE claimed = false;
 
 INSERT INTO free_gift_codes (code) VALUES
-    ('GIFT-A7K2X9'),
-    ('GIFT-M4P8Q3'),
-    ('GIFT-R5T1W6'),
-    ('GIFT-H9J3L0'),
-    ('GIFT-C2V7N4'),
-    ('GIFT-B6K8X1'),
-    ('GIFT-D9F3M5'),
-    ('GIFT-P4R7T2'),
-    ('GIFT-W1Z6L8'),
-    ('GIFT-Q5N9J3')
+    ('GIFT-xK9mP2qR8z'),
+    ('GIFT-A3bN7vW5cY'),
+    ('GIFT-L4pQ6rT2sU'),
+    ('GIFT-M8dF1hJ3kG'),
+    ('GIFT-R5eX7wZ9aV'),
+    ('GIFT-B2nM4lC6tH'),
+    ('GIFT-D9yU1iO3pL'),
+    ('GIFT-P7sE5jK8qW'),
+    ('GIFT-W6gH0zR2vX'),
+    ('GIFT-Q1mC8nF3bD')
 ON CONFLICT (code) DO NOTHING;
 
 -- Index for faster lookups

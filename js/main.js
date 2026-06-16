@@ -839,72 +839,34 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('funfairday_session', sessionId);
     }
 
-    // Gift code detection
-    var giftParams = new URLSearchParams(window.location.search);
-    var giftCode = giftParams.get('gift');
-
-    if (giftCode) {
-        // Wait for products to load, then claim
-        var claimGift = function() {
-            fetch('/.netlify/functions/claim-gift', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ code: giftCode, session: sessionId })
-            })
-            .then(function(r) { return r.json(); })
-            .then(function(result) {
-                if (result.success) {
-                    // Claim successful - add free gift to cart
-                    var freeGift = products.find(function(p) { return p.id === 'free-sticker-gift'; });
-                    if (freeGift) {
-                        Cart.addItem(freeGift, 1);
-                        // Store gift code for checkout tracking
-                        localStorage.setItem('funfairday_gift_code', giftCode);
-                        showPopup({
-                            icon: '🎁',
-                            title: 'Free Gift Claimed!',
-                            text: 'The free gift claim process will close after 30mins, please process the checkout now.',
-                            buttons: [
-                                { label: 'OK', className: 'btn-primary', action: function() {
-                                    openCart();
-                                }}
-                            ]
-                        });
+    // Gift claim popup (triggered after redirect from free-sticker.html)
+    var giftClaimedFlag = localStorage.getItem('funfairday_gift_claimed');
+    if (giftClaimedFlag === 'true') {
+        localStorage.removeItem('funfairday_gift_claimed');
+        // Wait a moment for page to fully render
+        setTimeout(function() {
+            showPopup({
+                icon: '🎁',
+                title: 'Free Gift Added! 🎉',
+                text: 'Please process the free sticker checkout within 30mins to claim your gift!',
+                buttons: [
+                    {
+                        label: 'Check out Now',
+                        className: 'btn-primary',
+                        action: function() {
+                            openCart();
+                        }
+                    },
+                    {
+                        label: 'Shop Around',
+                        className: 'btn-secondary',
+                        action: function() {
+                            window.location.href = 'category.html?cat=stickers';
+                        }
                     }
-                } else if (result.error === 'claimed') {
-                    // Gift is held by someone else - show 30% off offer
-                    if (!localStorage.getItem('funfairday_discount30')) {
-                        showPopup({
-                            icon: '😢',
-                            title: 'Sorry, claimed already!',
-                            text: 'Sorry the Free Gift has already been claimed, please wait for the new one! Good Luck',
-                            buttons: [
-                                {
-                                    label: 'Buy everything in 30% offer for your support',
-                                    className: 'btn-danger',
-                                    action: function() {
-                                        localStorage.setItem('funfairday_discount30', 'true');
-                                        showDiscountBanner();
-                                        updateCartUI();
-                                        showToast('30% discount applied to all products!');
-                                    }
-                                }
-                            ]
-                        });
-                    }
-                }
-            })
-            .catch(function(err) {
-                console.error('Gift claim error:', err);
+                ]
             });
-        };
-
-        // Run after products are loaded
-        if (window.__publicDataLoaded !== undefined) {
-            claimGift();
-        } else {
-            document.addEventListener('publicDataLoaded', function() { claimGift(); });
-        }
+        }, 500);
     }
 
     // Discount banner

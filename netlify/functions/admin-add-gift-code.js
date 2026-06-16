@@ -1,11 +1,11 @@
 // Netlify Function: Admin - Add (generate) a new gift code
 const { createClient } = require('@supabase/supabase-js');
 
-// Generate a random unguessable gift code
+// Generate a random unguessable gift code (10 chars, mixed case + numbers)
 function generateGiftCode() {
-    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
     var code = 'GIFT-';
-    for (var i = 0; i < 6; i++) {
+    for (var i = 0; i < 10; i++) {
         code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return code;
