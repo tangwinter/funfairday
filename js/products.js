@@ -170,27 +170,55 @@ const optionDetails = {
 };
 
 // ============================================
-// Dynamic Data Loading from Supabase API
+// Dynamic Data Loading from Supabase (Direct)
 // ============================================
-// Try to fetch live data from the Netlify Function
-// Falls back to the hardcoded data above if API unavailable
+// Supabase is configured to allow anon public read access to these tables
+// The anon key is safe for client-side use (Row Level Security restricts it)
+
+var SUPABASE_URL = 'https://hcqmwoxgmezkpapawtqv.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImhjcW13b3hnbWV6a3BhcGF3dHF2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODExNDExMjgsImV4cCI6MjA5NjcxNzEyOH0._Ezf4UKtYQDDAdi2qEy7VvVXVZt_G_FmayXYqT75wpY';
+
+async function supabaseFetch(table, query) {
+    var url = SUPABASE_URL + '/rest/v1/' + table + '?' + (query || '');
+    var res = await fetch(url, {
+        headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': 'Bearer ' + SUPABASE_ANON_KEY,
+            'Accept': 'application/json'
+        }
+    });
+    if (!res.ok) throw new Error(table + ': HTTP ' + res.status);
+    return res.json();
+}
 
 (async function loadPublicData() {
     try {
-        const response = await fetch('/.netlify/functions/get-public-data');
-        if (!response.ok) throw new Error('API unavailable');
-        const data = await response.json();
+        var [
+            categoriesData,
+            productsData,
+            settingsData,
+            caseStylesData,
+            optionsData,
+            categoryOptionsData,
+            phoneModelsData
+        ] = await Promise.all([
+            supabaseFetch('categories', 'select=*&hidden=eq.false&order=id.asc'),
+            supabaseFetch('products', 'select=*&order=sort_order.asc'),
+            supabaseFetch('site_settings', 'select=*'),
+            supabaseFetch('phone_case_styles', 'select=*&order=display_order.asc'),
+            supabaseFetch('options', 'select=*&order=key.asc'),
+            supabaseFetch('category_options', 'select=*'),
+            supabaseFetch('phone_models', 'select=*&order=display_order.asc')
+        ]);
 
-        if (data.categories && data.categories.length > 0) {
-            // Update categories (mutate the const array)
+        if (categoriesData && categoriesData.length > 0) {
             categories.length = 0;
-            data.categories.forEach(c => categories.push(c));
+            categoriesData.forEach(function(c) { categories.push(c); });
         }
 
-        if (data.products && data.products.length > 0) {
-            // Override products array
+        if (productsData && productsData.length > 0) {
             products.length = 0;
-            data.products.forEach(p => {
+            productsData.forEach(function(p) {
                 products.push({
                     id: p.id,
                     name: p.name,
@@ -202,47 +230,64 @@ const optionDetails = {
                     badge: null
                 });
             });
-            // Add badges from categories
-            products.forEach(p => {
-                const cat = data.categories.find(c => c.id === p.category);
+            products.forEach(function(p) {
+                var cat = categoriesData.find(function(c) { return c.id === p.category; });
                 if (cat) p.badge = cat.badge || null;
             });
         }
 
-        if (data.phoneCaseStyles && data.phoneCaseStyles.length > 0) {
+        if (caseStylesData && caseStylesData.length > 0) {
             phoneCaseStyles.length = 0;
-            data.phoneCaseStyles.forEach(s => phoneCaseStyles.push(s));
+            caseStylesData.forEach(function(s) { phoneCaseStyles.push(s); });
         }
 
-        if (data.phoneModels && data.phoneModels.length > 0) {
+        if (phoneModelsData && phoneModelsData.length > 0) {
             phoneModels.length = 0;
-            data.phoneModels.forEach(m => phoneModels.push(m));
+            phoneModelsData.forEach(function(m) { phoneModels.push(m); });
         }
 
-        if (data.options && data.options.length > 0) {
-            // Update optionDetails
-            data.options.forEach(o => {
+        if (optionsData && optionsData.length > 0) {
+            optionsData.forEach(function(o) {
                 optionDetails[o.key] = { name: o.name, description: o.description, price: parseFloat(o.price) };
             });
         }
 
-        if (data.categoryCustomization) {
-            Object.keys(data.categoryCustomization).forEach(key => {
-                categoryCustomization[key] = data.categoryCustomization[key];
+        var categoryOptions = {};
+        if (categoryOptionsData && categoryOptionsData.length > 0) {
+            categoryOptionsData.forEach(function(co) {
+                if (!categoryOptions[co.category_id]) categoryOptions[co.category_id] = [];
+                categoryOptions[co.category_id].push(co.option_key);
             });
         }
 
-        // Store settings globally for other scripts
-        if (data.settings) {
-            window.__siteSettings = data.settings;
+        if (categoriesData) {
+            categoriesData.forEach(function(cat) {
+                categoryCustomization[cat.id] = {
+                    hasCaseSelection: cat.id !== 'stickers',
+                    options: categoryOptions[cat.id] || []
+                };
+            });
+        }
+
+        // Store settings globally
+        var settings = {};
+        if (settingsData && settingsData.length > 0) {
+            settingsData.forEach(function(s) { settings[s.key] = s.value; });
+        }
+        if (Object.keys(settings).length > 0) {
+            window.__siteSettings = settings;
         }
         window.__publicDataLoaded = true;
-
-        // Dispatch event so other scripts know data is ready
-        document.dispatchEvent(new CustomEvent('publicDataLoaded', { detail: data }));
+        document.dispatchEvent(new CustomEvent('publicDataLoaded', { detail: {
+            categories: categoriesData,
+            products: productsData,
+            phoneCaseStyles: caseStylesData,
+            phoneModels: phoneModelsData,
+            settings: settings
+        }}));
 
     } catch (e) {
-        console.log('Using fallback data (API unavailable): ' + e.message);
+        console.log('Using fallback data (Supabase unavailable): ' + e.message);
         window.__publicDataLoaded = false;
     }
 })();
