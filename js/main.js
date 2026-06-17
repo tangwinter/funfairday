@@ -556,7 +556,60 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCartUI();
     }
 
-    // Calculate shipping via API
+    // ----- Client-side shipping calculation (no API needed) -----
+    var SHIP_ZONES = {
+        'zone1': { name: 'Asia', countries: ['JP','KR','TW','SG','MY','TH','PH','ID','VN','BN','KH','LA','MM','MN','CN','MO'] },
+        'zone2': { name: 'Oceania & Middle East', countries: ['AU','NZ','PG','FJ','SB','VU','AE','SA','QA','KW','BH','OM','IL','TR','CY'] },
+        'zone3': { name: 'Europe & Africa', countries: ['GB','IE','FR','DE','IT','ES','PT','NL','BE','LU','CH','AT','SE','NO','DK','FI','GR','PL','CZ','HU','RO','BG','HR','RS','SK','SI','LT','LV','EE','ZA','NG','KE','EG','MA','TN','DZ','GH','MU'] },
+        'zone4': { name: 'Americas', countries: ['US','CA','MX','BR','AR','CL','CO','PE','EC','VE','CR','PA','DO','PR','JM','TT','BS','BB','GY','SR','BO','PY','UY','GT','SV','HN','NI','BZ'] }
+    };
+    var SHIP_BASE_RATES = [
+        { maxG: 50,  z1: 1.74, z2: 2.17, z3: 2.61, z4: 3.04 },
+        { maxG: 100, z1: 2.61, z2: 3.30, z3: 3.91, z4: 4.35 },
+        { maxG: 200, z1: 3.48, z2: 4.35, z3: 5.22, z4: 5.65 },
+        { maxG: 500, z1: 4.78, z2: 6.09, z3: 6.96, z4: 7.83 }
+    ];
+    var SHIP_REGISTERED_FEE = 2.60;
+    var SHIP_FEDEX_RATES = [
+        { maxG: 50,  z1: 18.00, z2: 22.00, z3: 26.00, z4: 30.00 },
+        { maxG: 100, z1: 22.00, z2: 27.00, z3: 32.00, z4: 36.00 },
+        { maxG: 200, z1: 28.00, z2: 34.00, z3: 40.00, z4: 45.00 },
+        { maxG: 500, z1: 36.00, z2: 44.00, z3: 52.00, z4: 58.00 }
+    ];
+    var SHIP_MARKUP = 0.15;
+    var SHIP_DELIVERY = {
+        'hk-post-normal': { z1: '7-14 days', z2: '7-21 days', z3: '7-21 days', z4: '10-21 days' },
+        'hk-post-registered': { z1: '7-14 days with tracking', z2: '7-21 days with tracking', z3: '7-21 days with tracking', z4: '10-21 days with tracking' },
+        'fedex': { z1: '2-4 business days', z2: '2-5 business days', z3: '2-5 business days', z4: '3-5 business days' }
+    };
+
+    function _shipGetZone(country) {
+        var code = country.toUpperCase();
+        for (var z in SHIP_ZONES) {
+            if (SHIP_ZONES[z].countries.indexOf(code) !== -1) return z;
+        }
+        return 'zone4';
+    }
+
+    function _shipGetBaseRate(rates, totalGrams, zone) {
+        for (var i = 0; i < rates.length; i++) {
+            if (totalGrams <= rates[i].maxG) {
+                var r = rates[i];
+                var rateMap = { 'zone1': r.z1, 'zone2': r.z2, 'zone3': r.z3, 'zone4': r.z4 };
+                return rateMap[zone] || r.z4;
+            }
+        }
+        return rates[rates.length - 1][zone];
+    }
+
+    function _shipGetDelivery(method, zone) {
+        return (SHIP_DELIVERY[method] && SHIP_DELIVERY[method][zone]) || '7-21 days';
+    }
+
+    function _shipApplyMarkup(cost) {
+        return Math.round(cost * (1 + SHIP_MARKUP) * 100) / 100;
+    }
+
     window._calculateShipping = function(country) {
         var items = Cart.getItems().map(function(item) {
             var prod = products.find(function(p) { return p.id === item.id; });
@@ -568,43 +621,50 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         });
 
-        return fetch('/.netlify/functions/calculate-shipping', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items: items, country: country })
-        })
-        .then(function(r) {
-            return r.json().then(function(data) {
-                // Check if the HTTP response was an error
-                if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
-                if (data.error) throw new Error(data.error);
-                return data;
-            });
-        })
-        .then(function(data) {
-            window._shippingMethods = data.methods || [];
-
-            var freeEl = document.getElementById('shippingFree');
-            if (data.freeGift) {
-                if (freeEl) freeEl.style.display = 'block';
-                // Only HK Post Normal is $0; Registered and FedEx have normal cost
-                renderShippingMethods(data.methods, false);
-                // Auto-select the free method
-                var freeMethod = data.methods.find(function(m) { return m.cost === 0; }) || data.methods[0];
-                window._shippingCost = freeMethod.cost;
-                window._shippingMethod = freeMethod.name;
-            } else {
-                if (freeEl) freeEl.style.display = 'none';
-                renderShippingMethods(data.methods, false);
-            }
-
-            localStorage.setItem('funfairday_shipping_country', country);
-            return data;
-        })
-        .catch(function(err) {
-            console.error('Shipping calc error:', err);
-            throw err;
+        // Calculate locally
+        var hasFreeGift = items.some(function(item) {
+            return item.id === 'free-sticker-gift' || item.productId === 'free-sticker-gift';
         });
+        var totalGrams = items.reduce(function(sum, item) {
+            return sum + ((item.weight || 50) * (item.quantity || 1));
+        }, 0);
+        var zone = _shipGetZone(country);
+        var baseNormal = _shipGetBaseRate(SHIP_BASE_RATES, totalGrams, zone);
+        var baseRegistered = baseNormal + SHIP_REGISTERED_FEE;
+        var baseFedex = _shipGetBaseRate(SHIP_FEDEX_RATES, totalGrams, zone);
+
+        var methods;
+        if (hasFreeGift) {
+            methods = [
+                { id: 'hk-post-normal', name: 'HK Post Normal Airmail', cost: 0, deliveryTime: 'Free with Gift', originalCost: 0, markupPercent: 0 },
+                { id: 'hk-post-registered', name: 'HK Post Registered Airmail', cost: _shipApplyMarkup(baseRegistered), deliveryTime: _shipGetDelivery('hk-post-registered', zone), originalCost: Math.round(baseRegistered * 100) / 100, markupPercent: 15 },
+                { id: 'fedex', name: 'FedEx International Priority', cost: _shipApplyMarkup(baseFedex), deliveryTime: _shipGetDelivery('fedex', zone), originalCost: Math.round(baseFedex * 100) / 100, markupPercent: 15 }
+            ];
+        } else {
+            methods = [
+                { id: 'hk-post-normal', name: 'HK Post Normal Airmail', cost: _shipApplyMarkup(baseNormal), deliveryTime: _shipGetDelivery('hk-post-normal', zone), originalCost: Math.round(baseNormal * 100) / 100, markupPercent: 15 },
+                { id: 'hk-post-registered', name: 'HK Post Registered Airmail', cost: _shipApplyMarkup(baseRegistered), deliveryTime: _shipGetDelivery('hk-post-registered', zone), originalCost: Math.round(baseRegistered * 100) / 100, markupPercent: 15 },
+                { id: 'fedex', name: 'FedEx International Priority', cost: _shipApplyMarkup(baseFedex), deliveryTime: _shipGetDelivery('fedex', zone), originalCost: Math.round(baseFedex * 100) / 100, markupPercent: 15 }
+            ];
+        }
+
+        var data = { methods: methods, freeGift: hasFreeGift, weight: totalGrams, zone: zone };
+        window._shippingMethods = methods;
+
+        var freeEl = document.getElementById('shippingFree');
+        if (hasFreeGift) {
+            if (freeEl) freeEl.style.display = 'block';
+            renderShippingMethods(methods, false);
+            var freeMethod = methods.find(function(m) { return m.cost === 0; }) || methods[0];
+            window._shippingCost = freeMethod.cost;
+            window._shippingMethod = freeMethod.name;
+        } else {
+            if (freeEl) freeEl.style.display = 'none';
+            renderShippingMethods(methods, false);
+        }
+
+        localStorage.setItem('funfairday_shipping_country', country);
+        return Promise.resolve(data);
     };
 
     // Country dropdown change
