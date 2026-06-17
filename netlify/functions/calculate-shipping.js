@@ -76,34 +76,33 @@ exports.handler = async (event) => {
             return item.id === 'free-sticker-gift' || item.productId === 'free-sticker-gift';
         });
 
-        if (hasFreeGift) {
-            return {
-                statusCode: 200,
-                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-                body: JSON.stringify({
-                    methods: [
-                        { id: 'hk-post-normal', name: 'HK Post Normal Airmail', cost: 0, deliveryTime: 'Free (Gift)', originalCost: 0, markupPercent: 0 },
-                        { id: 'hk-post-registered', name: 'HK Post Registered Airmail', cost: 0, deliveryTime: 'Free (Gift)', originalCost: 0, markupPercent: 0 },
-                        { id: 'fedex', name: 'FedEx International Priority', cost: 0, deliveryTime: 'Free (Gift)', originalCost: 0, markupPercent: 0 }
-                    ],
-                    freeGift: true,
-                    weight: 0,
-                    zone: 'N/A'
-                })
-            };
-        }
-
-        // Calculate total weight
+        // Calculate total weight (needed for both free-gift and normal)
         var totalGrams = items.reduce(function(sum, item) {
             return sum + ((item.weight || 50) * (item.quantity || 1));
         }, 0);
 
         var zone = getZone(country);
-
-        // Calculate each method
         var baseNormal = getBaseRate(BASE_RATES, totalGrams, zone);
         var baseRegistered = baseNormal + REGISTERED_FEE;
         var baseFedex = getBaseRate(FEDEX_RATES, totalGrams, zone);
+
+        if (hasFreeGift) {
+            // Only HK Post Normal is free with gift; Registered and FedEx have normal cost
+            return {
+                statusCode: 200,
+                headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+                body: JSON.stringify({
+                    methods: [
+                        { id: 'hk-post-normal', name: 'HK Post Normal Airmail', cost: 0, deliveryTime: 'Free with Gift', originalCost: 0, markupPercent: 0 },
+                        { id: 'hk-post-registered', name: 'HK Post Registered Airmail', cost: applyMarkup(baseRegistered), deliveryTime: getDelivery('hk-post-registered', zone), originalCost: Math.round(baseRegistered * 100) / 100, markupPercent: 15 },
+                        { id: 'fedex', name: 'FedEx International Priority', cost: applyMarkup(baseFedex), deliveryTime: getDelivery('fedex', zone), originalCost: Math.round(baseFedex * 100) / 100, markupPercent: 15 }
+                    ],
+                    freeGift: true,
+                    weight: totalGrams,
+                    zone: zone
+                })
+            };
+        }
 
         var methods = [
             {

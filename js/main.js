@@ -579,13 +579,12 @@ document.addEventListener('DOMContentLoaded', function() {
             var freeEl = document.getElementById('shippingFree');
             if (data.freeGift) {
                 if (freeEl) freeEl.style.display = 'block';
-                // All methods are $0
-                var zeroMethods = (data.methods || []).map(function(m) {
-                    return { id: m.id, name: m.name, cost: 0, deliveryTime: m.deliveryTime };
-                });
-                renderShippingMethods(zeroMethods, false);
-                window._shippingCost = 0;
-                window._shippingMethod = 'Free (Gift)';
+                // Only HK Post Normal is $0; Registered and FedEx have normal cost
+                renderShippingMethods(data.methods, false);
+                // Auto-select the free method
+                var freeMethod = data.methods.find(function(m) { return m.cost === 0; }) || data.methods[0];
+                window._shippingCost = freeMethod.cost;
+                window._shippingMethod = freeMethod.name;
             } else {
                 if (freeEl) freeEl.style.display = 'none';
                 renderShippingMethods(data.methods, false);
@@ -608,7 +607,9 @@ document.addEventListener('DOMContentLoaded', function() {
             var freeEl = document.getElementById('shippingFree');
             if (country) {
                 methodsEl.style.display = 'none';
-                window._calculateShipping(country);
+                window._calculateShipping(country).catch(function(err) {
+                    showToast('Failed to calculate shipping. Please try again.');
+                });
             } else {
                 methodsEl.style.display = 'none';
                 if (freeEl) freeEl.style.display = 'none';
@@ -627,7 +628,9 @@ document.addEventListener('DOMContentLoaded', function() {
             if (typeof original === 'function') original();
             var countrySelect = document.getElementById('shippingCountry');
             if (countrySelect && countrySelect.value) {
-                window._calculateShipping(countrySelect.value);
+                window._calculateShipping(countrySelect.value).catch(function(err) {
+                    console.error('Shipping recalc error:', err);
+                });
             }
         };
     })(Cart.onUpdate);
