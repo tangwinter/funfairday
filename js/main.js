@@ -267,7 +267,8 @@ document.addEventListener('DOMContentLoaded', function() {
             try {
                 await window._calculateShipping(selectedCountry);
             } catch(e) {
-                showToast('Failed to calculate shipping. Please try again.');
+                console.error('Checkout shipping error:', e);
+                showToast('Shipping error: ' + e.message);
                 this.disabled = false;
                 this.textContent = 'Checkout';
                 return;
@@ -615,7 +616,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (country) {
                 methodsEl.style.display = 'none';
                 window._calculateShipping(country).catch(function(err) {
-                    showToast('Failed to calculate shipping. Please try again.');
+                    console.error('Shipping error detail:', err);
+                    showToast('Shipping error: ' + err.message);
                 });
             } else {
                 methodsEl.style.display = 'none';
