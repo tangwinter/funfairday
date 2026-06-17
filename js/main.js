@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', function() {
 
     const colorClasses = ['product-color-1', 'product-color-2', 'product-color-3', 'product-color-4'];
-    const placeholderIcons = ['üé®', 'üì±', 'üé≠', 'üíê'];
+    const placeholderIcons = ['?é®', '?ì±', '?é≠', '??'];
 
     // --- Render Categories on Homepage ---
     const categoriesGrid = document.getElementById('categoriesGrid');
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Fetch latest video thumbnails
         (async function loadYouTubeThumbnails() {
             try {
-                const response = await fetch('/.netlify/functions/get-latest-video', {
+                const response = await fetch('/get-latest-video', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ channels: youtubeChannels.map(c => c.handle) })
@@ -338,7 +338,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
-                var response = await fetch('/.netlify/functions/create-checkout', {
+                var response = await fetch('/create-checkout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -391,7 +391,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     : '$' + bundleProduct.price.toFixed(2);
 
                 showPopup({
-                    icon: 'üéâ',
+                    icon: '??',
                     title: 'Special Offer for You!',
                     text: 'Get 5pcs Stick Bundle Pack at ' + bundlePrice + ' only!\n(50% off - was US$16, now US$8)',
                     buttons: [
@@ -1123,7 +1123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     window.showPopup = function(opts) {
-        popupIcon.textContent = opts.icon || 'üéâ';
+        popupIcon.textContent = opts.icon || '??';
         popupTitle.textContent = opts.title || '';
         popupText.textContent = opts.text || '';
         popupActions.innerHTML = '';
@@ -1170,8 +1170,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Wait a moment for page to fully render
         setTimeout(function() {
             showPopup({
-                icon: 'üéÅ',
-                title: 'Free Gift Added! üéâ',
+                icon: '??',
+                title: 'Free Gift Added! ??',
                 text: 'Please process the free sticker checkout within 30mins to claim your gift!',
                 buttons: [
                     {

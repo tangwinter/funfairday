@@ -59,7 +59,7 @@
                     <option value="delivered">Delivered</option>
                     <option value="cancelled">Cancelled</option>
                 </select>
-                <button class="admin-btn admin-btn-outline" id="refreshBtn">↻ Refresh</button>
+                <button class="admin-btn admin-btn-outline" id="refreshBtn">??Refresh</button>
             </div>
         </div>
 
@@ -149,7 +149,7 @@
 
         async function init() {
             try {
-                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const res = await fetch('/get-supabase-config');
                 const config = await res.json();
                 if (!config.configured) { throw new Error('Not configured'); }
                 supabase = window.supabase.createClient(config.url, config.anonKey);
@@ -166,7 +166,7 @@
 
         async function loadOrders() {
             try {
-                const response = await fetch('/.netlify/functions/admin-get-orders', {
+                const response = await fetch('/admin-get-orders', {
                     headers: { 'Authorization': 'Bearer ' + accessToken }
                 });
                 const data = await response.json();
@@ -265,7 +265,7 @@
                 var tracking_number = document.getElementById('trackNumber').value.trim() || null;
                 var tracking_url = document.getElementById('trackUrl').value.trim() || null;
 
-                var response = await fetch('/.netlify/functions/admin-update-order', {
+                var response = await fetch('/admin-update-order', {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ order_id: orderId, status: status, tracking_number: tracking_number, tracking_url: tracking_url })
@@ -285,9 +285,9 @@
 
         document.getElementById('statusFilter').addEventListener('change', renderOrders);
         document.getElementById('refreshBtn').addEventListener('click', function() {
-            this.textContent = '↻ Loading...';
+            this.textContent = '??Loading...';
             loadOrders().then(function() {
-                document.getElementById('refreshBtn').textContent = '↻ Refresh';
+                document.getElementById('refreshBtn').textContent = '??Refresh';
             });
         });
 

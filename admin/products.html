@@ -111,7 +111,7 @@
                     <textarea id="prodDesc" class="admin-textarea" required></textarea>
                 </div>
                 <div class="admin-form-group">
-                    <label for="prodWeight">Weight (grams) <span style="color:#999;font-weight:400;">— for shipping calc, not shown to customers</span></label>
+                    <label for="prodWeight">Weight (grams) <span style="color:#999;font-weight:400;">??for shipping calc, not shown to customers</span></label>
                     <input type="number" id="prodWeight" class="admin-input" min="1" max="99999" value="50" style="width:120px;">
                 </div>
                 <div class="admin-form-group">
@@ -173,7 +173,7 @@
 
         async function init() {
             try {
-                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const res = await fetch('/get-supabase-config');
                 const config = await res.json();
                 if (!config.configured) { throw new Error('Not configured'); }
                 supabase = window.supabase.createClient(config.url, config.anonKey);
@@ -228,7 +228,7 @@
 
         async function loadProducts() {
             try {
-                const response = await fetch('/.netlify/functions/get-public-data');
+                const response = await fetch('/get-public-data');
                 const data = await response.json();
                 allProducts = data.products || [];
                 phoneModels = data.phoneModels || [];
@@ -461,7 +461,7 @@
                 reader.onload = async (e) => {
                     try {
                         const base64 = e.target.result.split(',')[1];
-                        const response = await fetch('/.netlify/functions/admin-upload-image', {
+                        const response = await fetch('/admin-upload-image', {
                             method: 'POST',
                             headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
                             body: JSON.stringify({ file_name: file.name, file_base64: base64, folder: 'products' })
@@ -562,7 +562,7 @@
             try {
                 if (editId) {
                     // Update existing product
-                    const response = await fetch('/.netlify/functions/admin-update-product', {
+                    const response = await fetch('/admin-update-product', {
                         method: 'POST',
                         headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
                         body: JSON.stringify({ id: editId, name, description, price, image_url, category_id, model_id, case_style_id, case_color, option_choice, weight_grams })
@@ -572,7 +572,7 @@
                 } else {
                     // Add new product
                     const newId = category_id + '-' + Date.now();
-                    const response = await fetch('/.netlify/functions/admin-add-product', {
+                    const response = await fetch('/admin-add-product', {
                         method: 'POST',
                         headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
                         body: JSON.stringify({ id: newId, name, description, price, image_url, category_id, model_id, case_style_id, case_color, option_choice, weight_grams })
@@ -594,7 +594,7 @@
         async function deleteProduct(id) {
             if (!confirm('Are you sure you want to delete this product?')) return;
             try {
-                const response = await fetch('/.netlify/functions/admin-delete-product', {
+                const response = await fetch('/admin-delete-product', {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id })
@@ -609,7 +609,7 @@
 
         async function toggleCategory(categoryId) {
             try {
-                const response = await fetch('/.netlify/functions/admin-toggle-category', {
+                const response = await fetch('/admin-toggle-category', {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ category_id: categoryId })

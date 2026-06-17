@@ -160,7 +160,7 @@
 
         async function init() {
             try {
-                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const res = await fetch('/get-supabase-config');
                 const config = await res.json();
                 if (!config.configured) { throw new Error('Not configured'); }
                 supabase = window.supabase.createClient(config.url, config.anonKey);
@@ -177,7 +177,7 @@
 
         async function loadGiftCodes() {
             try {
-                const response = await fetch('/.netlify/functions/admin-get-gift-codes', {
+                const response = await fetch('/admin-get-gift-codes', {
                     headers: { 'Authorization': 'Bearer ' + accessToken }
                 });
                 if (!response.ok) throw new Error('Failed to load');
@@ -269,7 +269,7 @@
             btn.textContent = 'Generating...';
 
             try {
-                var response = await fetch('/.netlify/functions/admin-add-gift-code', {
+                var response = await fetch('/admin-add-gift-code', {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
                     body: JSON.stringify({})

@@ -119,7 +119,7 @@
 
         async function init() {
             try {
-                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const res = await fetch('/get-supabase-config');
                 const config = await res.json();
                 if (!config.configured) { throw new Error('Not configured'); }
                 supabase = window.supabase.createClient(config.url, config.anonKey);
@@ -135,7 +135,7 @@
 
         async function loadSettings() {
             try {
-                const response = await fetch('/.netlify/functions/get-public-data');
+                const response = await fetch('/get-public-data');
                 const data = await response.json();
                 currentSettings = data.settings || {};
 
@@ -173,7 +173,7 @@
                 reader.onload = async (e) => {
                     try {
                         const base64 = e.target.result.split(',')[1];
-                        const response = await fetch('/.netlify/functions/admin-upload-image', {
+                        const response = await fetch('/admin-upload-image', {
                             method: 'POST',
                             headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -221,7 +221,7 @@
                     slogan: document.getElementById('slogan').value
                 };
 
-                const response = await fetch('/.netlify/functions/admin-update-settings', {
+                const response = await fetch('/admin-update-settings', {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
                     body: JSON.stringify({ settings })

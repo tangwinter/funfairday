@@ -125,13 +125,13 @@
     <!-- Gift Content -->
     <section class="gift-page" id="giftPage">
         <div class="gift-card">
-            <span class="gift-icon">🎁</span>
+            <span class="gift-icon">??</span>
             <h1>FREE RANDOM STICKER</h1>
             <div class="gift-price">$0.00</div>
-            <p class="gift-desc">Free random sticker gift — claim now! No purchase necessary. Just add to cart and checkout to receive your free sticker.</p>
+            <p class="gift-desc">Free random sticker gift ??claim now! No purchase necessary. Just add to cart and checkout to receive your free sticker.</p>
             <button class="btn btn-primary gift-btn" id="claimBtn">Add to Cart</button>
             <div class="gift-message" id="giftMessage"></div>
-            <div class="gift-footer-text">Only one free gift per person • 30min to checkout</div>
+            <div class="gift-footer-text">Only one free gift per person ??30min to checkout</div>
         </div>
     </section>
 
@@ -194,7 +194,7 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="gift-loading"></span> Claiming...';
 
-            fetch('/.netlify/functions/claim-gift', {
+            fetch('/claim-gift', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ code: giftCode, session: getSessionId() })

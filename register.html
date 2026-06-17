@@ -149,7 +149,7 @@
 
         (async function init() {
             try {
-                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const res = await fetch('/get-supabase-config');
                 const config = await res.json();
                 if (!config.configured) { showError('Site not configured yet.'); return; }
                 supabase = window.supabase.createClient(config.url, config.anonKey);

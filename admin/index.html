@@ -40,7 +40,7 @@
 
         (async function init() {
             try {
-                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const res = await fetch('/get-supabase-config');
                 const config = await res.json();
                 if (!config.configured) { showAdminError('Supabase not configured on server.'); return; }
                 supabase = window.supabase.createClient(config.url, config.anonKey);
@@ -99,7 +99,7 @@
 
         async function checkAdminRole(token) {
             try {
-                const response = await fetch('/.netlify/functions/admin-get-orders', {
+                const response = await fetch('/admin-get-orders', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
                 if (response.ok) {

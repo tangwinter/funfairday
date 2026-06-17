@@ -44,7 +44,7 @@
         (async function createOrder() {
             try {
                 // Fetch Supabase config from server
-                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const res = await fetch('/get-supabase-config');
                 const config = await res.json();
                 if (!config.configured) return;
 
@@ -89,7 +89,7 @@
                         orderPayload.shipping_cost = shippingInfo.cost;
                     }
 
-                    await fetch('/.netlify/functions/create-order', {
+                    await fetch('/create-order', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(orderPayload)
@@ -98,7 +98,7 @@
                     // Mark gift as fulfilled if a gift code was used
                     if (cartItems._giftCode) {
                         try {
-                            await fetch('/.netlify/functions/claim-gift', {
+                            await fetch('/claim-gift', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ code: cartItems._giftCode, fulfill: true })

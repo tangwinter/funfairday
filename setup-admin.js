@@ -41,7 +41,7 @@ async function main() {
     }
     
     console.log('Success!', email, 'is now an admin.');
-    console.log('Go to https://funfairday.netlify.app/admin/ to login');
+    console.log('Go to /admin/ to login');
 }
 
 main().catch(console.error);

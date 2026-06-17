@@ -124,7 +124,7 @@
 
         async function init() {
             try {
-                const res = await fetch('/.netlify/functions/get-supabase-config');
+                const res = await fetch('/get-supabase-config');
                 const config = await res.json();
                 if (!config.configured) { throw new Error('Not configured'); }
                 supabase = window.supabase.createClient(config.url, config.anonKey);
@@ -152,7 +152,7 @@
                 if (!pErr) document.getElementById('totalProducts').textContent = products.length;
 
                 // Load orders
-                const response = await fetch('/.netlify/functions/admin-get-orders', {
+                const response = await fetch('/admin-get-orders', {
                     headers: { 'Authorization': 'Bearer ' + accessToken }
                 });
 
@@ -192,7 +192,7 @@
 
         async function loadCustomers() {
             try {
-                const response = await fetch('/.netlify/functions/admin-get-users', {
+                const response = await fetch('/admin-get-users', {
                     headers: { 'Authorization': 'Bearer ' + accessToken }
                 });
 
