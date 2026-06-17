@@ -141,6 +141,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cartFooter.style.display = 'block';
 
         cartItems.innerHTML = items.map(item => {
+            var isFreeGift = (item.id === 'free-sticker-gift');
             const colorIndex = products.findIndex(p => p.id === item.id) % colorClasses.length;
             const colorClass = colorClasses[colorIndex >= 0 ? colorIndex : 0];
             const icon = placeholderIcons[colorIndex >= 0 ? colorIndex : 0];
@@ -170,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         <div class="cart-item-actions">
                             <button class="cart-qty-btn" data-action="decrease" data-id="${item.id}">-</button>
                             <span class="cart-item-qty">${item.quantity}</span>
-                            <button class="cart-qty-btn" data-action="increase" data-id="${item.id}">+</button>
+                            <button class="cart-qty-btn" data-action="increase" data-id="${item.id}"${isFreeGift ? ' disabled style="opacity:0.3;cursor:not-allowed;"' : ''}>+</button>
                             <button class="cart-item-remove" data-action="remove" data-id="${item.id}">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <polyline points="3 6 5 6 21 6"></polyline>
@@ -190,33 +191,41 @@ document.addEventListener('DOMContentLoaded', function() {
         cartTotal.textContent = '$' + totalWithShipping.toFixed(2);
         var subEl = document.getElementById('cartSubtotal');
         if (subEl) subEl.textContent = '$' + subtotal.toFixed(2);
-
-        document.querySelectorAll('.cart-qty-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const id = this.dataset.id;
-                const action = this.dataset.action;
-                const item = Cart.getItems().find(i => i.id === id);
-                if (!item) return;
-
-                if (action === 'increase') {
-                    Cart.updateQuantity(id, item.quantity + 1);
-                } else if (action === 'decrease') {
-                    Cart.updateQuantity(id, item.quantity - 1);
-                }
-                renderCartItems();
-                updateCartBadge();
-            });
-        });
-
-        document.querySelectorAll('.cart-item-remove').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const id = this.dataset.id;
-                Cart.removeItem(id);
-                renderCartItems();
-                updateCartBadge();
-            });
-        });
     }
+
+    // Event delegation for cart actions (more reliable than per-item listeners)
+    cartItems.addEventListener('click', function(e) {
+        var btn = e.target.closest('[data-action]');
+        if (!btn) return;
+
+        var id = btn.dataset.id;
+        var action = btn.dataset.action;
+
+        if (action === 'remove') {
+            Cart.removeItem(id);
+        } else if (action === 'increase') {
+            var item = Cart.getItems().find(function(i) { return i.id === id; });
+            if (!item) return;
+            // Prevent increasing free sticker quantity
+            if (item.id === 'free-sticker-gift') return;
+            Cart.updateQuantity(id, item.quantity + 1);
+        } else if (action === 'decrease') {
+            var item = Cart.getItems().find(function(i) { return i.id === id; });
+            if (!item) return;
+            Cart.updateQuantity(id, item.quantity - 1);
+        }
+
+        // Mark shipping as stale so it recalculates on next checkout
+        window._shippingCost = undefined;
+        renderCartItems();
+        updateCartBadge();
+
+        // Recalculate shipping if country is selected
+        var countrySelect = document.getElementById('shippingCountry');
+        if (countrySelect && countrySelect.value) {
+            window._calculateShipping(countrySelect.value);
+        }
+    });
 
     function updateCartBadge() {
         const count = Cart.getItemCount();
