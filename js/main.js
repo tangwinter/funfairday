@@ -2,7 +2,7 @@
 document.addEventListener('DOMContentLoaded', function() {
 
     const colorClasses = ['product-color-1', 'product-color-2', 'product-color-3', 'product-color-4'];
-    const placeholderIcons = ['?Ž¨', '?“±', '?Ž­', '??'];
+    const placeholderIcons = ['?ï¿½ï¿½', '?ï¿½ï¿½', '?ï¿½ï¿½', '??'];
 
     // --- Render Categories on Homepage ---
     const categoriesGrid = document.getElementById('categoriesGrid');
@@ -311,18 +311,23 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
 
                 var discountActive = Cart.isDiscountActive();
-                var useDynamicPrices = discountActive;
+                // Determine if we need dynamic pricing (no pre-configured Stripe price IDs)
+                var hasItemsWithoutPriceId = updatedItems.some(function(item) {
+                    var prod = products.find(function(p) { return p.id === item.id; });
+                    return prod && !prod.stripePriceId;
+                });
+                var useDynamicPrices = discountActive || hasItemsWithoutPriceId;
 
                 // Build items for Stripe (exclude $0 free gift items without priceId)
                 var stripeItems = updatedItems
                     .filter(function(item) {
                         var prod = products.find(function(p) { return p.id === item.id; });
-                        return prod && (prod.stripePriceId || discountActive);
+                        return prod && (prod.stripePriceId || useDynamicPrices);
                     })
                     .map(function(item) {
                         var prod = products.find(function(p) { return p.id === item.id; });
                         var basePrice = prod ? prod.price : item.price;
-                        var unitAmount = discountActive ? Math.round(basePrice * 0.7 * 100) : null;
+                        var unitAmount = useDynamicPrices ? Math.round(basePrice * (discountActive ? 0.7 : 1.0) * 100) : null;
                         return {
                             priceId: prod ? prod.stripePriceId : null,
                             name: item.name,

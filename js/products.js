@@ -1,6 +1,6 @@
 // Product Data Configuration
 const CONFIG = {
-    stripeReady: false,
+    stripeReady: true,
     currency: 'usd',
     successUrl: window.location.origin + '/success.html',
     cancelUrl: window.location.origin + '/'
@@ -134,9 +134,21 @@ Object.entries(productTemplates).forEach(([categoryId, template]) => {
             description: item.desc,
             category: categoryId,
             image: null,
-            stripePriceId: 'price_test_' + categoryId + '_' + (index + 1)
+            stripePriceId: null
         });
     });
+});
+
+
+// Bundle product (stick pack special offer - fallback if Supabase unavailable)
+products.push({
+    id: 'bundle-5pcs-stick',
+    name: '5pcs Stick Bundle Pack',
+    price: 8.00,
+    description: 'Get 5pcs Stick Bundle Pack at $8.00 only! (50% off - was US$16, now US$8)',
+    category: 'stickers',
+    image: null,
+    stripePriceId: null
 });
 
 // Phone Case Styles (10 styles x 8 colors each)
