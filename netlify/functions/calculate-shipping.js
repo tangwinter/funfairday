@@ -143,11 +143,11 @@ exports.handler = async (event) => {
         };
 
     } catch (error) {
-        console.error('Shipping error:', error);
+        console.error('Shipping error:', error.message, error.stack);
         return {
             statusCode: 500,
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ error: 'Failed to calculate shipping' })
+            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
+            body: JSON.stringify({ error: error.message || 'Failed to calculate shipping' })
         };
     }
 };

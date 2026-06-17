@@ -572,7 +572,14 @@ document.addEventListener('DOMContentLoaded', function() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ items: items, country: country })
         })
-        .then(function(r) { return r.json(); })
+        .then(function(r) {
+            return r.json().then(function(data) {
+                // Check if the HTTP response was an error
+                if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+                if (data.error) throw new Error(data.error);
+                return data;
+            });
+        })
         .then(function(data) {
             window._shippingMethods = data.methods || [];
 
