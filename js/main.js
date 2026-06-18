@@ -569,12 +569,18 @@ document.addEventListener('DOMContentLoaded', function() {
         'zone4': { name: 'Americas', countries: ['US','CA','MX','BR','AR','CL','CO','PE','EC','VE','CR','PA','DO','PR','JM','TT','BS','BB','GY','SR','BO','PY','UY','GT','SV','HN','NI','BZ'] }
     };
     var SHIP_BASE_RATES = [
-        { maxG: 50,  z1: 1.74, z2: 2.17, z3: 2.61, z4: 3.04 },
-        { maxG: 100, z1: 2.61, z2: 3.30, z3: 3.91, z4: 4.35 },
-        { maxG: 200, z1: 3.48, z2: 4.35, z3: 5.22, z4: 5.65 },
-        { maxG: 500, z1: 4.78, z2: 6.09, z3: 6.96, z4: 7.83 }
+        // Official HK Post Air Mail Packet rates (HKD->USD, /7.8)
+        // Source: Hongkong Post open data (intl-ORD Packet 2kg)
+        // z1(Asia): \.20/30g \.40/50g +\.80/10g
+        // z2(Oceania/MidEast): \.70/30g \.00/50g +\.90/10g
+        // z3(Europe/Africa): same as z2
+        // z4(Americas): \.90/30g \.50/50g +\.00/10g
+        { maxG: 50,  z1: 1.46, z2: 1.67, z3: 1.67, z4: 1.73 },
+        { maxG: 100, z1: 2.62, z2: 2.88, z3: 2.88, z4: 3.01 },
+        { maxG: 200, z1: 4.92, z2: 5.32, z3: 5.32, z4: 5.58 },
+        { maxG: 500, z1: 11.85, z2: 12.63, z3: 12.63, z4: 13.27 }
     ];
-    var SHIP_REGISTERED_FEE = 2.60;
+    var SHIP_REGISTERED_FEE = 2.00;
     var SHIP_FEDEX_RATES = [
         { maxG: 50,  z1: 18.00, z2: 22.00, z3: 26.00, z4: 30.00 },
         { maxG: 100, z1: 22.00, z2: 27.00, z3: 32.00, z4: 36.00 },
