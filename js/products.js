@@ -83,7 +83,8 @@ const productTemplates = {
             { name: 'Mini Sticker Add-On Pack', desc: 'Extra 20 carnival stickers to expand your collection.' },
             { name: 'Limited Edition - Golden Carnival', desc: 'Limited edition sticker set with gold foil accents.' }
         ],
-        prices: [15.00, 15.00, 15.00, 15.00, 25.00, 25.00, 25.00, 25.00, 20.00, 50.00, 8.00, 30.00]
+        prices: [15.00, 15.00, 15.00, 15.00, 25.00, 25.00, 25.00, 25.00, 20.00, 50.00, 8.00, 30.00],
+        weights: [250, 250, 250, 250, 250, 250, 250, 250, 500, 750, 150, 250]
     },
     'diy-paint-case': {
         priceBase: 25.00,
@@ -101,7 +102,8 @@ const productTemplates = {
             { name: 'Sealant Spray', desc: 'Waterproof sealant to protect your hand-painted design.' },
             { name: 'Limited Edition - Carnival Queen', desc: 'Limited edition hand-painted carnival queen design.' }
         ],
-        prices: [25.00, 25.00, 25.00, 25.00, 40.00, 40.00, 40.00, 40.00, 12.00, 55.00, 10.00, 60.00]
+        prices: [25.00, 25.00, 25.00, 25.00, 40.00, 40.00, 40.00, 40.00, 12.00, 55.00, 10.00, 60.00],
+        weights: [400, 400, 400, 400, 250, 250, 250, 250, 200, 500, 200, 250]
     },
     'diy-epoxy-case': {
         priceBase: 35.00,
@@ -119,7 +121,8 @@ const productTemplates = {
             { name: 'Deluxe Flower Kit', desc: 'DIY Kit + extra flowers + epoxy + tools bundle.' },
             { name: 'Limited Edition - Deweys Garden', desc: 'Limited edition arrangement inspired by Deweys favorite garden.' }
         ],
-        prices: [35.00, 35.00, 35.00, 35.00, 55.00, 55.00, 55.00, 55.00, 10.00, 15.00, 65.00, 70.00]
+        prices: [35.00, 35.00, 35.00, 35.00, 55.00, 55.00, 55.00, 55.00, 10.00, 15.00, 65.00, 70.00],
+        weights: [500, 500, 500, 500, 250, 250, 250, 250, 250, 500, 750, 250]
     }
 };
 
@@ -127,6 +130,7 @@ const products = [];
 Object.entries(productTemplates).forEach(([categoryId, template]) => {
     template.items.forEach((item, index) => {
         const price = template.prices ? template.prices[index] : template.priceBase;
+        const weight = template.weights ? template.weights[index] : 150;
         products.push({
             id: categoryId + '-' + (index + 1),
             name: item.name,
@@ -134,7 +138,8 @@ Object.entries(productTemplates).forEach(([categoryId, template]) => {
             description: item.desc,
             category: categoryId,
             image: null,
-            stripePriceId: null
+            stripePriceId: null,
+            weight_grams: weight
         });
     });
 });
@@ -148,7 +153,8 @@ products.push({
     description: 'Get 5pcs Stick Bundle Pack at $8.00 only! (50% off - was US$16, now US$8)',
     category: 'stickers',
     image: null,
-    stripePriceId: null
+    stripePriceId: null,
+    weight_grams: 150
 });
 
 // Phone Case Styles (10 styles x 8 colors each)
@@ -239,6 +245,7 @@ async function supabaseFetch(table, query) {
                     category: p.category_id,
                     image: p.image_url || null,
                     stripePriceId: p.stripe_price_id || null,
+                    weight_grams: p.weight_grams || 50,
                     badge: null
                 });
             });
