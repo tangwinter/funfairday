@@ -37,8 +37,11 @@ const Cart = {
     },
 
     getTotal() {
-        var total = this.items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-        return this.isDiscountActive() ? Math.round(total * 0.7 * 100) / 100 : total;
+        var total = this.items.reduce(function(sum, item) {
+            var effectivePrice = Cart.isDiscountActive() ? Math.round(item.price * 0.7 * 100) / 100 : item.price;
+            return sum + (effectivePrice * item.quantity);
+        }, 0);
+        return Math.round(total * 100) / 100;
     },
 
     addItem(product, quantity = 1, customization = null) {

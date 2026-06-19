@@ -1,4 +1,4 @@
-﻿// Main Application Logic
+// Main Application Logic
 document.addEventListener('DOMContentLoaded', function() {
 
     const colorClasses = ['product-color-1', 'product-color-2', 'product-color-3', 'product-color-4'];
@@ -180,7 +180,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             </button>
                         </div>
                     </div>
-                    <div class="cart-item-total">${Cart.isDiscountActive() ? '<span class="price-original">$' + (item.price * item.quantity).toFixed(2) + '</span><span class="price-discounted">$' + Cart.getDiscountedPrice(item.price * item.quantity).toFixed(2) + '</span>' : '$' + (item.price * item.quantity).toFixed(2)}</div>
+                    <div class="cart-item-total">${Cart.isDiscountActive() ? '<span class="price-original">$' + (item.price * item.quantity).toFixed(2) + '</span><span class="price-discounted">$' + (Cart.getDiscountedPrice(item.price) * item.quantity).toFixed(2) + '</span>' : '$' + (item.price * item.quantity).toFixed(2)}</div>
                 </div>
             `;
         }).join('');
