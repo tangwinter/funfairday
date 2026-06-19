@@ -475,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Global shipping state
     window._shippingMethods = [];
     window._selectedMethodId = 'hk-post-normal';
-    window._shippingCost = 0;
+    window._shippingCost = undefined;
     window._shippingMethod = '';
 
     // Populate country dropdown
@@ -488,16 +488,7 @@ document.addEventListener('DOMContentLoaded', function() {
             opt.textContent = c.name;
             select.appendChild(opt);
         });
-        var saved = localStorage.getItem('funfairday_shipping_country');
-        if (saved) {
-            select.value = saved;
-            if (select.value) {
-                setTimeout(function() {
-                    var evt = new Event('change');
-                    select.dispatchEvent(evt);
-                }, 100);
-            }
-        }
+        // Country select starts empty — user must choose
     })();
 
     // Render shipping method radio buttons (or fallback to old #shippingInfo)
@@ -691,7 +682,7 @@ document.addEventListener('DOMContentLoaded', function() {
             renderShippingMethods(methods, false);
         }
 
-        localStorage.setItem('funfairday_shipping_country', country);
+        // Country selection not persisted — starts empty each visit
         return Promise.resolve(data);
     };
 
@@ -710,7 +701,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 if (methodsEl) methodsEl.style.display = 'none';
                 if (freeEl) freeEl.style.display = 'none';
-                window._shippingCost = 0;
+                window._shippingCost = undefined;
                 window._shippingMethod = '';
                 var lineEl = document.getElementById('shippingLine');
                 if (lineEl) lineEl.style.display = 'none';
