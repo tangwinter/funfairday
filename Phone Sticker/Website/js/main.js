@@ -350,7 +350,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 var discountActive = Cart.isDiscountActive();
                 // Determine if we need dynamic pricing (no pre-configured Stripe price IDs)
                 var hasItemsWithoutPriceId = updatedItems.some(function(item) {
-                    var prod = products.find(function(p) { return p.id === item.id; });
+                    var prodId = item.productId || item.id;
+                    var prod = products.find(function(p) { return p.id === prodId; });
                     return prod && !prod.stripePriceId;
                 });
                 var useDynamicPrices = discountActive || hasItemsWithoutPriceId;
@@ -358,11 +359,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Build items for Stripe (exclude $0 free gift items without priceId)
                 var stripeItems = updatedItems
                     .filter(function(item) {
-                        var prod = products.find(function(p) { return p.id === item.id; });
+                        var prodId = item.productId || item.id;
+                        var prod = products.find(function(p) { return p.id === prodId; });
                         return prod && (prod.stripePriceId || useDynamicPrices);
                     })
                     .map(function(item) {
-                        var prod = products.find(function(p) { return p.id === item.id; });
+                        var prodId = item.productId || item.id;
+                        var prod = products.find(function(p) { return p.id === prodId; });
                         var basePrice = prod ? prod.price : item.price;
                         var unitAmount = useDynamicPrices ? Math.round(basePrice * (discountActive ? 0.7 : 1.0) * 100) : null;
                         return {
