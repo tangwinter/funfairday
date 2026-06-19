@@ -1,4 +1,4 @@
-// Main Application Logic
+﻿// Main Application Logic
 document.addEventListener('DOMContentLoaded', function() {
 
     const colorClasses = ['product-color-1', 'product-color-2', 'product-color-3', 'product-color-4'];
@@ -500,18 +500,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     })();
 
-    // Render shipping method radio buttons
+    // Render shipping method radio buttons (or fallback to old #shippingInfo)
     function renderShippingMethods(methods, freeGift) {
         var container = document.getElementById('shippingMethods');
+        var infoEl = document.getElementById('shippingInfo');
         var freeEl = document.getElementById('shippingFree');
-        if (!container) return;
+
+        // Fallback: if #shippingMethods not on page, use old #shippingInfo
+        if (!container) {
+            if (infoEl) {
+                if (!methods || methods.length === 0) {
+                    infoEl.style.display = 'none';
+                } else {
+                    var firstMethod = methods[0];
+                    var methodEl = document.getElementById('shippingMethod');
+                    var costEl = document.getElementById('shippingCost');
+                    if (methodEl) methodEl.textContent = firstMethod.name;
+                    if (costEl) costEl.textContent = '$' + firstMethod.cost.toFixed(2);
+                    infoEl.style.display = 'flex';
+                    window._selectedMethodId = firstMethod.id;
+                    window._shippingCost = firstMethod.cost;
+                    window._shippingMethod = firstMethod.name;
+                    updateShippingLine();
+                }
+            }
+            return;
+        }
 
         if (freeGift || !methods || methods.length === 0) {
             container.style.display = 'none';
+            if (infoEl) infoEl.style.display = 'none';
             return;
         }
 
         container.style.display = 'block';
+        if (infoEl) infoEl.style.display = 'none';
         container.innerHTML = '<div class="ship-methods-label">Shipping Method:</div>' +
             methods.map(function(m, idx) {
                 var checked = idx === 0 ? ' checked' : '';
@@ -685,13 +708,13 @@ document.addEventListener('DOMContentLoaded', function() {
             var methodsEl = document.getElementById('shippingMethods');
             var freeEl = document.getElementById('shippingFree');
             if (country) {
-                methodsEl.style.display = 'none';
+                if (methodsEl) methodsEl.style.display = 'none';
                 window._calculateShipping(country).catch(function(err) {
                     console.error('Shipping error detail:', err);
                     showToast('Shipping error: ' + err.message);
                 });
             } else {
-                methodsEl.style.display = 'none';
+                if (methodsEl) methodsEl.style.display = 'none';
                 if (freeEl) freeEl.style.display = 'none';
                 window._shippingCost = 0;
                 window._shippingMethod = '';
