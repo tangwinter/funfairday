@@ -385,7 +385,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         // Check if bundle offer should be shown
-        var bundleInCart = items.some(function(i) { return i.id === 'bundle-5pcs-stick' || i.productId === 'bundle-5pcs-stick'; });
+        var bundleInCart = Cart.getItems().some(function(i) { return i.id === 'bundle-5pcs-stick' || i.productId === 'bundle-5pcs-stick'; });
 
         if (!bundleInCart) {
             // Show bundle offer popup
@@ -1167,10 +1167,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 el.className = 'btn ' + (btn.className || 'btn-primary');
                 el.textContent = btn.label;
                 el.addEventListener('click', function(e) {
+                    // Close popup first, then run action (prevents stuck popups)
+                    var shouldClose = btn.closeOnClick !== false;
+                    if (shouldClose) popupOverlay.classList.remove('active');
                     if (btn.action) btn.action(e);
-                    if (btn.closeOnClick !== false) {
-                        popupOverlay.classList.remove('active');
-                    }
                 });
                 popupActions.appendChild(el);
             });
