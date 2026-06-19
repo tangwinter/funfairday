@@ -132,12 +132,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const emptyState = document.querySelector('.cart-empty');
 
         if (items.length === 0) {
-            emptyState.style.display = 'flex';
+            if (emptyState) emptyState.style.display = 'flex';
             cartFooter.style.display = 'none';
             return;
         }
 
-        emptyState.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'none';
         cartFooter.style.display = 'block';
 
         cartItems.innerHTML = items.map(item => {
