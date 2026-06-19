@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Confirmed - FunFairDay</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+</head>
+<body>
+    <div class="success-page">
+        <div class="success-content">
+            <div class="success-icon">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+            </div>
+            <h1 class="success-title">Thank You for Your Order!</h1>
+            <p class="success-text" id="orderMessage">Your payment was successful and we're processing your order now.</p>
+            <div id="orderDetails" style="display:none;text-align:left;background:#f9f9f9;border-radius:8px;padding:20px;margin-bottom:24px;">
+                <p style="font-weight:700;margin-bottom:8px;">Order Reference: <span id="orderRef" style="color:var(--primary);"></span></p>
+                <div id="orderItemsList" style="font-size:0.9rem;color:var(--text);margin-bottom:12px;"></div>
+                <p style="font-weight:700;font-size:1.1rem;">Total: <span id="orderTotal" style="color:var(--primary);"></span></p>
+            </div>
+            <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+                <a href="/" class="btn btn-primary">Continue Shopping</a>
+                <a href="account.html" class="btn btn-secondary">View My Orders</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Parse URL parameters
+        const params = new URLSearchParams(window.location.search);
+        const sessionId = params.get('session_id');
+        const orderRef = params.get('order_ref');
+
+        document.getElementById('orderRef').textContent = orderRef || 'N/A';
+
+        // Try to create order in Supabase
+        (async function createOrder() {
+            try {
+                // Fetch Supabase config from server
+                const res = await fetch('/get-supabase-config');
+                const config = await res.json();
+                if (!config.configured) return;
+
+                const supabase = window.supabase.createClient(config.url, config.anonKey);
+                const { data: { session } } = await supabase.auth.getSession();
+
+                // Get cart data from session storage
+                const cartJson = sessionStorage.getItem('checkout_cart');
+                const totalStr = sessionStorage.getItem('checkout_total');
+
+                if (cartJson && totalStr) {
+                    const cartItems = JSON.parse(cartJson);
+                    const total = parseFloat(totalStr);
+
+                    // Read shipping info from session
+                    const shippingJson = sessionStorage.getItem('checkout_shipping');
+                    var shippingInfo = shippingJson ? JSON.parse(shippingJson) : null;
+
+                    // Display order summary
+                    document.getElementById('orderDetails').style.display = 'block';
+                    document.getElementById('orderTotal').textContent = '$' + total.toFixed(2);
+
+                    const itemsList = document.getElementById('orderItemsList');
+                    itemsList.innerHTML = cartItems.map(item =>
+                        '<p style="padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.04);">' +
+                            item.name + ' x' + item.quantity +
+                            (item.caseStyle ? ' <span style="color:var(--text-light);font-size:0.85rem;">(' + item.caseStyle + (item.caseColor ? ' - ' + item.caseColor : '') + ')</span>' : '') +
+                            ' - <strong style="color:var(--primary);">$' + (item.price * item.quantity).toFixed(2) + '</strong>' +
+                        '</p>'
+                    ).join('');
+
+                    // Save order to Supabase
+                    var orderPayload = {
+                        customer_id: session ? session.user.id : null,
+                        customer_email: session ? session.user.email : null,
+                        items: cartItems,
+                        total: total,
+                        stripe_session_id: sessionId || ''
+                    };
+                    if (shippingInfo) {
+                        orderPayload.shipping_method = shippingInfo.method;
+                        orderPayload.shipping_cost = shippingInfo.cost;
+                    }
+
+                    await fetch('/create-order', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(orderPayload)
+                    });
+
+                    // Mark gift as fulfilled if a gift code was used
+                    if (cartItems._giftCode) {
+                        try {
+                            await fetch('/claim-gift', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ code: cartItems._giftCode, fulfill: true })
+                            });
+                        } catch (e) {
+                            console.error('Gift fulfill error:', e);
+                        }
+                        localStorage.removeItem('funfairday_gift_code');
+                    }
+
+                    sessionStorage.removeItem('checkout_cart');
+                    sessionStorage.removeItem('checkout_total');
+                    localStorage.removeItem('funfairday_cart');
+                }
+            } catch (e) {
+                console.error('Order creation error:', e);
+            }
+        })();
+    </script>
+</body>
+</html>

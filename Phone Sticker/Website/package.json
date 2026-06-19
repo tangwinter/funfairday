@@ -1,0 +1,9 @@
+{
+    "name": "funfairday-website",
+    "version": "1.0.0",
+    "description": "FunFairDay E-Commerce Website",
+    "private": true,
+    "scripts": {
+        "build": "echo 'Static site - no build required'"
+    }
+}
