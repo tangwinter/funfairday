@@ -39,7 +39,7 @@ export async function onRequest(context) {
             lineItems.push({
                 price_data: {
                     currency: 'usd',
-                    product_data: { name: shippingMethod || 'HK Post Airmail Shipping' },
+                    product_data: { name: shippingMethod || 'Speedpost Shipping' },
                     unit_amount: Math.round(shippingFee * 100)
                 },
                 quantity: 1
@@ -74,7 +74,7 @@ export async function onRequest(context) {
         stripeBody.append('cancel_url', cancelUrlFinal);
 
         // Add shipping address collection
-        var allowedCountries = ['US', 'CA', 'GB', 'AU', 'NZ', 'FR', 'DE', 'IT', 'ES', 'NL', 'CH', 'SE', 'NO', 'DK', 'BE', 'AT', 'IE', 'PT', 'GR', 'PL', 'CZ', 'JP', 'KR', 'SG', 'MY', 'TH', 'PH', 'ID', 'VN', 'CN', 'TW', 'AE', 'SA', 'ZA', 'MX', 'BR', 'AR'];
+        var allowedCountries = ['HK', 'US', 'CA', 'GB', 'AU', 'NZ', 'FR', 'DE', 'IT', 'ES', 'NL', 'CH', 'SE', 'NO', 'DK', 'BE', 'AT', 'IE', 'PT', 'GR', 'PL', 'CZ', 'JP', 'KR', 'SG', 'MY', 'TH', 'PH', 'ID', 'VN', 'CN', 'TW', 'AE', 'SA', 'ZA', 'MX', 'BR', 'AR'];
         allowedCountries.forEach(function(c) {
             stripeBody.append('shipping_address_collection[allowed_countries][]', c);
         });

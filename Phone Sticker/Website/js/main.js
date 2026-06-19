@@ -198,7 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         var subtotal = Cart.getTotal();
         var shipCost = window._shippingCost || 0;
-        var totalWithShipping = subtotal + shipCost;
+        var totalWithShipping = subtotal + (shipCost / 7.8);
         cartTotal.textContent = '$' + totalWithShipping.toFixed(2);
         var subEl = document.getElementById('cartSubtotal');
         if (subEl) subEl.textContent = '$' + subtotal.toFixed(2);
@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         items: stripeItems,
                         cartItems: cartItems,
                         total: Cart.getTotal(),
-                        shippingFee: window._shippingCost || 0,
+                        shippingFee: Math.round((window._shippingCost || 0) / 7.8 * 100) / 100,
                         shippingMethod: window._shippingMethod || '',
                         successUrl: CONFIG.successUrl,
                         cancelUrl: CONFIG.cancelUrl,
@@ -403,7 +403,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     sessionStorage.setItem('checkout_cart', JSON.stringify(cartItems));
                     sessionStorage.setItem('checkout_total', Cart.getTotal().toString());
                     sessionStorage.setItem('checkout_shipping', JSON.stringify({
-                        cost: window._shippingCost || 0,
+                        cost: Math.round((window._shippingCost || 0) / 7.8 * 100) / 100,
                         method: window._shippingMethod || '',
                         methodId: window._selectedMethodId || '',
                         country: selectedCountry
@@ -540,6 +540,7 @@ document.addEventListener('DOMContentLoaded', function() {
         { code: 'MX', name: 'Mexico' },
         { code: 'BR', name: 'Brazil' },
         { code: 'HK', name: 'Hong Kong' },
+        { code: 'OTHERS', name: 'Others (Non-listed country)' },
         { code: 'AR', name: 'Argentina' }
     ];
 
@@ -578,7 +579,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     var methodEl = document.getElementById('shippingMethod');
                     var costEl = document.getElementById('shippingCost');
                     if (methodEl) methodEl.textContent = firstMethod.name;
-                    if (costEl) costEl.textContent = '$' + firstMethod.cost.toFixed(2);
+                    if (costEl) costEl.textContent = 'HK$' + firstMethod.cost.toFixed(2);
                     infoEl.style.display = 'flex';
                     window._selectedMethodId = firstMethod.id;
                     window._shippingCost = firstMethod.cost;
@@ -604,7 +605,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     '<input type="radio" name="shippingMethod" value="' + m.id + '" data-cost="' + m.cost + '" data-name="' + m.name + '"' + checked + '>' +
                     '<div class="ship-method-info">' +
                         '<span class="ship-method-name">' + m.name + '</span>' +
-                        '<span class="ship-method-cost">$' + m.cost.toFixed(2) + '</span>' +
+                        '<span class="ship-method-cost">HK$' + m.cost.toFixed(2) + '</span>' +
                         '<span class="ship-method-time">' + m.deliveryTime + '</span>' +
                     '</div>' +
                 '</label>';
@@ -642,7 +643,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var lineCostEl = document.getElementById('shippingLineCost');
         if (!lineEl) return;
         lineEl.style.display = 'flex';
-        if (lineCostEl) lineCostEl.textContent = '$' + (window._shippingCost || 0).toFixed(2);
+        if (lineCostEl) lineCostEl.textContent = 'HK$' + (window._shippingCost || 0).toFixed(2);
         updateCartUI();
     }
 
@@ -700,7 +701,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function _shipGetSpeedpostRate(countryCode, totalGrams) {
         var code = countryCode.toUpperCase();
         var baseRateHkd = SHIP_SPEEDPOST_RATES[code];
-        if (!baseRateHkd) baseRateHkd = 375; // fallback
+        if (!baseRateHkd) baseRateHkd = 392; // highest (Norway) for Others
         var rateHkd;
         if (totalGrams <= 500) {
             rateHkd = baseRateHkd;
@@ -711,16 +712,16 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             rateHkd = baseRateHkd * 2.5;
         }
-        return Math.round((rateHkd / HKD_USD_RATE) * 100) / 100;
+        return Math.round(rateHkd * 100) / 100;
     }
 
     function _shipGetECGETRate(totalGrams) {
         for (var i = 0; i < SHIP_ECGET_RATES.length; i++) {
             if (totalGrams <= SHIP_ECGET_RATES[i].maxG) {
-                return Math.round((SHIP_ECGET_RATES[i].cost / HKD_USD_RATE) * 100) / 100;
+                return Math.round(SHIP_ECGET_RATES[i].cost * 100) / 100;
             }
         }
-        return Math.round((SHIP_ECGET_RATES[SHIP_ECGET_RATES.length - 1].cost / HKD_USD_RATE) * 100) / 100;
+        return Math.round(SHIP_ECGET_RATES[SHIP_ECGET_RATES.length - 1].cost * 100) / 100;
     }
 
     function _shipGetDeliveryTime(countryCode) {
