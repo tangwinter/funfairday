@@ -1,4 +1,5 @@
-node_modules
+﻿node_modules
 .env
 
-Phone Sticker/
+Phone Sticker/*
+!Phone Sticker/Website/
