@@ -191,6 +191,32 @@ document.addEventListener('DOMContentLoaded', function() {
         cartTotal.textContent = '$' + totalWithShipping.toFixed(2);
         var subEl = document.getElementById('cartSubtotal');
         if (subEl) subEl.textContent = '$' + subtotal.toFixed(2);
+
+        // Show free shipping threshold banner
+        var freeThresholdEl = document.getElementById('cartFreeThreshold');
+        if (!freeThresholdEl) {
+            // Create the banner element if not present
+            var shippingSection = document.querySelector('.cart-shipping');
+            if (shippingSection) {
+                var banner = document.createElement('div');
+                banner.id = 'cartFreeThreshold';
+                banner.className = 'cart-free-threshold';
+                shippingSection.parentNode.insertBefore(banner, shippingSection.nextSibling);
+                freeThresholdEl = banner;
+            }
+        }
+        if (freeThresholdEl) {
+            var hasFreeGift = items.some(function(item) {
+                return item.id === 'free-sticker-gift' || item.productId === 'free-sticker-gift';
+            });
+            if (hasFreeGift || subtotal >= SHIP_FREE_THRESHOLD) {
+                freeThresholdEl.style.display = 'none';
+            } else {
+                var needed = (SHIP_FREE_THRESHOLD - subtotal).toFixed(2);
+                freeThresholdEl.innerHTML = 'Add US$' + needed + ' more for <strong>Free Shipping</strong>!';
+                freeThresholdEl.style.display = 'block';
+            }
+        }
     }
 
     // Event delegation for cart actions (more reliable than per-item listeners)
@@ -427,11 +453,44 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
+        // Check if free shipping popup should be shown
+        var hasFreeGiftCheck = items.some(function(i) { return i.id === 'free-sticker-gift' || i.productId === 'free-sticker-gift'; });
+        var subtotalCheck = Cart.getTotal();
+        var isShippingFree = hasFreeGiftCheck || subtotalCheck >= SHIP_FREE_THRESHOLD;
+
+        if (!isShippingFree && subtotalCheck < SHIP_FREE_THRESHOLD) {
+            var needed = (SHIP_FREE_THRESHOLD - subtotalCheck).toFixed(2);
+            this.disabled = false;
+            this.textContent = 'Checkout';
+            showPopup({
+                icon: '🚚',
+                title: 'Free Shipping Available!',
+                text: 'Add US$' + needed + ' more to your order and get Free Shipping!',
+                buttons: [
+                    {
+                        label: 'Continue to Checkout',
+                        className: 'btn-primary',
+                        action: function() {
+                            proceedCheckout();
+                        }
+                    },
+                    {
+                        label: 'Keep Shopping',
+                        className: 'btn-secondary',
+                        action: function() {
+                            closeCart();
+                        }
+                    }
+                ]
+            });
+            return;
+        }
+
         // No bundle offer needed, proceed directly
         proceedCheckout.call(this);
     });
 
-    // --- HK Post Airmail Shipping ---
+    // --- Shipping ---
     var SHIPPING_COUNTRIES = [
         { code: 'US', name: 'United States' },
         { code: 'CA', name: 'Canada' },
@@ -469,12 +528,13 @@ document.addEventListener('DOMContentLoaded', function() {
         { code: 'ZA', name: 'South Africa' },
         { code: 'MX', name: 'Mexico' },
         { code: 'BR', name: 'Brazil' },
+        { code: 'HK', name: 'Hong Kong' },
         { code: 'AR', name: 'Argentina' }
     ];
 
     // Global shipping state
     window._shippingMethods = [];
-    window._selectedMethodId = 'hk-post-normal';
+    window._selectedMethodId = '';
     window._shippingCost = undefined;
     window._shippingMethod = '';
 
@@ -575,58 +635,86 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCartUI();
     }
 
-    // ----- Client-side shipping calculation (no API needed) -----
-    var SHIP_ZONES = {
-        'zone1': { name: 'Asia', countries: ['JP','KR','TW','SG','MY','TH','PH','ID','VN','BN','KH','LA','MM','MN','CN','MO'] },
-        'zone2': { name: 'Oceania & Middle East', countries: ['AU','NZ','PG','FJ','SB','VU','AE','SA','QA','KW','BH','OM','IL','TR','CY'] },
-        'zone3': { name: 'Europe & Africa', countries: ['GB','IE','FR','DE','IT','ES','PT','NL','BE','LU','CH','AT','SE','NO','DK','FI','GR','PL','CZ','HU','RO','BG','HR','RS','SK','SI','LT','LV','EE','ZA','NG','KE','EG','MA','TN','DZ','GH','MU'] },
-        'zone4': { name: 'Americas', countries: ['US','CA','MX','BR','AR','CL','CO','PE','EC','VE','CR','PA','DO','PR','JM','TT','BS','BB','GY','SR','BO','PY','UY','GT','SV','HN','NI','BZ'] }
-    };
-    var SHIP_BASE_RATES = [
-        { maxG: 50,  z1: 1.74, z2: 2.17, z3: 2.61, z4: 3.04 },
-        { maxG: 100, z1: 2.61, z2: 3.30, z3: 3.91, z4: 4.35 },
-        { maxG: 200, z1: 3.48, z2: 4.35, z3: 5.22, z4: 5.65 },
-        { maxG: 500, z1: 4.78, z2: 6.09, z3: 6.96, z4: 7.83 }
-    ];
-    var SHIP_REGISTERED_FEE = 2.60;
-    var SHIP_FEDEX_RATES = [
-        { maxG: 50,  z1: 18.00, z2: 22.00, z3: 26.00, z4: 30.00 },
-        { maxG: 100, z1: 22.00, z2: 27.00, z3: 32.00, z4: 36.00 },
-        { maxG: 200, z1: 28.00, z2: 34.00, z3: 40.00, z4: 45.00 },
-        { maxG: 500, z1: 36.00, z2: 44.00, z3: 52.00, z4: 58.00 }
-    ];
-    var SHIP_MARKUP = 0.15;
-    var SHIP_DELIVERY = {
-        'hk-post-normal': { z1: '7-14 days', z2: '7-21 days', z3: '7-21 days', z4: '10-21 days' },
-        'hk-post-registered': { z1: '7-14 days with tracking', z2: '7-21 days with tracking', z3: '7-21 days with tracking', z4: '10-21 days with tracking' },
-        'fedex': { z1: '2-4 business days', z2: '2-5 business days', z3: '2-5 business days', z4: '3-5 business days' }
+    // ----- Speedpost (overseas) & EC-GET (Hong Kong local) shipping -----
+    // Speedpost rates from HK Post: https://webapp.hongkongpost.hk/en/postage_calculator2/speedpost.html
+    // EC-GET rates from HK Post: https://www.hongkongpost.hk/en/sending_mail/local/ec_get/index.html
+    var HKD_USD_RATE = 7.8;
+    var SHIP_FREE_THRESHOLD = 50;
+
+    // Speedpost 0.5kg base rates per country (HKD)
+    var SHIP_SPEEDPOST_RATES = {
+        'US': 375, 'CA': 265,
+        'GB': 321, 'FR': 300, 'DE': 341, 'IT': 343, 'ES': 325,
+        'NL': 303, 'BE': 272, 'CH': 350, 'SE': 383, 'NO': 392,
+        'DK': 338, 'AT': 310, 'IE': 284, 'PT': 290, 'GR': 314,
+        'PL': 352, 'CZ': 298,
+        'AU': 247, 'NZ': 212,
+        'JP': 209, 'KR': 260, 'SG': 191, 'MY': 200, 'TH': 180,
+        'PH': 208, 'ID': 211, 'VN': 198,
+        'CN': 168, 'TW': 237,
+        'ZA': 284,
+        'MX': 322, 'BR': 287, 'AR': 336
     };
 
-    function _shipGetZone(country) {
-        var code = country.toUpperCase();
-        for (var z in SHIP_ZONES) {
-            if (SHIP_ZONES[z].countries.indexOf(code) !== -1) return z;
+    // EC-GET Hong Kong local rates (HKD) — Special offer until Jun 2026
+    var SHIP_ECGET_RATES = [
+        { maxG: 500, cost: 10 },
+        { maxG: 2000, cost: 13 },
+        { maxG: 5000, cost: 20 },
+        { maxG: 10000, cost: 30 },
+        { maxG: 20000, cost: 45 }
+    ];
+
+    // Speedpost delivery time estimates (working days)
+    var SHIP_SPEEDPOST_EDD = {
+        'JP': '1-3 days', 'KR': '2-3 days', 'TW': '2-3 days',
+        'SG': '1-3 days', 'MY': '2-3 days', 'TH': '2-3 days',
+        'PH': '2-3 days', 'ID': '2-3 days', 'VN': '2-3 days',
+        'CN': '1-3 days',
+        'AU': '2-3 days', 'NZ': '2-3 days',
+        'GB': '2-4 days', 'IE': '2-4 days', 'FR': '2-4 days',
+        'DE': '2-4 days', 'IT': '2-4 days', 'ES': '2-4 days',
+        'PT': '2-4 days', 'NL': '2-4 days', 'BE': '2-4 days',
+        'CH': '2-4 days', 'AT': '2-4 days', 'SE': '2-4 days',
+        'NO': '2-4 days', 'DK': '2-4 days',
+        'GR': '2-4 days', 'PL': '2-4 days', 'CZ': '2-4 days',
+        'ZA': '3-5 days',
+        'US': '1-4 days', 'CA': '2-4 days',
+        'MX': '2-5 days', 'BR': '3-5 days', 'AR': '3-5 days'
+    };
+
+    // Note: UAE (AE) and Saudi Arabia (SA) have no Speedpost service from HK Post.
+    // They remain in the country list for reference but rates will use fallback pricing.
+
+    function _shipGetSpeedpostRate(countryCode, totalGrams) {
+        var code = countryCode.toUpperCase();
+        var baseRateHkd = SHIP_SPEEDPOST_RATES[code];
+        if (!baseRateHkd) baseRateHkd = 375; // fallback
+        var rateHkd;
+        if (totalGrams <= 500) {
+            rateHkd = baseRateHkd;
+        } else if (totalGrams <= 1000) {
+            rateHkd = baseRateHkd * 1.3;
+        } else if (totalGrams <= 2000) {
+            rateHkd = baseRateHkd * 1.8;
+        } else {
+            rateHkd = baseRateHkd * 2.5;
         }
-        return 'zone4';
+        return Math.round((rateHkd / HKD_USD_RATE) * 100) / 100;
     }
 
-    function _shipGetBaseRate(rates, totalGrams, zone) {
-        for (var i = 0; i < rates.length; i++) {
-            if (totalGrams <= rates[i].maxG) {
-                var r = rates[i];
-                var rateMap = { 'zone1': r.z1, 'zone2': r.z2, 'zone3': r.z3, 'zone4': r.z4 };
-                return rateMap[zone] || r.z4;
+    function _shipGetECGETRate(totalGrams) {
+        for (var i = 0; i < SHIP_ECGET_RATES.length; i++) {
+            if (totalGrams <= SHIP_ECGET_RATES[i].maxG) {
+                return Math.round((SHIP_ECGET_RATES[i].cost / HKD_USD_RATE) * 100) / 100;
             }
         }
-        return rates[rates.length - 1][zone];
+        return Math.round((SHIP_ECGET_RATES[SHIP_ECGET_RATES.length - 1].cost / HKD_USD_RATE) * 100) / 100;
     }
 
-    function _shipGetDelivery(method, zone) {
-        return (SHIP_DELIVERY[method] && SHIP_DELIVERY[method][zone]) || '7-21 days';
-    }
-
-    function _shipApplyMarkup(cost) {
-        return Math.round(cost * (1 + SHIP_MARKUP) * 100) / 100;
+    function _shipGetDeliveryTime(countryCode) {
+        var code = countryCode.toUpperCase();
+        return SHIP_SPEEDPOST_EDD[code] || '3-5 days';
     }
 
     window._calculateShipping = function(country) {
@@ -640,50 +728,67 @@ document.addEventListener('DOMContentLoaded', function() {
             };
         });
 
-        // Calculate locally
         var hasFreeGift = items.some(function(item) {
             return item.id === 'free-sticker-gift' || item.productId === 'free-sticker-gift';
         });
         var totalGrams = items.reduce(function(sum, item) {
             return sum + ((item.weight || 50) * (item.quantity || 1));
         }, 0);
-        var zone = _shipGetZone(country);
-        var baseNormal = _shipGetBaseRate(SHIP_BASE_RATES, totalGrams, zone);
-        var baseRegistered = baseNormal + SHIP_REGISTERED_FEE;
-        var baseFedex = _shipGetBaseRate(SHIP_FEDEX_RATES, totalGrams, zone);
 
-        var methods;
-        if (hasFreeGift) {
-            methods = [
-                { id: 'hk-post-normal', name: 'HK Post Normal Airmail', cost: 0, deliveryTime: 'Free with Gift', originalCost: 0, markupPercent: 0 },
-                { id: 'hk-post-registered', name: 'HK Post Registered Airmail', cost: _shipApplyMarkup(baseRegistered), deliveryTime: _shipGetDelivery('hk-post-registered', zone), originalCost: Math.round(baseRegistered * 100) / 100, markupPercent: 15 },
-                { id: 'fedex', name: 'FedEx International Priority', cost: _shipApplyMarkup(baseFedex), deliveryTime: _shipGetDelivery('fedex', zone), originalCost: Math.round(baseFedex * 100) / 100, markupPercent: 15 }
-            ];
+        var subtotal = Cart.getTotal();
+        var isHK = country.toUpperCase() === 'HK';
+        var isFreeShipping = hasFreeGift || subtotal >= SHIP_FREE_THRESHOLD;
+
+        var cost, name, deliveryTime, methodId;
+
+        if (isHK) {
+            // Hong Kong local: EC-GET only
+            cost = _shipGetECGETRate(totalGrams);
+            name = 'EC-GET (Post Office / 7-Eleven Collection)';
+            deliveryTime = '2 working days';
+            methodId = 'ec-get';
         } else {
-            methods = [
-                { id: 'hk-post-normal', name: 'HK Post Normal Airmail', cost: _shipApplyMarkup(baseNormal), deliveryTime: _shipGetDelivery('hk-post-normal', zone), originalCost: Math.round(baseNormal * 100) / 100, markupPercent: 15 },
-                { id: 'hk-post-registered', name: 'HK Post Registered Airmail', cost: _shipApplyMarkup(baseRegistered), deliveryTime: _shipGetDelivery('hk-post-registered', zone), originalCost: Math.round(baseRegistered * 100) / 100, markupPercent: 15 },
-                { id: 'fedex', name: 'FedEx International Priority', cost: _shipApplyMarkup(baseFedex), deliveryTime: _shipGetDelivery('fedex', zone), originalCost: Math.round(baseFedex * 100) / 100, markupPercent: 15 }
-            ];
+            // Overseas: Speedpost only
+            cost = _shipGetSpeedpostRate(country, totalGrams);
+            name = 'Speedpost (Tracking included)';
+            deliveryTime = _shipGetDeliveryTime(country);
+            methodId = 'speedpost';
         }
 
-        var data = { methods: methods, freeGift: hasFreeGift, weight: totalGrams, zone: zone };
+        // Apply free shipping
+        if (isFreeShipping) {
+            cost = 0;
+            name = 'Free Shipping';
+            deliveryTime = '—';
+        }
+
+        var methods = [{
+            id: methodId,
+            name: name,
+            cost: cost,
+            deliveryTime: deliveryTime
+        }];
+
         window._shippingMethods = methods;
 
+        // Update free shipping banner
         var freeEl = document.getElementById('shippingFree');
-        if (hasFreeGift) {
-            if (freeEl) freeEl.style.display = 'block';
-            renderShippingMethods(methods, false);
-            var freeMethod = methods.find(function(m) { return m.cost === 0; }) || methods[0];
-            window._shippingCost = freeMethod.cost;
-            window._shippingMethod = freeMethod.name;
+        if (isFreeShipping) {
+            if (freeEl) {
+                freeEl.style.display = 'block';
+                if (hasFreeGift) {
+                    freeEl.textContent = 'Free Shipping (Free Gift in cart!)';
+                } else {
+                    freeEl.textContent = 'Free Shipping (Order over US$' + SHIP_FREE_THRESHOLD + ')';
+                }
+            }
         } else {
             if (freeEl) freeEl.style.display = 'none';
-            renderShippingMethods(methods, false);
         }
 
-        // Country selection not persisted — starts empty each visit
-        return Promise.resolve(data);
+        renderShippingMethods(methods, false);
+
+        return Promise.resolve({ methods: methods, freeGift: isFreeShipping, weight: totalGrams });
     };
 
     // Country dropdown change
