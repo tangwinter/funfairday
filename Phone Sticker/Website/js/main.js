@@ -132,7 +132,18 @@ document.addEventListener('DOMContentLoaded', function() {
         const emptyState = document.querySelector('.cart-empty');
 
         if (items.length === 0) {
-            if (emptyState) emptyState.style.display = 'flex';
+            if (emptyState) {
+                emptyState.style.display = 'flex';
+            } else {
+                // Recreate empty state if it was destroyed by innerHTML
+                cartItems.innerHTML = '<div class="cart-empty">' +
+                    '<svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">' +
+                    '<circle cx="9" cy="21" r="1"></circle>' +
+                    '<circle cx="20" cy="21" r="1"></circle>' +
+                    '<path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>' +
+                    '</svg>' +
+                    '<p>Your cart is empty</p></div>';
+            }
             cartFooter.style.display = 'none';
             return;
         }
