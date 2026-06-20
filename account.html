@@ -471,117 +471,16 @@
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
 
-        // Cart UI with item rendering
-        const cPanel = document.getElementById('cartPanel');
-        const cOverlay = document.getElementById('cartOverlay');
-        const cItems = document.getElementById('cartItems');
-        const cFooter = document.getElementById('cartFooter');
-        const cTotal = document.getElementById('cartTotal');
-
-        function renderCart() {
-            var items = Cart.getItems();
-            var emptyState = cItems.querySelector('.cart-empty');
-
-            if (items.length === 0) {
-                if (emptyState) emptyState.style.display = 'flex';
-                cFooter.style.display = 'none';
-                updateBadge();
-                return;
+        // Cart badge update on page load
+        try {
+            const cartData = JSON.parse(localStorage.getItem('funfairday_cart') || '[]');
+            const count = cartData.reduce((s, i) => s + i.quantity, 0);
+            const badge = document.getElementById('cartBadge');
+            if (badge) {
+                badge.textContent = count;
+                badge.style.display = count > 0 ? 'flex' : 'none';
             }
-            if (emptyState) emptyState.style.display = 'none';
-            cFooter.style.display = 'block';
-
-            cItems.innerHTML = items.map(function(item) {
-                var details = '';
-                if (item.caseStyle) {
-                    details = '<div class="cart-item-custom" style="font-size:0.8rem;color:var(--text-light);margin-top:4px;">';
-                    if (item.phoneModel) details += '<span>Model: ' + item.phoneModel + '</span>';
-                    details += '<span>Case: ' + item.caseStyle + ' (' + item.caseColor + ')</span>';
-                    if (item.optionsText) details += '<span>Options: ' + item.optionsText + '</span>';
-                    details += '</div>';
-                }
-                var priceHtml = Cart.isDiscountActive() ?
-                    '<span class="price-original">$' + item.price.toFixed(2) + '</span><span class="price-discounted">$' + Cart.getDiscountedPrice(item.price).toFixed(2) + '</span>' :
-                    '$' + item.price.toFixed(2);
-                var totalPrice = Cart.isDiscountActive() ?
-                    '<span class="price-original">$' + (item.price * item.quantity).toFixed(2) + '</span><span class="price-discounted">$' + (Cart.getDiscountedPrice(item.price) * item.quantity).toFixed(2) + '</span>' :
-                    '$' + (item.price * item.quantity).toFixed(2);
-                return '<div class="cart-item" data-id="' + item.id + '">' +
-                    '<div class="cart-item-info">' +
-                    '<div class="cart-item-name">' + item.name + '</div>' +
-                    '<div class="cart-item-price">' + priceHtml + ' each</div>' +
-                    details +
-                    '<div class="cart-item-actions">' +
-                    '<button class="cart-qty-btn" data-action="decrease" data-id="' + item.id + '">-</button>' +
-                    '<span class="cart-item-qty">' + item.quantity + '</span>' +
-                    '<button class="cart-qty-btn" data-action="increase" data-id="' + item.id + '">+</button>' +
-                    '<button class="cart-item-remove" data-action="remove" data-id="' + item.id + '"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>' +
-                    '</div></div>' +
-                    '<div class="cart-item-total">' + totalPrice + '</div></div>';
-            }).join('');
-
-            var subtotal = Cart.getTotal();
-            var totalWithShipping = subtotal + ((window._shippingCost || 0) / 7.8);
-            cTotal.textContent = '$' + totalWithShipping.toFixed(2);
-            var subEl = document.getElementById('cartSubtotal');
-            if (subEl) subEl.textContent = '$' + subtotal.toFixed(2);
-            updateBadge();
-            updateCartShipping();
-        }
-
-        function updateBadge() {
-            var badge = document.getElementById('cartBadge');
-            if (!badge) return;
-            var count = Cart.getItemCount();
-            badge.textContent = count;
-            badge.style.display = count > 0 ? 'flex' : 'none';
-        }
-
-        function updateCartShipping() {
-            var shippingSection = document.getElementById('cartShipping');
-            var destEl = document.getElementById('shippingDestination');
-            var missingEl = document.getElementById('cartAddressMissing');
-            if (!shippingSection || !destEl) return;
-
-            try {
-                var addrStr = localStorage.getItem('funfairday_shipping_address') || sessionStorage.getItem('funfairday_shipping_address');
-                var addrData = addrStr ? JSON.parse(addrStr) : null;
-                if (!addrData || !addrData.country) {
-                    shippingSection.style.display = 'none';
-                    if (missingEl) missingEl.style.display = 'flex';
-                    return;
-                }
-                if (missingEl) missingEl.style.display = 'none';
-
-                var countryName = addrData.country;
-                var map = { 'HK': 'Hong Kong', 'CN': 'China', 'TW': 'Taiwan', 'US': 'United States', 'GB': 'United Kingdom', 'CA': 'Canada', 'AU': 'Australia', 'JP': 'Japan', 'KR': 'South Korea', 'SG': 'Singapore', 'MY': 'Malaysia', 'PH': 'Philippines', 'TH': 'Thailand', 'VN': 'Vietnam', 'DE': 'Germany', 'FR': 'France', 'IT': 'Italy', 'ES': 'Spain', 'NL': 'Netherlands', 'CH': 'Switzerland', 'SE': 'Sweden', 'NO': 'Norway', 'DK': 'Denmark', 'FI': 'Finland', 'IE': 'Ireland', 'NZ': 'New Zealand', 'ZA': 'South Africa', 'AE': 'United Arab Emirates', 'SA': 'Saudi Arabia', 'BR': 'Brazil', 'OTHERS': 'Other' };
-                countryName = map[addrData.country] || addrData.country;
-
-                destEl.textContent = countryName;
-                shippingSection.style.display = 'block';
-            } catch(e) {
-                shippingSection.style.display = 'none';
-            }
-        }
-
-        // Open/close cart
-        document.getElementById('cartBtn').addEventListener('click', function() {
-            cPanel.classList.add('active');
-            cOverlay.classList.add('active');
-            renderCart();
-        });
-        document.getElementById('cartClose').addEventListener('click', function() {
-            cPanel.classList.remove('active');
-            cOverlay.classList.remove('active');
-        });
-        cOverlay.addEventListener('click', function() {
-            cPanel.classList.remove('active');
-            cOverlay.classList.remove('active');
-        });
-
-        // Init
-        Cart.init();
-        renderCart();
+        } catch(e) {}
 
     </script>
     <script src="js/products.js"></script>
