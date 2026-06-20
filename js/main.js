@@ -1,6 +1,9 @@
 ﻿// Main Application Logic
 document.addEventListener('DOMContentLoaded', function() {
 
+    // Auth state flag
+    window._isLoggedIn = false;
+
     const colorClasses = ['product-color-1', 'product-color-2', 'product-color-3', 'product-color-4'];
     const placeholderIcons = ['🎨', '📱', '🎭', '💐'];
 
@@ -462,6 +465,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Step: Auth popup (Sign In / Register / Stranger)
         function showAuthPopup() {
+            // If already signed in, skip auth popup
+            if (window._isLoggedIn) {
+                showShippingConfirm();
+                return;
+            }
             showPopup({
                 icon: '🔐',
                 title: 'Almost there!',
@@ -1656,6 +1664,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const authLink = document.getElementById('authLink');
             if (authLink) {
                 if (session) {
+                    window._isLoggedIn = true;
                     authLink.textContent = 'My Account';
                     authLink.href = 'account.html';
                 } else {
