@@ -1937,8 +1937,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (authLink) {
                 if (session) {
                     window._isLoggedIn = true;
-                    window._userEmail = session.user.email || '';
-                    authLink.textContent = window._userEmail;
+                    window._userDisplayName = session.user.user_metadata?.full_name || localStorage.getItem('funfairday_user_name') || session.user.email || '';
+                    authLink.textContent = window._userDisplayName;
                     authLink.href = 'account.html';
                 } else {
                     authLink.textContent = 'Sign In';

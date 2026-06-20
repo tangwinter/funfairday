@@ -325,10 +325,18 @@
                 const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
-                    options: { emailRedirectTo: window.location.origin + '/login.html' }
+                    options: {
+                        emailRedirectTo: window.location.origin + '/login.html',
+                        data: {
+                            full_name: document.getElementById('addrName').value.trim()
+                        }
+                    }
                 });
 
                 if (error) throw error;
+
+                // Save user display name to localStorage for nav
+                localStorage.setItem('funfairday_user_name', document.getElementById('addrName').value.trim());
 
                 // Save shipping address to sessionStorage
                 sessionStorage.setItem('funfairday_shipping_address', JSON.stringify({
