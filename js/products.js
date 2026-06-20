@@ -9,10 +9,10 @@ const CONFIG = {
 const categories = [
     {
         id: 'stickers',
-        name: "Carousel's Sticker Jar",
-        shortName: "Carousel's Sticker Jar",
-        description: 'Just the stickers pure joy. 30+ styles of stickers for you. Find the limited editional one.',
-        longDescription: "Carousel loves to chase stickers across the floor. Now you can chase your creativity too!",
+        name: 'Sticker Jar',
+        shortName: 'Sticker Jar',
+        description: 'Browse our 3D and Fluffy sticker collections!',
+        longDescription: 'From cute animals to tiny food — find your perfect sticker!',
         image: null,
         badge: 'Popular',
         emoji: '\u{1F3A0}'
@@ -21,21 +21,17 @@ const categories = [
 
 const productTemplates = {
     'stickers': {
-        priceBase: 5.00,
+        priceBase: 1.92,
         items: [
-            { name: 'Carousel Dreams Sticker', desc: 'A whimsical carousel horse sticker with rainbow ribbons.' },
-            { name: 'Carnival Stripes Sticker', desc: 'Classic red and white carnival tent stripes.' },
-            { name: 'Cotton Candy Cloud Sticker', desc: 'Fluffy pink cotton candy with sparkles.' },
-            { name: 'Ferris Wheel Glow Sticker', desc: 'A glowing ferris wheel under the night sky.' },
-            { name: 'Ticket to Fun Sticker', desc: 'Vintage carnival ticket design.' },
-            { name: 'Ring Toss Star Sticker', desc: 'A golden star from the ring toss game.' },
-            { name: 'Ballerina Bear Sticker', desc: 'A dancing bear in a tutu.' },
-            { name: 'Lucky Clover Sticker', desc: 'Find your luck with this four-leaf clover.' },
-            { name: 'Popcorn Party Sticker', desc: 'A bucket of popcorn ready to party.' },
-            { name: 'Lemonade Smile Sticker', desc: 'A cheerful glass of lemonade.' },
-            { name: 'Balloon Bouquet Sticker', desc: 'A cluster of colorful balloons.' },
-            { name: 'Midnight Carnival Sticker', desc: 'Limited edition carnival at midnight with glowing lights.' }
-        ]
+            { name: '3D Sticker', desc: 'High-quality 3D sticker with raised design' },
+            { name: 'Fluffy Sticker', desc: 'Soft fluffy sticker with textured finish' },
+            { name: '3D Sticker Assorted 4-Pack', desc: '4 assorted 3D stickers in random styles' },
+            { name: '3D Sticker Assorted 8-Pack', desc: '8 assorted 3D stickers in random styles' },
+            { name: 'Fluffy Sticker Assorted 4-Pack', desc: '4 assorted fluffy stickers in random styles' },
+            { name: 'Fluffy Sticker Assorted 8-Pack', desc: '8 assorted fluffy stickers in random styles' }
+        ],
+        prices: [1.92, 1.67, 6.67, 11.28, 5.77, 9.62],
+        weights: [25, 30, 100, 200, 120, 240]
     },
     'diy-sticker-case': {
         priceBase: 15.00,
@@ -53,8 +49,7 @@ const productTemplates = {
             { name: 'Mini Sticker Add-On Pack', desc: 'Extra 20 carnival stickers to expand your collection.' },
             { name: 'Limited Edition - Golden Carnival', desc: 'Limited edition sticker set with gold foil accents.' }
         ],
-        prices: [15.00, 15.00, 15.00, 15.00, 25.00, 25.00, 25.00, 25.00, 20.00, 50.00, 8.00, 30.00],
-        weights: [250, 250, 250, 250, 250, 250, 250, 250, 500, 750, 150, 250]
+        prices: [15.00, 15.00, 15.00, 15.00, 25.00, 25.00, 25.00, 25.00, 20.00, 50.00, 8.00, 30.00]
     },
     'diy-paint-case': {
         priceBase: 25.00,
@@ -72,8 +67,7 @@ const productTemplates = {
             { name: 'Sealant Spray', desc: 'Waterproof sealant to protect your hand-painted design.' },
             { name: 'Limited Edition - Carnival Queen', desc: 'Limited edition hand-painted carnival queen design.' }
         ],
-        prices: [25.00, 25.00, 25.00, 25.00, 40.00, 40.00, 40.00, 40.00, 12.00, 55.00, 10.00, 60.00],
-        weights: [400, 400, 400, 400, 250, 250, 250, 250, 200, 500, 200, 250]
+        prices: [25.00, 25.00, 25.00, 25.00, 40.00, 40.00, 40.00, 40.00, 12.00, 55.00, 10.00, 60.00]
     },
     'diy-epoxy-case': {
         priceBase: 35.00,
@@ -91,8 +85,7 @@ const productTemplates = {
             { name: 'Deluxe Flower Kit', desc: 'DIY Kit + extra flowers + epoxy + tools bundle.' },
             { name: 'Limited Edition - Deweys Garden', desc: 'Limited edition arrangement inspired by Deweys favorite garden.' }
         ],
-        prices: [35.00, 35.00, 35.00, 35.00, 55.00, 55.00, 55.00, 55.00, 10.00, 15.00, 65.00, 70.00],
-        weights: [500, 500, 500, 500, 250, 250, 250, 250, 250, 500, 750, 250]
+        prices: [35.00, 35.00, 35.00, 35.00, 55.00, 55.00, 55.00, 55.00, 10.00, 15.00, 65.00, 70.00]
     }
 };
 
@@ -100,7 +93,6 @@ const products = [];
 Object.entries(productTemplates).forEach(([categoryId, template]) => {
     template.items.forEach((item, index) => {
         const price = template.prices ? template.prices[index] : template.priceBase;
-        const weight = template.weights ? template.weights[index] : 150;
         products.push({
             id: categoryId + '-' + (index + 1),
             name: item.name,
@@ -109,23 +101,78 @@ Object.entries(productTemplates).forEach(([categoryId, template]) => {
             category: categoryId,
             image: null,
             stripePriceId: null,
-            weight_grams: weight
+            weight_grams: template.weights ? template.weights[index] : 50
         });
     });
 });
 
+// ============================================
+// New Sticker Jar Products (override Supabase data)
+// ============================================
+// Each individual sticker design with photo from images/stickers/
+var STICKER_PRODUCTS = [
+    // --- 3D Stickers (HK$15 = $1.92 USD, 25g each) ---
+    { id: 'sticker-3d-cute-animal', name: '3D Cute Animal', price: 1.92, description: '3D Sticker - Cute Animal Design', weight_grams: 25, image: '/images/stickers/3d/Cute%20Animal.jpeg' },
+    { id: 'sticker-3d-cute-beard-bear', name: '3D Cute Beard and Bear', price: 1.92, description: '3D Sticker - Cute Beard and Bear', weight_grams: 25, image: '/images/stickers/3d/Cute%20Beard%20and%20Bear.jpeg' },
+    { id: 'sticker-3d-cute-bird', name: '3D Cute Bird', price: 1.92, description: '3D Sticker - Cute Bird Design', weight_grams: 25, image: '/images/stickers/3d/Cute%20Bird.jpeg' },
+    { id: 'sticker-3d-cute-black-cat', name: '3D Cute Black Cat', price: 1.92, description: '3D Sticker - Cute Black Cat', weight_grams: 25, image: '/images/stickers/3d/Cute%20Black%20Cat.jpeg' },
+    { id: 'sticker-3d-cute-black-dots', name: '3D Cute Black Dots', price: 1.92, description: '3D Sticker - Cute Black Dots', weight_grams: 25, image: '/images/stickers/3d/Cute%20Blak%20Dots.jpeg' },
+    { id: 'sticker-3d-cute-cat', name: '3D Cute Cat', price: 1.92, description: '3D Sticker - Cute Cat Design', weight_grams: 25, image: '/images/stickers/3d/Cute%20Cat.jpeg' },
+    { id: 'sticker-3d-cute-dino', name: '3D Cute Dino', price: 1.92, description: '3D Sticker - Cute Dino Design', weight_grams: 25, image: '/images/stickers/3d/Cute%20Dino.jpeg' },
+    { id: 'sticker-3d-cute-dog', name: '3D Cute Dog', price: 1.92, description: '3D Sticker - Cute Dog Design', weight_grams: 25, image: '/images/stickers/3d/Cute%20Dog.jpeg' },
+    { id: 'sticker-3d-cute-ghost', name: '3D Cute Ghost', price: 1.92, description: '3D Sticker - Cute Ghost Design', weight_grams: 25, image: '/images/stickers/3d/Cute%20Ghost.jpeg' },
+    { id: 'sticker-3d-cute-pink-bunny', name: '3D Cute Pink Bunny', price: 1.92, description: '3D Sticker - Cute Pink Bunny', weight_grams: 25, image: '/images/stickers/3d/Cute%20Pink%20Bunny.jpeg' },
+    { id: 'sticker-3d-cute-sea-animal', name: '3D Cute Sea Animal', price: 1.92, description: '3D Sticker - Cute Sea Animal', weight_grams: 25, image: '/images/stickers/3d/Cute%20Sea%20Animal.jpeg' },
+    { id: 'sticker-3d-cute-white-bunny', name: '3D Cute White Bunny', price: 1.92, description: '3D Sticker - Cute White Bunny', weight_grams: 25, image: '/images/stickers/3d/Cute%20White%20Bunny.jpeg' },
+    // --- Fluffy Stickers (HK$13 = $1.67 USD, 30g each) ---
+    { id: 'sticker-fluffy-mini-animal-food', name: 'Fluffy Mini Animal and Food', price: 1.67, description: 'Fluffy Sticker - Mini Animal and Food', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Animal%20and%20Food.jpeg' },
+    { id: 'sticker-fluffy-mini-bunny', name: 'Fluffy Mini Bunny', price: 1.67, description: 'Fluffy Sticker - Mini Bunny', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Bunny.jpeg' },
+    { id: 'sticker-fluffy-mini-dog', name: 'Fluffy Mini Dog', price: 1.67, description: 'Fluffy Sticker - Mini Dog', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Dog.jpeg' },
+    { id: 'sticker-fluffy-mini-fruit', name: 'Fluffy Mini Fruit', price: 1.67, description: 'Fluffy Sticker - Mini Fruit', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Fruit.jpeg' },
+    { id: 'sticker-fluffy-mini-garden-animal', name: 'Fluffy Mini Garden and Animal', price: 1.67, description: 'Fluffy Sticker - Mini Garden and Animal', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Garden%20and%20Animal.jpeg' },
+    { id: 'sticker-fluffy-mini-sea-animal', name: 'Fluffy Mini Sea Animal', price: 1.67, description: 'Fluffy Sticker - Mini Sea Animal', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Sea%20Animal.jpeg' },
+    { id: 'sticker-fluffy-mini-sushi-cat', name: 'Fluffy Mini Sushi Cat', price: 1.67, description: 'Fluffy Sticker - Mini Sushi Cat', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Sushi%20Cat.jpeg' },
+    { id: 'sticker-fluffy-mini-tiny-bunny', name: 'Fluffy Mini Tiny Bunny', price: 1.67, description: 'Fluffy Sticker - Mini Tiny Bunny', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Tiny%20Bunny.jpeg' },
+    { id: 'sticker-fluffy-mini-tiny-cat', name: 'Fluffy Mini Tiny Cat', price: 1.67, description: 'Fluffy Sticker - Mini Tiny Cat', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Tiny%20Cat.jpeg' },
+    { id: 'sticker-fluffy-mini-tiny-dog', name: 'Fluffy Mini Tiny Dog', price: 1.67, description: 'Fluffy Sticker - Mini Tiny Dog', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Tiny%20Dog.jpeg' },
+    { id: 'sticker-fluffy-mini-tiny-panda', name: 'Fluffy Mini Tiny Panda', price: 1.67, description: 'Fluffy Sticker - Mini Tiny Panda', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Tiny%20Panda.jpeg' },
+    // --- Bundle Packs ---
+    { id: 'sticker-3d-pack-4', name: '3D Sticker Assorted 4-Pack', price: 6.67, description: '4 assorted 3D stickers (random styles) - HK$52 value!', weight_grams: 100, image: '/images/stickers/3d/Cute%20Cat.jpeg' },
+    { id: 'sticker-3d-pack-8', name: '3D Sticker Assorted 8-Pack', price: 11.28, description: '8 assorted 3D stickers (random styles) - HK$88 value!', weight_grams: 200, image: '/images/stickers/3d/Cute%20Dino.jpeg' },
+    { id: 'sticker-fluffy-pack-4', name: 'Fluffy Sticker Assorted 4-Pack', price: 5.77, description: '4 assorted fluffy stickers (random styles) - HK$45 value!', weight_grams: 120, image: '/images/stickers/fluffy/Mini%20Tiny%20Cat.jpeg' },
+    { id: 'sticker-fluffy-pack-8', name: 'Fluffy Sticker Assorted 8-Pack', price: 9.62, description: '8 assorted fluffy stickers (random styles) - HK$75 value!', weight_grams: 240, image: '/images/stickers/fluffy/Mini%20Tiny%20Bunny.jpeg' },
+    // --- Free Gift & Specials ---
+    { id: 'free-sticker-gift', name: 'Free Random Sticker Gift', price: 0, description: 'Free random sticker gift - claim now! No purchase necessary!', weight_grams: 5, image: null },
+    { id: 'bundle-5pcs-stick', name: '5pcs Stick Bundle Pack', price: 8.00, description: 'Get 5pcs Stick Bundle Pack at $8.00 only! (50% off - was US$16, now US$8)', weight_grams: 150, image: null }
+];
 
-// Bundle product (stick pack special offer - fallback if Supabase unavailable)
-products.push({
-    id: 'bundle-5pcs-stick',
-    name: '5pcs Stick Bundle Pack',
-    price: 8.00,
-    description: 'Get 5pcs Stick Bundle Pack at $8.00 only! (50% off - was US$16, now US$8)',
-    category: 'stickers',
-    image: null,
-    stripePriceId: null,
-    weight_grams: 150
-});
+// Helper: replace sticker products in the products array
+function applyStickerProducts() {
+    // Remove old sticker products
+    for (var i = products.length - 1; i >= 0; i--) {
+        if (products[i].category === 'stickers') {
+            products.splice(i, 1);
+        }
+    }
+    // Add new sticker products
+    STICKER_PRODUCTS.forEach(function(sp) {
+        var p = {
+            id: sp.id,
+            name: sp.name,
+            price: sp.price,
+            description: sp.description,
+            category: 'stickers',
+            image: sp.image,
+            stripePriceId: null,
+            weight_grams: sp.weight_grams
+        };
+        if (sp.category) p.category = sp.category;
+        products.push(p);
+    });
+}
+
+// Apply immediately for fallback data
+applyStickerProducts();
 
 // Phone Case Styles (10 styles x 8 colors each)
 const phoneCaseStyles = [
@@ -228,6 +275,8 @@ async function supabaseFetch(table, query) {
                 var cat = categoriesData.find(function(c) { return c.id === p.category; });
                 if (cat) p.badge = cat.badge || null;
             });
+            // Override with new sticker products after Supabase loading
+            applyStickerProducts();
         }
 
         if (caseStylesData && caseStylesData.length > 0) {
