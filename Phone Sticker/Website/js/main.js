@@ -37,16 +37,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const youtubeGrid = document.getElementById('youtubeGrid');
     const youtubeChannels = [
         {
-            name: 'Natural Flow Studio',
-            handle: '@naturalflowstudio26',
-            url: 'https://www.youtube.com/@naturalflowstudio26',
-            description: 'Creative flow and art tutorials'
-        },
-        {
-            name: 'Beard Care',
-            handle: '@Beard-care',
-            url: 'https://www.youtube.com/@Beard-care',
-            description: 'Beard grooming and styling tips'
+            name: 'FunFairDay',
+            handle: '@funfairday',
+            url: 'https://www.youtube.com/@funfairday',
+            description: 'FunFairDay - DIY stickers and accessories'
         }
     ];
 
