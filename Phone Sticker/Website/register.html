@@ -277,7 +277,9 @@
                 const config = await res.json();
                 if (!config.configured) { showError('Site not configured yet.'); return; }
                 supabase = window.supabase.createClient(config.url, config.anonKey);
+                console.log('[Register] Supabase initialized successfully');
             } catch(e) {
+                console.error('[Register] Init error:', e);
                 showError('Failed to connect. Please contact the site owner.');
             }
         })();
@@ -327,7 +329,9 @@
             btn.textContent = 'Creating account...';
 
             try {
-                const { data, error } = await supabase.auth.signUp({
+                console.log('[Register] Calling supabase.auth.signUp...');
+                // Race signUp against a 20-second timeout
+                const signUpPromise = supabase.auth.signUp({
                     email,
                     password,
                     options: {
@@ -337,6 +341,13 @@
                         }
                     }
                 });
+                const timeoutPromise = new Promise(function(_, reject) {
+                    setTimeout(function() {
+                        reject(new Error('Connection to server timed out. Please try again later.'));
+                    }, 20000);
+                });
+                const { data, error } = await Promise.race([signUpPromise, timeoutPromise]);
+                console.log('[Register] signUp completed', data ? 'with data' : 'no data', error ? 'error:' + error.message : 'no error');
 
                 if (error) throw error;
 
