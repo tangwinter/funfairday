@@ -462,6 +462,25 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Step: Auth popup (Sign In / Create Account)
         function showAuthPopup() {
+            // If auth check hasn't completed yet, wait briefly
+            if (!window._authChecked) {
+                showToast('Checking login status...');
+                var checkTimer = setInterval(function() {
+                    if (window._authChecked) {
+                        clearInterval(checkTimer);
+                        showAuthPopup();
+                    }
+                }, 100);
+                // Safety timeout after 3 seconds
+                setTimeout(function() {
+                    if (!window._authChecked) {
+                        clearInterval(checkTimer);
+                        window._authChecked = true;
+                        showAuthPopup();
+                    }
+                }, 3000);
+                return;
+            }
             // If already signed in, go directly to Stripe
             if (window._isLoggedIn) {
                 var savedAddr = sessionStorage.getItem('funfairday_shipping_address');
@@ -1918,7 +1937,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (authLink) {
                 if (session) {
                     window._isLoggedIn = true;
-                    authLink.textContent = 'My Account';
+                    window._userEmail = session.user.email || '';
+                    authLink.textContent = window._userEmail;
                     authLink.href = 'account.html';
                 } else {
                     authLink.textContent = 'Sign In';
