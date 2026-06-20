@@ -16,36 +16,6 @@ const categories = [
         image: null,
         badge: 'Popular',
         emoji: '\u{1F3A0}'
-    },
-    {
-        id: 'diy-sticker-case',
-        name: "Tilly's Sticky Carnival Kit",
-        shortName: "Tilly's Sticky Carnival Kit",
-        description: 'DIY Sticker Phone Case Set (per-sticked service is available)',
-        longDescription: "Tilly is our busy little kitty always making a mess in the cutest way. Let her inspire your own sticky masterpiece!",
-        image: null,
-        badge: 'Make to Order',
-        emoji: '\u{1F36D}'
-    },
-    {
-        id: 'diy-paint-case',
-        name: "Pippin's Paint & Paste Set",
-        shortName: "Pippin's Paint & Paste Set",
-        description: 'DIY Hand Paint Phone Case Set',
-        longDescription: "Pippin has tiny paws but a big imagination. She paints with her tail but we recommend using the brush.",
-        image: null,
-        badge: 'Make to Order',
-        emoji: '\u{1F9F8}'
-    },
-    {
-        id: 'diy-epoxy-case',
-        name: "Dewey's Dried Flower Magic Kit",
-        shortName: "Dewey's Dried Flower Magic Kit",
-        description: 'DIY Epoxy Flower Phone Case Set',
-        longDescription: "Dewey loves to nap in the garden. This kit brings that peaceful, dewy feeling to your phone like pressed flowers from a happy day.",
-        image: null,
-        badge: 'Make to Order',
-        emoji: '\u{1F4A7}'
     }
 ];
 
@@ -225,7 +195,12 @@ async function supabaseFetch(table, query) {
 
         if (categoriesData && categoriesData.length > 0) {
             categories.length = 0;
-            categoriesData.forEach(function(c) { categories.push(c); });
+            categoriesData.forEach(function(c) { 
+                // Only keep Sticker Jar category visible
+                if (c.id === 'stickers') {
+                    categories.push(c);
+                }
+            });
         }
 
         if (productsData && productsData.length > 0) {
