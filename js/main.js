@@ -312,6 +312,7 @@ document.addEventListener('DOMContentLoaded', function() {
         console.warn('Checkout button not found');
     } else {
     checkoutBtn.addEventListener('click', async function() {
+        try {
         showToast('Checking out...');
         const items = Cart.getItems();
         if (items.length === 0) {
@@ -495,14 +496,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (!window._authChecked) {
                     clearInterval(checkTimer);
                     window._authChecked = true;
-                    showToast('Auth check timed out, proceeding...');
+                    // Check if Supabase session exists in localStorage
+                    var hasSession = false;
+                    try {
+                        var sbKey = Object.keys(localStorage).find(function(k) { return k.indexOf('sb-') === 0 || k.indexOf('supabase') === 0; });
+                        if (sbKey) {
+                            var sbData = JSON.parse(localStorage.getItem(sbKey) || 'null');
+                            if (sbData && (sbData.access_token || sbData.provider_token)) hasSession = true;
+                        }
+                    } catch(e) {}
+                    if (hasSession) {
+                        window._isLoggedIn = true;
+                        showToast('Login detected, proceeding...');
+                    } else {
+                        showToast('Auth check timed out, proceeding...');
+                    }
                     doCheckout();
                 }
-            }, 3000);
+            }, 8000);
             return;
         }
 
         doCheckout();
+        } catch (e) {
+            console.error('Checkout error:', e);
+            showToast('Something went wrong: ' + e.message);
+            this.disabled = false;
+            this.textContent = 'Checkout';
+        }
     });
     }
 

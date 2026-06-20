@@ -256,6 +256,9 @@
                 const config = await res.json();
                 if (!config.configured) { return false; }
                 supabase = window.supabase.createClient(config.url, config.anonKey);
+                // Cache config for main.js auth init
+                localStorage.setItem('supabase_url', config.url);
+                localStorage.setItem('supabase_anon_key', config.anonKey);
                 return true;
             } catch(e) {
                 return false;
