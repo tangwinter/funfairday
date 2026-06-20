@@ -350,19 +350,10 @@
                 }));
 
                 successDiv.classList.add('show');
-                // Don't auto-redirect — user needs to confirm email first
-                // Add a login button after a moment
+                // Auto-redirect after signup (email confirmation disabled)
                 setTimeout(function() {
-                    var loginBtn = document.createElement('a');
-                    loginBtn.href = 'login.html';
-                    loginBtn.className = 'btn btn-primary';
-                    loginBtn.textContent = 'Go to Login';
-                    loginBtn.style.display = 'block';
-                    loginBtn.style.textAlign = 'center';
-                    loginBtn.style.marginTop = '12px';
-                    loginBtn.style.textDecoration = 'none';
-                    successDiv.parentNode.appendChild(loginBtn);
-                }, 500);
+                    window.location.href = '/?checkout=1';
+                }, 1500);
 
             } catch (err) {
                 errorDiv.textContent = err.message;
