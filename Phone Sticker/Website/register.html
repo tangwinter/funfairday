@@ -13,29 +13,30 @@
         .auth-page {
             min-height: 100vh;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
-            padding: 100px 20px 40px;
+            padding: 100px 20px 60px;
         }
         .auth-card {
             background: white;
             border-radius: 16px;
-            padding: 40px;
+            padding: 36px 32px;
             width: 100%;
-            max-width: 420px;
+            max-width: 540px;
             box-shadow: 0 10px 40px rgba(0,0,0,0.08);
         }
         .auth-card h1 {
-            font-size: 1.8rem;
+            font-size: 1.6rem;
             font-weight: 800;
             color: var(--dark);
             text-align: center;
-            margin-bottom: 8px;
+            margin-bottom: 4px;
         }
-        .auth-card p {
+        .auth-card .page-subtitle {
             text-align: center;
             color: var(--text-light);
-            margin-bottom: 32px;
+            margin-bottom: 24px;
+            font-size: 0.9rem;
         }
         .auth-error {
             background: #fce4ec;
@@ -57,6 +58,59 @@
             display: none;
         }
         .auth-success.show { display: block; }
+        .auth-form .form-group {
+            margin-bottom: 16px;
+        }
+        .auth-form .form-group label {
+            display: block;
+            font-weight: 700;
+            color: var(--dark);
+            margin-bottom: 4px;
+            font-size: 0.85rem;
+        }
+        .auth-form .form-group input,
+        .auth-form .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: var(--font);
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s ease;
+            background: #fff;
+            color: var(--dark);
+            box-sizing: border-box;
+        }
+        .auth-form .form-group input:focus,
+        .auth-form .form-group select:focus {
+            border-color: var(--primary);
+        }
+        .auth-form .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .auth-form .required {
+            color: var(--primary);
+        }
+        .auth-form .addr-section {
+            border-top: 1px solid #eee;
+            padding-top: 16px;
+            margin-top: 8px;
+        }
+        .auth-form .addr-section-title {
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 12px;
+        }
+        .auth-form .btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 1rem;
+            margin-top: 8px;
+        }
         .auth-link {
             text-align: center;
             margin-top: 20px;
@@ -69,33 +123,15 @@
             text-decoration: none;
         }
         .auth-link a:hover { text-decoration: underline; }
-        .auth-form .form-group {
-            margin-bottom: 20px;
-        }
-        .auth-form .form-group label {
-            display: block;
-            font-weight: 700;
-            color: var(--dark);
-            margin-bottom: 6px;
-            font-size: 0.9rem;
-        }
-        .auth-form .form-group input {
-            width: 100%;
-            padding: 12px 16px;
-            border: 2px solid rgba(0,0,0,0.08);
-            border-radius: 8px;
-            font-family: var(--font);
-            font-size: 0.95rem;
-            transition: border-color 0.2s ease;
-        }
-        .auth-form .form-group input:focus {
-            outline: none;
-            border-color: var(--primary);
-        }
-        .auth-form .btn {
-            width: 100%;
-            padding: 14px;
-            font-size: 1rem;
+        #customCountryGroup { display: none; }
+        @media (max-width: 480px) {
+            .auth-form .form-row {
+                grid-template-columns: 1fr;
+                gap: 0;
+            }
+            .auth-card {
+                padding: 24px 20px;
+            }
         }
     </style>
 </head>
@@ -115,22 +151,67 @@
     <div class="auth-page">
         <div class="auth-card">
             <h1>Create Account</h1>
-            <p>Join FunFairDay and start shopping</p>
+            <p class="page-subtitle">Join FunFairDay and start shopping</p>
             <div class="auth-error" id="registerError"></div>
             <div class="auth-success" id="registerSuccess">Account created! Redirecting...</div>
             <form class="auth-form" id="registerForm">
                 <div class="form-group">
-                    <label for="email">Email</label>
+                    <label for="email">Email <span class="required">*</span></label>
                     <input type="email" id="email" placeholder="your@email.com" required>
                 </div>
                 <div class="form-group">
-                    <label for="password">Password</label>
+                    <label for="password">Password <span class="required">*</span></label>
                     <input type="password" id="password" placeholder="At least 6 characters" minlength="6" required>
                 </div>
                 <div class="form-group">
-                    <label for="confirmPassword">Confirm Password</label>
+                    <label for="confirmPassword">Confirm Password <span class="required">*</span></label>
                     <input type="password" id="confirmPassword" placeholder="Repeat your password" required>
                 </div>
+
+                <!-- Shipping Address Section -->
+                <div class="addr-section">
+                    <div class="addr-section-title">Shipping Address</div>
+
+                    <div class="form-group">
+                        <label for="addrName">Full Name <span class="required">*</span></label>
+                        <input type="text" id="addrName" placeholder="e.g. John Smith" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="addrStreet">Street Address <span class="required">*</span></label>
+                        <input type="text" id="addrStreet" placeholder="e.g. 123 Main St, Apt 4B" required>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="addrCity">City <span class="required">*</span></label>
+                            <input type="text" id="addrCity" placeholder="Hong Kong" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="addrState">State / Province</label>
+                            <input type="text" id="addrState" placeholder="Optional">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="addrZip">ZIP / Postal Code</label>
+                            <input type="text" id="addrZip" placeholder="Optional">
+                        </div>
+                        <div class="form-group">
+                            <label for="addrPhone">Phone</label>
+                            <input type="tel" id="addrPhone" placeholder="Optional">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="addrCountry">Country <span class="required">*</span></label>
+                        <select id="addrCountry" required>
+                            <option value="">Select your country...</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="customCountryGroup">
+                        <label for="addrCustomCountry">Enter your country <span class="required">*</span></label>
+                        <input type="text" id="addrCustomCountry" placeholder="Type your country name">
+                    </div>
+                </div>
+
                 <button type="submit" class="btn btn-primary" id="registerBtn">Create Account</button>
             </form>
             <div class="auth-link">
@@ -140,12 +221,51 @@
     </div>
 
     <script>
+        // === Shipping Countries ===
+        var SHIPPING_COUNTRIES = [
+            { code: 'AR', name: 'Argentina' }, { code: 'AU', name: 'Australia' },
+            { code: 'AT', name: 'Austria' }, { code: 'BE', name: 'Belgium' },
+            { code: 'BR', name: 'Brazil' }, { code: 'CA', name: 'Canada' },
+            { code: 'CN', name: 'China' }, { code: 'CZ', name: 'Czech Republic' },
+            { code: 'DK', name: 'Denmark' }, { code: 'FR', name: 'France' },
+            { code: 'DE', name: 'Germany' }, { code: 'GR', name: 'Greece' },
+            { code: 'HK', name: 'Hong Kong' }, { code: 'ID', name: 'Indonesia' },
+            { code: 'IE', name: 'Ireland' }, { code: 'IT', name: 'Italy' },
+            { code: 'JP', name: 'Japan' }, { code: 'MY', name: 'Malaysia' },
+            { code: 'MX', name: 'Mexico' }, { code: 'NL', name: 'Netherlands' },
+            { code: 'NZ', name: 'New Zealand' }, { code: 'NO', name: 'Norway' },
+            { code: 'PH', name: 'Philippines' }, { code: 'PL', name: 'Poland' },
+            { code: 'PT', name: 'Portugal' }, { code: 'SA', name: 'Saudi Arabia' },
+            { code: 'SG', name: 'Singapore' }, { code: 'ZA', name: 'South Africa' },
+            { code: 'KR', name: 'South Korea' }, { code: 'ES', name: 'Spain' },
+            { code: 'SE', name: 'Sweden' }, { code: 'CH', name: 'Switzerland' },
+            { code: 'TW', name: 'Taiwan' }, { code: 'TH', name: 'Thailand' },
+            { code: 'AE', name: 'United Arab Emirates' }, { code: 'GB', name: 'United Kingdom' },
+            { code: 'US', name: 'United States' }, { code: 'VN', name: 'Vietnam' },
+            { code: 'OTHERS', name: 'Others (Not in the list)' }
+        ];
+
         let supabase = null;
 
         function showError(msg) {
             const el = document.getElementById('registerError');
             if (el) { el.textContent = msg; el.classList.add('show'); }
         }
+
+        // Populate country dropdown
+        (function() {
+            var sel = document.getElementById('addrCountry');
+            SHIPPING_COUNTRIES.forEach(function(c) {
+                var opt = document.createElement('option');
+                opt.value = c.code;
+                opt.textContent = c.name;
+                sel.appendChild(opt);
+            });
+            sel.addEventListener('change', function() {
+                var customGroup = document.getElementById('customCountryGroup');
+                customGroup.style.display = this.value === 'OTHERS' ? 'block' : 'none';
+            });
+        })();
 
         (async function init() {
             try {
@@ -161,6 +281,26 @@
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             if (!supabase) { showError('Supabase not configured.'); return; }
+
+            // Validate address fields
+            var addrName = document.getElementById('addrName').value.trim();
+            var addrStreet = document.getElementById('addrStreet').value.trim();
+            var addrCity = document.getElementById('addrCity').value.trim();
+            var addrCountry = document.getElementById('addrCountry').value;
+            var addrCustom = document.getElementById('addrCustomCountry').value.trim();
+
+            if (!addrName || !addrStreet || !addrCity) {
+                showError('Please fill in your name, street address, and city.');
+                return;
+            }
+            if (!addrCountry) {
+                showError('Please select your country.');
+                return;
+            }
+            if (addrCountry === 'OTHERS' && !addrCustom) {
+                showError('Please enter your country name.');
+                return;
+            }
 
             const btn = document.getElementById('registerBtn');
             const errorDiv = document.getElementById('registerError');
@@ -190,9 +330,21 @@
 
                 if (error) throw error;
 
+                // Save shipping address to sessionStorage
+                sessionStorage.setItem('funfairday_shipping_address', JSON.stringify({
+                    name: addrName,
+                    street: addrStreet,
+                    city: addrCity,
+                    state: document.getElementById('addrState').value.trim(),
+                    zip: document.getElementById('addrZip').value.trim(),
+                    phone: document.getElementById('addrPhone').value.trim(),
+                    country: addrCountry === 'OTHERS' ? addrCustom : addrCountry
+                }));
+
                 successDiv.classList.add('show');
                 setTimeout(() => {
-                    window.location.href = 'login.html';
+                    var returnTo = 'login.html?return_to=' + encodeURIComponent(window.location.origin + '/');
+                    window.location.href = returnTo;
                 }, 2000);
 
             } catch (err) {

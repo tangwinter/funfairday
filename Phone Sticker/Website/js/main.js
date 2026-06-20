@@ -484,20 +484,25 @@ document.addEventListener('DOMContentLoaded', function() {
             return found ? found.name : code;
         }
 
-        // Step: Auth popup (Sign In / Register / Stranger)
+        // Step: Auth popup (Sign In / Continue as Guest)
         function showAuthPopup() {
-            // If already signed in, skip auth popup
+            // If already signed in, go directly to Stripe
             if (window._isLoggedIn) {
-                showAddressForm();
+                var savedAddr = sessionStorage.getItem('funfairday_shipping_address');
+                if (savedAddr) {
+                    proceedCheckout();
+                } else {
+                    showAddressForm();
+                }
                 return;
             }
             showPopup({
                 icon: '🔐',
                 title: 'Almost there!',
-                text: 'Please sign in to save your address, or continue as a guest.',
+                text: 'Sign in to continue, or checkout as a guest.',
                 buttons: [
                     {
-                        label: 'Buy as Stranger',
+                        label: 'Continue as Guest',
                         className: 'btn-primary',
                         action: function() {
                             // Save checkout state and redirect to address form page
@@ -511,17 +516,17 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     },
                     {
-                        label: 'Sign In / Register',
+                        label: 'Sign In',
                         className: 'btn-secondary',
                         action: function() {
-                            // Save checkout state so we can resume on address form page
+                            // Save checkout state, will restore on return
                             sessionStorage.setItem('funfairday_checkout_state', JSON.stringify({
                                 country: selectedCountry,
                                 shippingCost: window._shippingCost,
                                 shippingMethod: window._shippingMethod,
                                 methodId: window._selectedMethodId
                             }));
-                            window.location.href = 'login.html?return_to=' + encodeURIComponent(window.location.origin + '/address-form.html');
+                            window.location.href = 'login.html?return_to=' + encodeURIComponent(window.location.origin + '/?checkout=1');
                         }
                     }
                 ]
@@ -600,7 +605,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     }));
 
                     overlay.classList.remove('active');
-                    showFinalSteps();
+                    proceedCheckout();
                 });
 
                 // Handle back button
@@ -716,41 +721,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // ===== START CHECKOUT FLOW =====
-        // If gift code in use, show fluffy sticker upsell first
-        var hasGiftCode = !!localStorage.getItem('funfairday_gift_code');
-
-        if (hasGiftCode) {
-            var fluffyProduct = products.find(function(p) { return p.id === 'sticker-fluffy-pack-8'; });
-            showPopup({
-                icon: '🎁',
-                title: 'Add a Fluffy Sticker Pack?',
-                text: 'Add 8pcs Assorted Fluffy Sticker Pack ($9.62) to your gift order?',
-                buttons: [
-                    {
-                        label: 'Add to Cart ($9.62)',
-                        className: 'btn-primary',
-                        action: function() {
-                            if (fluffyProduct) {
-                                Cart.addItem(fluffyProduct, 1);
-                                showToast('Fluffy Sticker Pack added!');
-                                updateCartUI();
-                                openCart();
-                            }
-                            setTimeout(showAuthPopup, 300);
-                        }
-                    },
-                    {
-                        label: 'No thanks, keep checking out',
-                        className: 'btn-secondary',
-                        action: function() {
-                            setTimeout(showAuthPopup, 300);
-                        }
-                    }
-                ]
-            });
-        } else {
-            showAuthPopup();
-        }
+        // Show auth popup (or go directly to Stripe if logged in)
+        showAuthPopup();
     });
 
     // ============================================
@@ -1989,7 +1961,43 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    // --- Checkout Resume: detect ?checkout=1 after login ---
+    (function() {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('checkout') !== '1') return;
 
+        // Clean up URL param without page reload
+        if (history.replaceState) {
+            var cleanUrl = window.location.origin + window.location.pathname;
+            history.replaceState(null, '', cleanUrl);
+        }
+
+        // Check if we have a saved address
+        var savedAddr = sessionStorage.getItem('funfairday_shipping_address');
+        if (!savedAddr) return;
+
+        // Restore checkout state if available
+        try {
+            var savedState = sessionStorage.getItem('funfairday_checkout_state');
+            if (savedState) {
+                var state = JSON.parse(savedState);
+                if (state.country) window._selectedCountry = state.country;
+                if (state.shippingCost !== undefined) window._shippingCost = state.shippingCost;
+                if (state.shippingMethod) window._shippingMethod = state.shippingMethod;
+                if (state.methodId) window._selectedMethodId = state.methodId;
+                sessionStorage.removeItem('funfairday_checkout_state');
+            }
+        } catch(e) {}
+
+        // Pre-select country in shipping dropdown to trigger shipping calculation
+        var countrySelect = document.getElementById('shippingCountry');
+        if (countrySelect && window._selectedCountry) {
+            countrySelect.value = window._selectedCountry;
+            // Trigger change event to calculate shipping
+            var evt = new Event('change', { bubbles: true });
+            countrySelect.dispatchEvent(evt);
+        }
+    })();
 
 
     // Listen for public data loaded event to update dynamic content
