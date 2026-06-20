@@ -366,7 +366,9 @@ document.addEventListener('DOMContentLoaded', function() {
                     .map(function(item) {
                         var prodId = item.productId || item.id;
                         var prod = products.find(function(p) { return p.id === prodId; });
-                        var basePrice = prod ? prod.price : item.price;
+                        // For customized items (caseStyle set), use stored item.price which includes case + options
+                        // For regular items, use the product's current price for consistency
+                        var basePrice = item.caseStyle ? item.price : (prod ? prod.price : item.price);
                         var unitAmount = useDynamicPrices ? Math.round(basePrice * (discountActive ? 0.7 : 1.0) * 100) : null;
                         return {
                             priceId: prod ? prod.stripePriceId : null,
