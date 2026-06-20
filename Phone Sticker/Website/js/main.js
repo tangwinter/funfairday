@@ -658,7 +658,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 label: 'Keep Checkout',
                                 className: 'btn-secondary',
                                 action: function() {
-                                    showFreeShippingCheck();
+                                    setTimeout(showFreeShippingCheck, 300);
                                 }
                             }
                         ]
@@ -736,7 +736,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         label: 'No thanks, keep checking out',
                         className: 'btn-secondary',
                         action: function() {
-                            showAuthPopup();
+                            setTimeout(showAuthPopup, 300);
                         }
                     }
                 ]
