@@ -155,7 +155,8 @@
             <div class="auth-error" id="registerError"></div>
             <div class="auth-success" id="registerSuccess">
                 <div style="font-size:1rem;font-weight:700;margin-bottom:6px;">Account Created! 🎉</div>
-                <div style="font-size:0.85rem;line-height:1.5;">You are now signed in. Redirecting to checkout...</div>
+                <div style="font-size:0.85rem;line-height:1.5;margin-bottom:14px;">You can now sign in with your email and password.</div>
+                <div><a href="login.html" class="btn btn-primary" id="goToLoginBtn" style="text-decoration:none;">Go to Login</a></div>
             </div>
             <form class="auth-form" id="registerForm">
                 <div class="form-group">
@@ -364,12 +365,9 @@
                     country: addrCountry === 'OTHERS' ? addrCustom : addrCountry
                 }));
 
-                // Hide form, show success message, then redirect to checkout
+                // Hide form, show success message with Go to Login button
                 form.style.display = 'none';
                 successDiv.classList.add('show');
-                setTimeout(function() {
-                    window.location.href = '/?checkout=1';
-                }, 1500);
 
             } catch (err) {
                 errorDiv.textContent = err.message || 'Something went wrong. Please try again.';
