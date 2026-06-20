@@ -467,7 +467,14 @@ document.addEventListener('DOMContentLoaded', function() {
             var savedAddr = getShippingAddress();
             if (!savedAddr) {
                 showToast('Please enter your shipping address.');
-                window.location.href = 'account.html';
+                // Save checkout state and redirect to address form
+                sessionStorage.setItem('funfairday_checkout_state', JSON.stringify({
+                    country: window._selectedCountry || '',
+                    shippingCost: window._shippingCost,
+                    shippingMethod: window._shippingMethod || '',
+                    methodId: window._selectedMethodId || ''
+                }));
+                window.location.href = 'address-form.html';
                 return;
             }
 
@@ -1766,7 +1773,17 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Check if we have a saved address
         var savedAddr = getShippingAddress();
-        if (!savedAddr) return;
+        if (!savedAddr) {
+            // No address saved - save checkout state and redirect to address form
+            sessionStorage.setItem('funfairday_checkout_state', JSON.stringify({
+                country: window._selectedCountry || '',
+                shippingCost: window._shippingCost,
+                shippingMethod: window._shippingMethod || '',
+                methodId: window._selectedMethodId || ''
+            }));
+            window.location.href = 'address-form.html';
+            return;
+        }
 
         // Restore checkout state if available
         try {
