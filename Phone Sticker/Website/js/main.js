@@ -273,11 +273,8 @@ document.addEventListener('DOMContentLoaded', function() {
         renderCartItems();
         updateCartBadge();
 
-        // Recalculate shipping if country is selected
-        var countrySelect = document.getElementById('shippingCountry');
-        if (countrySelect && countrySelect.value) {
-            window._calculateShipping(countrySelect.value);
-        }
+        // Recalculate shipping from saved address
+        autoDetectShippingFromAddress();
     });
 
     function updateCartBadge() {
@@ -1958,14 +1955,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         } catch(e) {}
 
-        // Pre-select country in shipping dropdown to trigger shipping calculation
-        var countrySelect = document.getElementById('shippingCountry');
-        if (countrySelect && window._selectedCountry) {
-            countrySelect.value = window._selectedCountry;
-            // Trigger change event to calculate shipping
-            var evt = new Event('change', { bubbles: true });
-            countrySelect.dispatchEvent(evt);
-        }
     })();
 
 

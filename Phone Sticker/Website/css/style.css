@@ -871,6 +871,12 @@ ul {
     color: var(--dark);
     white-space: nowrap;
 }
+.cart-shipping-destination {
+    flex: 1;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary);
+}
 .cart-shipping-select {
     flex: 1;
     padding: 8px 10px;
