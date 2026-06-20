@@ -179,26 +179,6 @@
             e.preventDefault();
             if (!supabase) { showLoginError('Supabase not configured.'); return; }
 
-            // Validate address fields
-            var addrName = document.getElementById('addrName').value.trim();
-            var addrStreet = document.getElementById('addrStreet').value.trim();
-            var addrCity = document.getElementById('addrCity').value.trim();
-            var addrCountry = document.getElementById('addrCountry').value;
-            var addrCustom = document.getElementById('addrCustomCountry').value.trim();
-
-            if (!addrName || !addrStreet || !addrCity) {
-                showLoginError('Please fill in your name, street address, and city.');
-                return;
-            }
-            if (!addrCountry) {
-                showLoginError('Please select your country.');
-                return;
-            }
-            if (addrCountry === 'OTHERS' && !addrCustom) {
-                showLoginError('Please enter your country name.');
-                return;
-            }
-
             const btn = document.getElementById('loginBtn');
             btn.disabled = true;
             btn.textContent = 'Signing in...';
