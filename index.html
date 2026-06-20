@@ -141,16 +141,14 @@
         </div>
         <div class="cart-footer" id="cartFooter" style="display: none;">
             <!-- Shipping Section -->
-            <div class="cart-shipping" id="cartShipping">
+            <div class="cart-shipping" id="cartShipping" style="display:none;">
                 <div class="cart-shipping-header">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="3 11 8 11 10 13 14 13 16 11 21 11"/></svg>
                     <span>Shipping</span>
                 </div>
                 <div class="cart-shipping-row">
-                    <label class="cart-shipping-label" for="shippingCountry">Destination:</label>
-                    <select id="shippingCountry" class="cart-shipping-select">
-                        <option value="">Select country</option>
-                    </select>
+                    <label class="cart-shipping-label">Shipping to:</label>
+                    <span class="cart-shipping-destination" id="shippingDestination">—</span>
                 </div>
                 <div class="cart-shipping-methods" id="shippingMethods"></div>
                 <div class="cart-shipping-free" id="shippingFree" style="display:none;">
@@ -168,7 +166,7 @@
                 </div>
             </div>
             <div id="cartFreeShippingMsg" class="cart-free-shipping-msg" style="display:none;">
-                ?? Free Shipping
+                🚚 Free Shipping
             </div>
             <div class="cart-total">
                 <span>Total:</span>

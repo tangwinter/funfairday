@@ -208,14 +208,12 @@
                     <span>Shipping</span>
                 </div>
                 <div class="cart-shipping-row">
-                    <label class="cart-shipping-label" for="shippingCountry">Destination:</label>
-                    <select id="shippingCountry" class="cart-shipping-select">
-                        <option value="">Select country</option>
-                    </select>
+                    <label class="cart-shipping-label">Shipping to:</label>
+                    <span class="cart-shipping-destination" id="shippingDestination">â€”</span>
                 </div>
                 <div class="cart-shipping-methods" id="shippingMethods"></div>
                 <div class="cart-shipping-free" id="shippingFree" style="display:none;">
-                    ?? Free Shipping (Free Gift in cart!)
+                    ðŸŽ‰ Free Shipping (Free Gift in cart!)
                 </div>
             </div>
             <div class="cart-total-row">
@@ -331,7 +329,7 @@
                     var trackingHtml = '';
                     if (order.tracking_number) {
                         trackingHtml += '<div style="margin-top:8px;padding:10px 14px;background:#e8f5e9;border-radius:8px;font-size:0.85rem;display:flex;justify-content:space-between;align-items:center;">' +
-                            '<div><span style="font-weight:700;color:#2e7d32;">?“¦ Tracking: </span>' +
+                            '<div><span style="font-weight:700;color:#2e7d32;">ðŸ“¦ Tracking: </span>' +
                             '<span style="font-family:monospace;font-weight:600;">' + order.tracking_number + '</span></div>';
                         if (order.tracking_url) {
                             trackingHtml += '<a href="' + order.tracking_url + '" target="_blank" class="btn btn-primary" style="padding:6px 14px;font-size:0.8rem;text-decoration:none;">Track Parcel</a>';

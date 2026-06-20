@@ -1,8 +1,9 @@
 ﻿// Main Application Logic
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Auth state flag
+    // Auth state flags
     window._isLoggedIn = false;
+    window._authChecked = false;
 
     const colorClasses = ['product-color-1', 'product-color-2', 'product-color-3', 'product-color-4'];
     const placeholderIcons = ['🎨', '📱', '🎭', '💐'];
@@ -272,11 +273,8 @@ document.addEventListener('DOMContentLoaded', function() {
         renderCartItems();
         updateCartBadge();
 
-        // Recalculate shipping if country is selected
-        var countrySelect = document.getElementById('shippingCountry');
-        if (countrySelect && countrySelect.value) {
-            window._calculateShipping(countrySelect.value);
-        }
+        // Recalculate shipping from saved address
+        autoDetectShippingFromAddress();
     });
 
     function updateCartBadge() {
@@ -303,16 +301,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const items = Cart.getItems();
         if (items.length === 0) return;
 
-        // Require shipping destination selection
-        var countrySelect = document.getElementById('shippingCountry');
-        var selectedCountry = countrySelect ? countrySelect.value : '';
-        if (!selectedCountry) {
-            showToast('Please select a shipping destination first.');
+        // Get country from auto-detected address; if not set, trigger auth flow
+        if (!window._selectedCountry) {
+            showToast('Please sign in to set your shipping destination.');
             this.disabled = false;
             this.textContent = 'Checkout';
-            if (countrySelect) countrySelect.focus();
             return;
         }
+        var selectedCountry = window._selectedCountry;
 
         // Auto-calculate shipping if not yet done
         if (window._shippingCost === undefined) {
@@ -425,7 +421,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         shippingMethod: window._shippingMethod || '',
                         successUrl: CONFIG.successUrl,
                         cancelUrl: CONFIG.cancelUrl,
-                        useDynamicPrices: useDynamicPrices
+                        useDynamicPrices: useDynamicPrices,
+                        shippingAddress: JSON.parse(sessionStorage.getItem('funfairday_shipping_address') || 'null')
                     })
                 });
 
@@ -463,30 +460,47 @@ document.addEventListener('DOMContentLoaded', function() {
             return found ? found.name : code;
         }
 
-        // Step: Auth popup (Sign In / Register / Stranger)
+        // Step: Auth popup (Sign In / Create Account)
         function showAuthPopup() {
-            // If already signed in, skip auth popup
+            // If already signed in, go directly to Stripe
             if (window._isLoggedIn) {
-                showShippingConfirm();
+                var savedAddr = sessionStorage.getItem('funfairday_shipping_address');
+                if (savedAddr) {
+                    proceedCheckout();
+                } else {
+                    showAddressForm();
+                }
                 return;
             }
             showPopup({
                 icon: '🔐',
                 title: 'Almost there!',
-                text: 'Please sign in to save your address, or continue as a guest.',
+                text: 'Please sign in to continue, or create a new account.',
                 buttons: [
                     {
-                        label: 'Buy as Stranger',
+                        label: 'Sign In',
                         className: 'btn-primary',
                         action: function() {
-                            showShippingConfirm();
+                            sessionStorage.setItem('funfairday_checkout_state', JSON.stringify({
+                                country: selectedCountry,
+                                shippingCost: window._shippingCost,
+                                shippingMethod: window._shippingMethod,
+                                methodId: window._selectedMethodId
+                            }));
+                            window.location.href = 'login.html?return_to=' + encodeURIComponent(window.location.origin + '/?checkout=1');
                         }
                     },
                     {
-                        label: 'Sign In / Register',
+                        label: 'Create an Account',
                         className: 'btn-secondary',
                         action: function() {
-                            window.location.href = 'login.html?return_to=' + encodeURIComponent(window.location.href);
+                            sessionStorage.setItem('funfairday_checkout_state', JSON.stringify({
+                                country: selectedCountry,
+                                shippingCost: window._shippingCost,
+                                shippingMethod: window._shippingMethod,
+                                methodId: window._selectedMethodId
+                            }));
+                            window.location.href = 'register.html';
                         }
                     }
                 ]
@@ -495,36 +509,108 @@ document.addEventListener('DOMContentLoaded', function() {
             checkoutBtn.textContent = 'Checkout';
         }
 
-        // Step: Shipping cost confirmation
-        function showShippingConfirm() {
-            var countryName = getCountryName(selectedCountry);
-            var shipCostUSD = Math.round((window._shippingCost || 0) / 7.8 * 100) / 100;
-            var shipMethod = window._shippingMethod || 'Shipping';
+        // Step: Shipping address form
+        function showAddressForm() {
+            var overlay = document.getElementById('addressFormOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'addressFormOverlay';
+                overlay.className = 'popup-overlay';
+                overlay.innerHTML = '<div class="popup-card address-form-card">'
+                    + '<div class="addr-header">'
+                    + '<span class="addr-icon">📦</span>'
+                    + '<h3 class="addr-title">Shipping Address</h3>'
+                    + '<p class="addr-subtitle">Fill in your shipping details to continue</p>'
+                    + '</div>'
+                    + '<form id="addressForm" class="addr-form">'
+                    + '<div class="form-group"><label>Full Name <span class="required">*</span></label><input type="text" id="addrFullName" required placeholder="e.g. John Smith"></div>'
+                    + '<div class="form-group"><label>Street Address <span class="required">*</span></label><input type="text" id="addrStreet" required placeholder="e.g. 123 Main St, Apt 4B"></div>'
+                    + '<div class="form-row">'
+                    + '<div class="form-group"><label>City <span class="required">*</span></label><input type="text" id="addrCity" required placeholder="Hong Kong"></div>'
+                    + '<div class="form-group"><label>State / Province</label><input type="text" id="addrState" placeholder="Optional"></div>'
+                    + '</div>'
+                    + '<div class="form-row">'
+                    + '<div class="form-group"><label>ZIP / Postal Code</label><input type="text" id="addrZip" placeholder="Optional"></div>'
+                    + '<div class="form-group"><label>Phone</label><input type="tel" id="addrPhone" placeholder="Optional"></div>'
+                    + '</div>'
+                    + '<div class="form-group"><label>Country <span class="required">*</span></label><select id="addrCountry" class="addr-select"></select></div>'
+                    + '<div class="addr-actions">'
+                    + '<button type="submit" class="btn btn-primary addr-btn">Continue to Payment →</button>'
+                    + '<button type="button" class="btn btn-secondary addr-btn" id="addrBackBtn">← Back</button>'
+                    + '</div>'
+                    + '</form>'
+                    + '</div>';
+                document.body.appendChild(overlay);
 
-            showPopup({
-                icon: '📦',
-                title: 'Confirm Shipping',
-                text: 'Destination: ' + countryName + '\nMethod: ' + shipMethod + '\nCost: $' + shipCostUSD.toFixed(2),
-                buttons: [
-                    {
-                        label: 'Change Country',
-                        className: 'btn-secondary',
-                        action: function() {
-                            if (countrySelect) {
-                                countrySelect.focus();
-                                showToast('Please select a different country to recalculate shipping.');
-                            }
-                        }
-                    },
-                    {
-                        label: 'Confirm & Pay',
-                        className: 'btn-primary',
-                        action: function() {
-                            showFinalSteps();
-                        }
+                // Populate country dropdown
+                var countrySelectEl = overlay.querySelector('#addrCountry');
+                SHIPPING_COUNTRIES.forEach(function(c) {
+                    var opt = document.createElement('option');
+                    opt.value = c.code;
+                    opt.textContent = c.name;
+                    countrySelectEl.appendChild(opt);
+                });
+
+                // Handle form submit
+                overlay.querySelector('#addressForm').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    var name = document.getElementById('addrFullName').value.trim();
+                    var street = document.getElementById('addrStreet').value.trim();
+                    var city = document.getElementById('addrCity').value.trim();
+                    var state = document.getElementById('addrState').value.trim();
+                    var zip = document.getElementById('addrZip').value.trim();
+                    var phone = document.getElementById('addrPhone').value.trim();
+                    var countryCode = document.getElementById('addrCountry').value;
+
+                    if (!name || !street || !city || !countryCode) {
+                        showToast('Please fill in all required fields.');
+                        return;
                     }
-                ]
-            });
+
+                    // Store address in sessionStorage
+                    sessionStorage.setItem('funfairday_shipping_address', JSON.stringify({
+                        name: name,
+                        street: street,
+                        city: city,
+                        state: state,
+                        zip: zip,
+                        phone: phone,
+                        country: countryCode
+                    }));
+
+                    overlay.classList.remove('active');
+                    proceedCheckout();
+                });
+
+                // Handle back button
+                overlay.querySelector('#addrBackBtn').addEventListener('click', function() {
+                    overlay.classList.remove('active');
+                    showAuthPopup();
+                });
+
+                // Close on overlay click
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        overlay.classList.remove('active');
+                    }
+                });
+            }
+
+            // Pre-select country from current shipping selection
+            var countryEl = overlay.querySelector('#addrCountry');
+            if (selectedCountry && countryEl) {
+                countryEl.value = window._selectedCountry;
+            }
+
+            // Clear form fields
+            overlay.querySelector('#addrFullName').value = '';
+            overlay.querySelector('#addrStreet').value = '';
+            overlay.querySelector('#addrCity').value = '';
+            overlay.querySelector('#addrState').value = '';
+            overlay.querySelector('#addrZip').value = '';
+            overlay.querySelector('#addrPhone').value = '';
+
+            overlay.classList.add('active');
         }
 
         // Step: Bundle offer + free shipping check + proceed
@@ -558,7 +644,7 @@ document.addEventListener('DOMContentLoaded', function() {
                                 label: 'Keep Checkout',
                                 className: 'btn-secondary',
                                 action: function() {
-                                    showFreeShippingCheck();
+                                    setTimeout(showFreeShippingCheck, 300);
                                 }
                             }
                         ]
@@ -609,42 +695,216 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // ===== START CHECKOUT FLOW =====
-        // If gift code in use, show fluffy sticker upsell first
-        var hasGiftCode = !!localStorage.getItem('funfairday_gift_code');
-
-        if (hasGiftCode) {
-            var fluffyProduct = products.find(function(p) { return p.id === 'sticker-fluffy-pack-8'; });
-            showPopup({
-                icon: '🎁',
-                title: 'Add a Fluffy Sticker Pack?',
-                text: 'Add 8pcs Assorted Fluffy Sticker Pack ($9.62) to your gift order?',
-                buttons: [
-                    {
-                        label: 'Add to Cart ($9.62)',
-                        className: 'btn-primary',
-                        action: function() {
-                            if (fluffyProduct) {
-                                Cart.addItem(fluffyProduct, 1);
-                                showToast('Fluffy Sticker Pack added!');
-                                updateCartUI();
-                                openCart();
-                            }
-                            setTimeout(showAuthPopup, 300);
-                        }
-                    },
-                    {
-                        label: 'No thanks, keep checking out',
-                        className: 'btn-secondary',
-                        action: function() {
-                            showAuthPopup();
-                        }
-                    }
-                ]
-            });
-        } else {
-            showAuthPopup();
-        }
+        // Show auth popup (or go directly to Stripe if logged in)
+        showAuthPopup();
     });
+
+    // ============================================
+    // Global checkout functions (for resume after login)
+    // ============================================
+
+    window._proceedCheckoutFromLogin = async function() {
+        try {
+            const updatedItems = Cart.getItems();
+            const cartItems = updatedItems.map(function(item) {
+                return {
+                    id: item.id,
+                    productId: item.productId || item.id,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity,
+                    caseStyle: item.caseStyle || null,
+                    caseColor: item.caseColor || null,
+                    phoneModel: item.phoneModel || null,
+                    optionsText: item.optionsText || null
+                };
+            });
+
+            var giftCode = localStorage.getItem('funfairday_gift_code');
+            if (giftCode) cartItems._giftCode = giftCode;
+            if (Cart.isDiscountActive()) cartItems._discount30 = 'true';
+
+            if (!CONFIG.stripeReady) {
+                showToast('Stripe payment not yet configured.');
+                return;
+            }
+
+            var discountActive = Cart.isDiscountActive();
+            var hasItemsWithoutPriceId = updatedItems.some(function(item) {
+                var prodId = item.productId || item.id;
+                var prod = products.find(function(p) { return p.id === prodId; });
+                return prod && !prod.stripePriceId;
+            });
+            var useDynamicPrices = discountActive || hasItemsWithoutPriceId;
+
+            var stripeItems = updatedItems
+                .filter(function(item) {
+                    var prodId = item.productId || item.id;
+                    var prod = products.find(function(p) { return p.id === prodId; });
+                    return prod && (prod.stripePriceId || useDynamicPrices);
+                })
+                .map(function(item) {
+                    var prodId = item.productId || item.id;
+                    var prod = products.find(function(p) { return p.id === prodId; });
+                    var basePrice = item.caseStyle ? item.price : (prod ? prod.price : item.price);
+                    var unitAmount = useDynamicPrices ? Math.round(basePrice * (discountActive ? 0.7 : 1.0) * 100) : null;
+                    return {
+                        priceId: prod ? prod.stripePriceId : null,
+                        name: item.name,
+                        unitAmount: unitAmount,
+                        quantity: item.quantity
+                    };
+                });
+
+            if (stripeItems.length === 0) {
+                showToast('No payable items in cart.');
+                return;
+            }
+
+            if (giftCode) {
+                try {
+                    var sid = localStorage.getItem('funfairday_session') || '';
+                    await fetch('/claim-gift', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: giftCode, session: sid, fulfill: true })
+                    });
+                } catch(e) {
+                    console.log('Gift fulfill note:', e.message);
+                }
+            }
+
+            var response = await fetch('/create-checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: stripeItems,
+                    cartItems: cartItems,
+                    total: Cart.getTotal(),
+                    shippingFee: Math.round((window._shippingCost || 0) / 7.8 * 100) / 100,
+                    shippingMethod: window._shippingMethod || '',
+                    successUrl: CONFIG.successUrl,
+                    cancelUrl: CONFIG.cancelUrl,
+                    useDynamicPrices: useDynamicPrices,
+                    shippingAddress: JSON.parse(sessionStorage.getItem('funfairday_shipping_address') || 'null')
+                })
+            });
+
+            if (!response.ok) throw new Error('Checkout request failed');
+            var data = await response.json();
+
+            if (data.url) {
+                sessionStorage.setItem('checkout_cart', JSON.stringify(cartItems));
+                sessionStorage.setItem('checkout_total', Cart.getTotal().toString());
+                sessionStorage.setItem('checkout_shipping', JSON.stringify({
+                    cost: Math.round((window._shippingCost || 0) / 7.8 * 100) / 100,
+                    method: window._shippingMethod || '',
+                    methodId: window._selectedMethodId || '',
+                    country: window._selectedCountry
+                }));
+                window.location.href = data.url;
+            } else {
+                throw new Error('No checkout URL');
+            }
+
+        } catch (error) {
+            console.error('Checkout error:', error);
+            showToast('Unable to process checkout. Please try again later.');
+        }
+    };
+
+    window._showAddressFormFromLogin = function() {
+        try {
+            var overlay = document.getElementById('addressFormOverlay2');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'addressFormOverlay2';
+                overlay.className = 'popup-overlay';
+                overlay.innerHTML = '<div class="popup-card address-form-card">'
+                    + '<div class="addr-header">'
+                    + '<span class="addr-icon">📦</span>'
+                    + '<h3 class="addr-title">Shipping Address</h3>'
+                    + '<p class="addr-subtitle">Fill in your shipping details to continue</p>'
+                    + '</div>'
+                    + '<form id="addressForm2" class="addr-form">'
+                    + '<div class="form-group"><label>Full Name <span class="required">*</span></label><input type="text" id="addrFullName2" required placeholder="e.g. John Smith"></div>'
+                    + '<div class="form-group"><label>Street Address <span class="required">*</span></label><input type="text" id="addrStreet2" required placeholder="e.g. 123 Main St, Apt 4B"></div>'
+                    + '<div class="form-row">'
+                    + '<div class="form-group"><label>City <span class="required">*</span></label><input type="text" id="addrCity2" required placeholder="Hong Kong"></div>'
+                    + '<div class="form-group"><label>State / Province</label><input type="text" id="addrState2" placeholder="Optional"></div>'
+                    + '</div>'
+                    + '<div class="form-row">'
+                    + '<div class="form-group"><label>ZIP / Postal Code</label><input type="text" id="addrZip2" placeholder="Optional"></div>'
+                    + '<div class="form-group"><label>Phone</label><input type="tel" id="addrPhone2" placeholder="Optional"></div>'
+                    + '</div>'
+                    + '<div class="form-group"><label>Country <span class="required">*</span></label><select id="addrCountry2" class="addr-select"></select></div>'
+                    + '<div class="addr-actions">'
+                    + '<button type="submit" class="btn btn-primary addr-btn">Continue to Payment →</button>'
+                    + '</div>'
+                    + '</form>'
+                    + '</div>';
+                document.body.appendChild(overlay);
+
+                var countrySelectEl = overlay.querySelector('#addrCountry2');
+                SHIPPING_COUNTRIES.forEach(function(c) {
+                    var opt = document.createElement('option');
+                    opt.value = c.code;
+                    opt.textContent = c.name;
+                    countrySelectEl.appendChild(opt);
+                });
+
+                overlay.querySelector('#addressForm2').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    var name = document.getElementById('addrFullName2').value.trim();
+                    var street = document.getElementById('addrStreet2').value.trim();
+                    var city = document.getElementById('addrCity2').value.trim();
+                    var state = document.getElementById('addrState2').value.trim();
+                    var zip = document.getElementById('addrZip2').value.trim();
+                    var phone = document.getElementById('addrPhone2').value.trim();
+                    var countryCode = document.getElementById('addrCountry2').value;
+
+                    if (!name || !street || !city || !countryCode) {
+                        showToast('Please fill in all required fields.');
+                        return;
+                    }
+
+                    sessionStorage.setItem('funfairday_shipping_address', JSON.stringify({
+                        name: name, street: street, city: city,
+                        state: state, zip: zip, phone: phone, country: countryCode
+                    }));
+
+                    overlay.classList.remove('active');
+                    window._proceedCheckoutFromLogin();
+                });
+
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        overlay.classList.remove('active');
+                    }
+                });
+            }
+
+            var countryEl = overlay.querySelector('#addrCountry2');
+            if (window._selectedCountry && countryEl) {
+                countryEl.value = window._selectedCountry;
+            }
+
+            overlay.querySelector('#addrFullName2').value = '';
+            overlay.querySelector('#addrStreet2').value = '';
+            overlay.querySelector('#addrCity2').value = '';
+            overlay.querySelector('#addrState2').value = '';
+            overlay.querySelector('#addrZip2').value = '';
+            overlay.querySelector('#addrPhone2').value = '';
+
+            overlay.classList.add('active');
+        } catch(e) {
+            console.error('Address form error:', e);
+            // Fallback: try Resume Mode via button click
+            window._resumeCheckoutMode = true;
+            var btn = document.getElementById('checkoutBtn');
+            if (btn) btn.click();
+        }
+    };
 
     // --- Shipping ---
     var SHIPPING_COUNTRIES = [
@@ -695,18 +955,39 @@ document.addEventListener('DOMContentLoaded', function() {
     window._shippingCost = undefined;
     window._shippingMethod = '';
 
-    // Populate country dropdown
-    (function populateCountries() {
-        var select = document.getElementById('shippingCountry');
-        if (!select) return;
-        SHIPPING_COUNTRIES.forEach(function(c) {
-            var opt = document.createElement('option');
-            opt.value = c.code;
-            opt.textContent = c.name;
-            select.appendChild(opt);
-        });
-        // Country select starts empty — user must choose
-    })();
+    // Auto-detect shipping from saved address
+    function autoDetectShippingFromAddress() {
+        var shippingSection = document.getElementById('cartShipping');
+        var destEl = document.getElementById('shippingDestination');
+        if (!shippingSection || !destEl) return;
+
+        try {
+            var addrData = JSON.parse(sessionStorage.getItem('funfairday_shipping_address') || 'null');
+            if (!addrData || !addrData.country) {
+                shippingSection.style.display = 'none';
+                return;
+            }
+
+            var countryCode = addrData.country;
+            var countryObj = SHIPPING_COUNTRIES.find(function(c) { return c.code === countryCode; });
+            var countryName = countryObj ? countryObj.name : countryCode;
+
+            destEl.textContent = countryName;
+            shippingSection.style.display = 'block';
+
+            window._selectedCountry = countryCode;
+
+            // Auto-calculate shipping if not yet done or country changed
+            if (window._selectedCountry && (window._shippingCost === undefined || window._lastShippingCountry !== countryCode)) {
+                window._lastShippingCountry = countryCode;
+                window._calculateShipping(countryCode).catch(function(err) {
+                    console.error('Auto shipping error:', err);
+                });
+            }
+        } catch(e) {
+            shippingSection.style.display = 'none';
+        }
+    }
 
     // Render shipping method radio buttons (or fallback to old #shippingInfo)
     function renderShippingMethods(methods, freeGift) {
@@ -1072,40 +1353,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return Promise.resolve({ methods: methods, freeGift: isFreeShipping, weight: totalGrams });
     };
 
-    // Country dropdown change
-    document.addEventListener('change', function(e) {
-        if (e.target && e.target.id === 'shippingCountry') {
-            var country = e.target.value;
-            var methodsEl = document.getElementById('shippingMethods');
-            var freeEl = document.getElementById('shippingFree');
-            if (country) {
-                if (methodsEl) methodsEl.style.display = 'none';
-                window._calculateShipping(country).catch(function(err) {
-                    console.error('Shipping error detail:', err);
-                    showToast('Shipping error: ' + err.message);
-                });
-            } else {
-                if (methodsEl) methodsEl.style.display = 'none';
-                if (freeEl) freeEl.style.display = 'none';
-                window._shippingCost = undefined;
-                window._shippingMethod = '';
-                var lineEl = document.getElementById('shippingLine');
-                if (lineEl) lineEl.style.display = 'none';
-                updateCartUI();
-            }
-        }
-    });
-
     // Recalculate shipping when cart changes
     Cart.onUpdate = (function(original) {
         return function() {
             if (typeof original === 'function') original();
-            var countrySelect = document.getElementById('shippingCountry');
-            if (countrySelect && countrySelect.value) {
-                window._calculateShipping(countrySelect.value).catch(function(err) {
-                    console.error('Shipping recalc error:', err);
-                });
-            }
+            autoDetectShippingFromAddress();
         };
     })(Cart.onUpdate);
 
@@ -1661,6 +1913,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 
         supabase.auth.getSession().then(({ data: { session } }) => {
+            window._authChecked = true;
             const authLink = document.getElementById('authLink');
             if (authLink) {
                 if (session) {
@@ -1674,6 +1927,36 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+    // --- Checkout Resume: detect ?checkout=1 after login ---
+    (function() {
+        var params = new URLSearchParams(window.location.search);
+        if (params.get('checkout') !== '1') return;
+
+        // Clean up URL param without page reload
+        if (history.replaceState) {
+            var cleanUrl = window.location.origin + window.location.pathname;
+            history.replaceState(null, '', cleanUrl);
+        }
+
+        // Check if we have a saved address
+        var savedAddr = sessionStorage.getItem('funfairday_shipping_address');
+        if (!savedAddr) return;
+
+        // Restore checkout state if available
+        try {
+            var savedState = sessionStorage.getItem('funfairday_checkout_state');
+            if (savedState) {
+                var state = JSON.parse(savedState);
+                if (state.country) window._selectedCountry = state.country;
+                if (state.shippingCost !== undefined) window._shippingCost = state.shippingCost;
+                if (state.shippingMethod) window._shippingMethod = state.shippingMethod;
+                if (state.methodId) window._selectedMethodId = state.methodId;
+                sessionStorage.removeItem('funfairday_checkout_state');
+            }
+        } catch(e) {}
+
+    })();
+
 
     // Listen for public data loaded event to update dynamic content
     document.addEventListener('publicDataLoaded', function(e) {
