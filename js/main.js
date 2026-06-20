@@ -599,7 +599,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     var methodEl = document.getElementById('shippingMethod');
                     var costEl = document.getElementById('shippingCost');
                     if (methodEl) methodEl.textContent = firstMethod.name;
-                    if (costEl) costEl.textContent = 'HK$' + firstMethod.cost.toFixed(2);
+                    if (costEl) costEl.textContent = '$' + (firstMethod.cost / 7.8).toFixed(2);
                     infoEl.style.display = 'flex';
                     window._selectedMethodId = firstMethod.id;
                     window._shippingCost = firstMethod.cost;
@@ -625,7 +625,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     '<input type="radio" name="shippingMethod" value="' + m.id + '" data-cost="' + m.cost + '" data-name="' + m.name + '"' + checked + '>' +
                     '<div class="ship-method-info">' +
                         '<span class="ship-method-name">' + m.name + '</span>' +
-                        '<span class="ship-method-cost">HK$' + m.cost.toFixed(2) + '</span>' +
+                        '<span class="ship-method-cost">$' + (m.cost / 7.8).toFixed(2) + '</span>' +
                         '<span class="ship-method-time">' + m.deliveryTime + '</span>' +
                     '</div>' +
                 '</label>';
@@ -663,7 +663,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var lineCostEl = document.getElementById('shippingLineCost');
         if (!lineEl) return;
         lineEl.style.display = 'flex';
-        if (lineCostEl) lineCostEl.textContent = 'HK$' + (window._shippingCost || 0).toFixed(2);
+        if (lineCostEl) lineCostEl.textContent = '$' + ((window._shippingCost || 0) / 7.8).toFixed(2);
         updateCartUI();
     }
 
