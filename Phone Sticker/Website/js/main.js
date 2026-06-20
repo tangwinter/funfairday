@@ -410,9 +410,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
                 if (stripeItems.length === 0) {
-                    showToast('No payable items in cart.');
-                    checkoutBtn.disabled = false;
-                    checkoutBtn.textContent = 'Checkout';
+                    // Free order (only free stickers, no paid items)
+                    createFreeOrder(cartItems, checkoutBtn);
                     return;
                 }
 
@@ -554,6 +553,101 @@ document.addEventListener('DOMContentLoaded', function() {
         return localStorage.getItem('funfairday_shipping_address');
     }
 
+    // Helper: get logged-in user info from stored Supabase session
+    function getStoredUser() {
+        try {
+            for (var i = 0; i < localStorage.length; i++) {
+                var key = localStorage.key(i);
+                if (key && key.indexOf('sb-') === 0 && key.indexOf('-auth-token') > 0) {
+                    var data = JSON.parse(localStorage.getItem(key));
+                    if (data && data.user) {
+                        return { id: data.user.id, email: data.user.email };
+                    }
+                }
+            }
+        } catch(e) {}
+        return null;
+    }
+
+    // Helper: create free order (no Stripe payment needed)
+    async function createFreeOrder(cartItems, checkoutBtnEl) {
+        try {
+            showToast('Processing free order...');
+            var userInfo = getStoredUser();
+            if (!userInfo) {
+                showToast('Please log in to claim free items.');
+                if (checkoutBtnEl) { checkoutBtnEl.disabled = false; checkoutBtnEl.textContent = 'Checkout'; }
+                return;
+            }
+
+            var savedAddr = getShippingAddress();
+            var shippingAddr = savedAddr ? JSON.parse(savedAddr) : null;
+
+            // Read shipping info from window
+            var shipMethod = window._shippingMethod || '';
+            var shipCost = Math.round((window._shippingCost || 0) / 7.8 * 100) / 100;
+
+            // Save order data to sessionStorage for success page
+            sessionStorage.setItem('checkout_cart', JSON.stringify(cartItems));
+            sessionStorage.setItem('checkout_total', Cart.getTotal().toString());
+            sessionStorage.setItem('checkout_shipping', JSON.stringify({
+                cost: 0, method: '', methodId: '', country: window._selectedCountry || ''
+            }));
+
+            var freeOrderRef = 'FREE-' + Date.now().toString(36).toUpperCase();
+
+            var orderRes = await fetch('/create-order', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    customer_id: userInfo.id,
+                    customer_email: userInfo.email,
+                    items: cartItems,
+                    total: 0,
+                    shipping_address: shippingAddr,
+                    stripe_session_id: '',
+                    shipping_method: shipMethod,
+                    shipping_cost: shipCost
+                })
+            });
+
+            if (orderRes.ok) {
+                // Fulfill gift code if present
+                var giftCode = localStorage.getItem('funfairday_gift_code');
+                if (giftCode) {
+                    try {
+                        var sid = localStorage.getItem('funfairday_session') || '';
+                        await fetch('/claim-gift', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code: giftCode, session: sid, fulfill: true })
+                        });
+                    } catch(e) {}
+                    localStorage.removeItem('funfairday_gift_code');
+                    localStorage.removeItem('funfairday_gift_expires');
+                }
+
+                // Clear cart
+                localStorage.removeItem('funfairday_cart');
+                if (typeof Cart !== 'undefined' && Cart.init) Cart.init();
+
+                showToast('Free order placed!');
+                setTimeout(function() {
+                    window.location.href = 'success.html?order_ref=' + freeOrderRef;
+                }, 500);
+            } else {
+                var errText = await orderRes.text();
+                console.error('Free order failed:', errText);
+                showToast('Failed to create free order. Please try again.');
+                if (checkoutBtnEl) { checkoutBtnEl.disabled = false; checkoutBtnEl.textContent = 'Checkout'; }
+            }
+        } catch(e) {
+            console.error('Free order error:', e);
+            showToast('Something went wrong: ' + e.message);
+            if (checkoutBtnEl) { checkoutBtnEl.disabled = false; checkoutBtnEl.textContent = 'Checkout'; }
+        }
+    }
+
     window._resumeCheckout = function() {
         var checkoutBtnEl = document.getElementById('checkoutBtn');
         if (checkoutBtnEl) {
@@ -627,7 +721,8 @@ document.addEventListener('DOMContentLoaded', function() {
             });
 
             if (stripeItems.length === 0) {
-                showToast('No payable items in cart.');
+                // Free order (only free stickers, no paid items)
+                createFreeOrder(cartItems, null);
                 return;
             }
 

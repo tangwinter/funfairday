@@ -40,9 +40,32 @@
 
         document.getElementById('orderRef').textContent = orderRef || 'N/A';
 
-        // Try to create order in Supabase
+        // Try to create order in Supabase (skip for free orders - already saved)
         (async function createOrder() {
             try {
+                // Free orders are already saved during checkout
+                if (orderRef && orderRef.indexOf('FREE-') === 0) {
+                    // Just display the order summary from sessionStorage
+                    const cartJson = sessionStorage.getItem('checkout_cart');
+                    const totalStr = sessionStorage.getItem('checkout_total');
+                    if (cartJson && totalStr) {
+                        const cartItems = JSON.parse(cartJson);
+                        document.getElementById('orderDetails').style.display = 'block';
+                        document.getElementById('orderTotal').textContent = '$' + parseFloat(totalStr).toFixed(2);
+                        const itemsList = document.getElementById('orderItemsList');
+                        itemsList.innerHTML = cartItems.map(item =>
+                            '<p style="padding:4px 0;border-bottom:1px solid rgba(0,0,0,0.04);">' +
+                                item.name + ' x' + item.quantity +
+                                (item.caseStyle ? ' <span style="color:var(--text-light);font-size:0.85rem;">(' + item.caseStyle + (item.caseColor ? ' - ' + item.caseColor : '') + ')</span>' : '') +
+                                ' - <strong style="color:var(--primary);">$' + (item.price * item.quantity).toFixed(2) + '</strong>' +
+                            '</p>'
+                        ).join('');
+                    }
+                    sessionStorage.removeItem('checkout_cart');
+                    sessionStorage.removeItem('checkout_total');
+                    sessionStorage.removeItem('checkout_shipping');
+                    return;
+                }
                 // Fetch Supabase config from server
                 const res = await fetch('/get-supabase-config');
                 const config = await res.json();
