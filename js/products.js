@@ -12,7 +12,7 @@ const categories = [
         name: 'Sticker Jar',
         shortName: 'Sticker Jar',
         description: 'Browse our 3D and Fluffy sticker collections!',
-        longDescription: 'From cute animals to tiny food — find your perfect sticker!',
+        longDescription: 'Sticker Jar',
         image: '/images/stickers/3d-sticker.jpeg',
         badge: 'Popular',
         emoji: '\u{1F3A0}'
