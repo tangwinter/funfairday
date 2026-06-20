@@ -304,35 +304,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const items = Cart.getItems();
         if (items.length === 0) return;
 
-        // === RESUME MODE (after login): skip validation, go directly to address form ===
-        if (window._resumeCheckoutMode) {
-            window._resumeCheckoutMode = false;
-            try {
-                var savedState = JSON.parse(sessionStorage.getItem('funfairday_checkout_state') || 'null');
-                if (savedState) {
-                    sessionStorage.removeItem('funfairday_checkout_state');
-                    if (savedState.country) {
-                        selectedCountry = savedState.country;
-                        window._selectedCountry = savedState.country;
-                    }
-                    if (savedState.shippingCost !== undefined) window._shippingCost = savedState.shippingCost;
-                    if (savedState.shippingMethod) window._shippingMethod = savedState.shippingMethod;
-                    if (savedState.methodId) window._selectedMethodId = savedState.methodId;
-                }
-            } catch(e) {}
-            showAddressForm();
-            return;
-        }
-        var countrySelect = document.getElementById('shippingCountry');
-        var selectedCountry = countrySelect ? countrySelect.value : '';
-        window._selectedCountry = selectedCountry;
-        if (!selectedCountry) {
-            showToast('Please select a shipping destination first.');
+        // Get country from auto-detected address; if not set, trigger auth flow
+        if (!window._selectedCountry) {
+            showToast('Please sign in to set your shipping destination.');
             this.disabled = false;
             this.textContent = 'Checkout';
-            if (countrySelect) countrySelect.focus();
             return;
         }
+        var selectedCountry = window._selectedCountry;
 
         // Auto-calculate shipping if not yet done
         if (window._shippingCost === undefined) {
@@ -979,18 +958,39 @@ document.addEventListener('DOMContentLoaded', function() {
     window._shippingCost = undefined;
     window._shippingMethod = '';
 
-    // Populate country dropdown
-    (function populateCountries() {
-        var select = document.getElementById('shippingCountry');
-        if (!select) return;
-        SHIPPING_COUNTRIES.forEach(function(c) {
-            var opt = document.createElement('option');
-            opt.value = c.code;
-            opt.textContent = c.name;
-            select.appendChild(opt);
-        });
-        // Country select starts empty — user must choose
-    })();
+    // Auto-detect shipping from saved address
+    function autoDetectShippingFromAddress() {
+        var shippingSection = document.getElementById('cartShipping');
+        var destEl = document.getElementById('shippingDestination');
+        if (!shippingSection || !destEl) return;
+
+        try {
+            var addrData = JSON.parse(sessionStorage.getItem('funfairday_shipping_address') || 'null');
+            if (!addrData || !addrData.country) {
+                shippingSection.style.display = 'none';
+                return;
+            }
+
+            var countryCode = addrData.country;
+            var countryObj = SHIPPING_COUNTRIES.find(function(c) { return c.code === countryCode; });
+            var countryName = countryObj ? countryObj.name : countryCode;
+
+            destEl.textContent = countryName;
+            shippingSection.style.display = 'block';
+
+            window._selectedCountry = countryCode;
+
+            // Auto-calculate shipping if not yet done or country changed
+            if (window._selectedCountry && (window._shippingCost === undefined || window._lastShippingCountry !== countryCode)) {
+                window._lastShippingCountry = countryCode;
+                window._calculateShipping(countryCode).catch(function(err) {
+                    console.error('Auto shipping error:', err);
+                });
+            }
+        } catch(e) {
+            shippingSection.style.display = 'none';
+        }
+    }
 
     // Render shipping method radio buttons (or fallback to old #shippingInfo)
     function renderShippingMethods(methods, freeGift) {
@@ -1356,40 +1356,11 @@ document.addEventListener('DOMContentLoaded', function() {
         return Promise.resolve({ methods: methods, freeGift: isFreeShipping, weight: totalGrams });
     };
 
-    // Country dropdown change
-    document.addEventListener('change', function(e) {
-        if (e.target && e.target.id === 'shippingCountry') {
-            var country = e.target.value;
-            var methodsEl = document.getElementById('shippingMethods');
-            var freeEl = document.getElementById('shippingFree');
-            if (country) {
-                if (methodsEl) methodsEl.style.display = 'none';
-                window._calculateShipping(country).catch(function(err) {
-                    console.error('Shipping error detail:', err);
-                    showToast('Shipping error: ' + err.message);
-                });
-            } else {
-                if (methodsEl) methodsEl.style.display = 'none';
-                if (freeEl) freeEl.style.display = 'none';
-                window._shippingCost = undefined;
-                window._shippingMethod = '';
-                var lineEl = document.getElementById('shippingLine');
-                if (lineEl) lineEl.style.display = 'none';
-                updateCartUI();
-            }
-        }
-    });
-
     // Recalculate shipping when cart changes
     Cart.onUpdate = (function(original) {
         return function() {
             if (typeof original === 'function') original();
-            var countrySelect = document.getElementById('shippingCountry');
-            if (countrySelect && countrySelect.value) {
-                window._calculateShipping(countrySelect.value).catch(function(err) {
-                    console.error('Shipping recalc error:', err);
-                });
-            }
+            autoDetectShippingFromAddress();
         };
     })(Cart.onUpdate);
 
