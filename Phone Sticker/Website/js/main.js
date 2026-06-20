@@ -500,21 +500,28 @@ document.addEventListener('DOMContentLoaded', function() {
                         label: 'Buy as Stranger',
                         className: 'btn-primary',
                         action: function() {
-                            showAddressForm();
-                        }
-                    },
-                    {
-                        label: 'Sign In / Register',
-                        className: 'btn-secondary',
-                        action: function() {
-                            // Save checkout state so we can resume after login
+                            // Save checkout state and redirect to address form page
                             sessionStorage.setItem('funfairday_checkout_state', JSON.stringify({
                                 country: selectedCountry,
                                 shippingCost: window._shippingCost,
                                 shippingMethod: window._shippingMethod,
                                 methodId: window._selectedMethodId
                             }));
-                            window.location.href = 'login.html?return_to=' + encodeURIComponent(window.location.origin + window.location.pathname);
+                            window.location.href = 'address-form.html';
+                        }
+                    },
+                    {
+                        label: 'Sign In / Register',
+                        className: 'btn-secondary',
+                        action: function() {
+                            // Save checkout state so we can resume on address form page
+                            sessionStorage.setItem('funfairday_checkout_state', JSON.stringify({
+                                country: selectedCountry,
+                                shippingCost: window._shippingCost,
+                                shippingMethod: window._shippingMethod,
+                                methodId: window._selectedMethodId
+                            }));
+                            window.location.href = 'login.html?return_to=' + encodeURIComponent(window.location.origin + '/address-form.html');
                         }
                     }
                 ]
@@ -1983,40 +1990,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // --- Checkout Resume After Login ---
-    // Simple self-contained resume: no auth dependency needed since address form works for guests too
-    (function() {
-        var savedState = sessionStorage.getItem('funfairday_checkout_state');
-        if (!savedState) return;
 
-        sessionStorage.removeItem('funfairday_checkout_state');
-
-        try {
-            var state = JSON.parse(savedState);
-            if (state.country) window._selectedCountry = state.country;
-            if (state.shippingCost !== undefined) window._shippingCost = state.shippingCost;
-            if (state.shippingMethod) window._shippingMethod = state.shippingMethod;
-            if (state.methodId) window._selectedMethodId = state.methodId;
-        } catch(e) {
-            console.log('Resume checkout state error:', e);
-            return;
-        }
-
-        // Wait for page to fully stabilize, then show address form
-        setTimeout(function() {
-            try {
-                if (typeof window._showAddressFormFromLogin === 'function') {
-                    window._showAddressFormFromLogin();
-                    return;
-                }
-                window._resumeCheckoutMode = true;
-                var btn = document.getElementById('checkoutBtn');
-                if (btn) btn.click();
-            } catch(e) {
-                console.log('Resume checkout show error:', e);
-            }
-        }, 800);
-    })();
 
     // Listen for public data loaded event to update dynamic content
     document.addEventListener('publicDataLoaded', function(e) {

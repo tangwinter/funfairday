@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shipping Address - FunFairDay</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .address-page { min-height: 100vh; display: flex; align-items: flex-start; justify-content: center; padding: 120px 20px 60px; }
+        .address-card { background: white; border-radius: 16px; padding: 36px 32px; width: 100%; max-width: 560px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); }
+        .address-card h1 { font-size: 1.6rem; font-weight: 800; color: var(--dark); text-align: center; margin-bottom: 4px; }
+        .address-card .page-subtitle { text-align: center; color: var(--text-light); margin-bottom: 28px; font-size: 0.95rem; }
+        .order-summary { background: #f9f9f9; border-radius: 10px; padding: 14px 16px; margin-bottom: 24px; font-size: 0.85rem; }
+        .order-summary .summary-row { display: flex; justify-content: space-between; padding: 3px 0; }
+        .order-summary .summary-row.total { font-weight: 800; font-size: 0.95rem; border-top: 1px solid #e0e0e0; margin-top: 6px; padding-top: 6px; }
+        .order-summary .summary-label { color: var(--text-light); }
+        .order-summary .summary-value { color: var(--dark); font-weight: 700; }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); z-index: 99999; display: none; justify-content: center; align-items: center; flex-direction: column; gap: 16px; }
+        .loading-overlay.active { display: flex; }
+        .loading-spinner { width: 40px; height: 40px; border: 4px solid #e0e0e0; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-size: 1rem; color: var(--dark); font-weight: 700; }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container header-inner">
+            <a href="index.html" class="logo">
+                <img src="images/FFD Logo.jpeg" alt="FunFairDay Logo" class="logo-img">
+                <span class="logo-text">FunFairDay</span>
+            </a>
+            <nav class="nav">
+                <a href="index.html" class="nav-link">Home</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Loading overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Processing payment...</div>
+    </div>
+
+    <div class="address-page">
+        <div class="address-card">
+            <h1>Shipping Address</h1>
+            <p class="page-subtitle">Fill in your shipping details to continue checkout</p>
+
+            <!-- Order summary -->
+            <div class="order-summary" id="orderSummary">
+                <div class="summary-row"><span class="summary-label">Items:</span><span class="summary-value" id="summaryItems">0</span></div>
+                <div class="summary-row"><span class="summary-label">Subtotal:</span><span class="summary-value" id="summarySubtotal">$0.00</span></div>
+                <div class="summary-row"><span class="summary-label">Shipping:</span><span class="summary-value" id="summaryShipping">Calculated</span></div>
+                <div class="summary-row total"><span class="summary-label">Total:</span><span class="summary-value" id="summaryTotal">$0.00</span></div>
+            </div>
+
+            <!-- Error message -->
+            <div class="auth-error" id="addressError"></div>
+
+            <!-- Address form -->
+            <form class="addr-form" id="addressForm">
+                <div class="form-group">
+                    <label>Full Name <span class="required">*</span></label>
+                    <input type="text" id="addrFullName" required placeholder="e.g. John Smith">
+                </div>
+                <div class="form-group">
+                    <label>Street Address <span class="required">*</span></label>
+                    <input type="text" id="addrStreet" required placeholder="e.g. 123 Main St, Apt 4B">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>City <span class="required">*</span></label>
+                        <input type="text" id="addrCity" required placeholder="Hong Kong">
+                    </div>
+                    <div class="form-group">
+                        <label>State / Province</label>
+                        <input type="text" id="addrState" placeholder="Optional">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>ZIP / Postal Code</label>
+                        <input type="text" id="addrZip" placeholder="Optional">
+                    </div>
+                    <div class="form-group">
+                        <label>Phone</label>
+                        <input type="tel" id="addrPhone" placeholder="Optional">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Country <span class="required">*</span></label>
+                    <select id="addrCountry" class="addr-select" required>
+                        <option value="">Select country...</option>
+                    </select>
+                </div>
+                <div class="addr-actions" style="margin-top:8px;">
+                    <button type="submit" class="btn btn-primary addr-btn" id="continueBtn">Continue to Payment</button>
+                    <a href="index.html" class="btn btn-secondary addr-btn" style="text-align:center;text-decoration:none;">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+    <script src="js/products.js"></script>
+    <script src="js/cart.js"></script>
+    <script>
+    // ============================================
+    // Shipping Countries (must match main.js)
+    // ============================================
+    var SHIPPING_COUNTRIES = [
+        { code: 'AR', name: 'Argentina' },
+        { code: 'AU', name: 'Australia' },
+        { code: 'AT', name: 'Austria' },
+        { code: 'BE', name: 'Belgium' },
+        { code: 'BR', name: 'Brazil' },
+        { code: 'CA', name: 'Canada' },
+        { code: 'CN', name: 'China' },
+        { code: 'CZ', name: 'Czech Republic' },
+        { code: 'DK', name: 'Denmark' },
+        { code: 'FR', name: 'France' },
+        { code: 'DE', name: 'Germany' },
+        { code: 'GR', name: 'Greece' },
+        { code: 'HK', name: 'Hong Kong' },
+        { code: 'ID', name: 'Indonesia' },
+        { code: 'IE', name: 'Ireland' },
+        { code: 'IT', name: 'Italy' },
+        { code: 'JP', name: 'Japan' },
+        { code: 'MY', name: 'Malaysia' },
+        { code: 'MX', name: 'Mexico' },
+        { code: 'NL', name: 'Netherlands' },
+        { code: 'NZ', name: 'New Zealand' },
+        { code: 'NO', name: 'Norway' },
+        { code: 'PH', name: 'Philippines' },
+        { code: 'PL', name: 'Poland' },
+        { code: 'PT', name: 'Portugal' },
+        { code: 'SA', name: 'Saudi Arabia' },
+        { code: 'SG', name: 'Singapore' },
+        { code: 'ZA', name: 'South Africa' },
+        { code: 'KR', name: 'South Korea' },
+        { code: 'ES', name: 'Spain' },
+        { code: 'SE', name: 'Sweden' },
+        { code: 'CH', name: 'Switzerland' },
+        { code: 'TW', name: 'Taiwan' },
+        { code: 'TH', name: 'Thailand' },
+        { code: 'AE', name: 'United Arab Emirates' },
+        { code: 'GB', name: 'United Kingdom' },
+        { code: 'US', name: 'United States' },
+        { code: 'VN', name: 'Vietnam' },
+        { code: 'OTHERS', name: 'Others (Non-listed country)' }
+    ];
+
+    // ============================================
+    // Toast notification
+    // ============================================
+    function showToast(msg) {
+        var existing = document.querySelector('.toast');
+        if (existing) existing.remove();
+        var toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.textContent = msg;
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.classList.add('show'); }, 10);
+        setTimeout(function() {
+            toast.classList.remove('show');
+            setTimeout(function() { if (toast.parentNode) toast.parentNode.removeChild(toast); }, 300);
+        }, 3000);
+    }
+
+    function showError(msg) {
+        var el = document.getElementById('addressError');
+        if (el) { el.textContent = msg; el.classList.add('show'); }
+    }
+
+    function hideError() {
+        var el = document.getElementById('addressError');
+        if (el) el.classList.remove('show');
+    }
+
+    // ============================================
+    // Page Initialization
+    // ============================================
+    document.addEventListener('DOMContentLoaded', function() {
+        // Restore checkout state from sessionStorage
+        var savedState = null;
+        try {
+            var raw = sessionStorage.getItem('funfairday_checkout_state');
+            if (raw) savedState = JSON.parse(raw);
+        } catch(e) {
+            console.log('No checkout state found');
+        }
+
+        // If no checkout state and cart is empty, redirect home
+        Cart.init();
+        var items = Cart.getItems();
+        if (!savedState || items.length === 0) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        // Restore shipping state
+        window._selectedCountry = savedState.country || '';
+        window._shippingCost = savedState.shippingCost;
+        window._shippingMethod = savedState.shippingMethod || '';
+        window._selectedMethodId = savedState.methodId || '';
+
+        // Clean up: remove the state since it's been consumed
+        sessionStorage.removeItem('funfairday_checkout_state');
+
+        // Populate country dropdown
+        var countrySelect = document.getElementById('addrCountry');
+        SHIPPING_COUNTRIES.forEach(function(c) {
+            var opt = document.createElement('option');
+            opt.value = c.code;
+            opt.textContent = c.name;
+            if (c.code === window._selectedCountry) opt.selected = true;
+            countrySelect.appendChild(opt);
+        });
+
+        // Show order summary
+        var itemCount = items.reduce(function(sum, i) { return sum + i.quantity; }, 0);
+        var total = Cart.getTotal();
+        document.getElementById('summaryItems').textContent = itemCount + ' item(s)';
+        document.getElementById('summarySubtotal').textContent = '$' + total.toFixed(2);
+        if (window._shippingCost !== undefined) {
+            var shippingUSD = Math.round((window._shippingCost || 0) / 7.8 * 100) / 100;
+            document.getElementById('summaryShipping').textContent = '$' + shippingUSD.toFixed(2);
+            document.getElementById('summaryTotal').textContent = '$' + (total + shippingUSD).toFixed(2);
+        }
+
+        // ============================================
+        // Form submission: call /create-checkout
+        // ============================================
+        document.getElementById('addressForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            hideError();
+
+            var name = document.getElementById('addrFullName').value.trim();
+            var street = document.getElementById('addrStreet').value.trim();
+            var city = document.getElementById('addrCity').value.trim();
+            var state = document.getElementById('addrState').value.trim();
+            var zip = document.getElementById('addrZip').value.trim();
+            var phone = document.getElementById('addrPhone').value.trim();
+            var countryCode = document.getElementById('addrCountry').value;
+
+            if (!name || !street || !city || !countryCode) {
+                showError('Please fill in all required fields.');
+                return;
+            }
+
+            // Save address
+            sessionStorage.setItem('funfairday_shipping_address', JSON.stringify({
+                name: name, street: street, city: city,
+                state: state, zip: zip, phone: phone, country: countryCode
+            }));
+
+            // Show loading
+            document.getElementById('loadingOverlay').classList.add('active');
+            document.getElementById('continueBtn').disabled = true;
+            document.getElementById('continueBtn').textContent = 'Processing...';
+
+            try {
+                // Build cart items (same logic as proceedCheckout in main.js)
+                var updatedItems = Cart.getItems();
+                var cartItems = updatedItems.map(function(item) {
+                    return {
+                        id: item.id,
+                        productId: item.productId || item.id,
+                        name: item.name,
+                        price: item.price,
+                        quantity: item.quantity,
+                        caseStyle: item.caseStyle || null,
+                        caseColor: item.caseColor || null,
+                        phoneModel: item.phoneModel || null,
+                        optionsText: item.optionsText || null
+                    };
+                });
+
+                // Add gift code and discount info
+                var giftCode = localStorage.getItem('funfairday_gift_code');
+                if (giftCode) cartItems._giftCode = giftCode;
+                if (localStorage.getItem('funfairday_discount30') === 'true') cartItems._discount30 = 'true';
+
+                // Build Stripe items
+                var discountActive = localStorage.getItem('funfairday_discount30') === 'true';
+                var hasItemsWithoutPriceId = updatedItems.some(function(item) {
+                    var prodId = item.productId || item.id;
+                    var prod = products.find(function(p) { return p.id === prodId; });
+                    return prod && !prod.stripePriceId;
+                });
+                var useDynamicPrices = discountActive || hasItemsWithoutPriceId;
+
+                var stripeItems = updatedItems
+                    .filter(function(item) {
+                        var prodId = item.productId || item.id;
+                        var prod = products.find(function(p) { return p.id === prodId; });
+                        return prod && (prod.stripePriceId || useDynamicPrices);
+                    })
+                    .map(function(item) {
+                        var prodId = item.productId || item.id;
+                        var prod = products.find(function(p) { return p.id === prodId; });
+                        var basePrice = item.caseStyle ? item.price : (prod ? prod.price : item.price);
+                        var unitAmount = useDynamicPrices ? Math.round(basePrice * (discountActive ? 0.7 : 1.0) * 100) : null;
+                        return {
+                            priceId: prod ? prod.stripePriceId : null,
+                            name: item.name,
+                            unitAmount: unitAmount,
+                            quantity: item.quantity
+                        };
+                    });
+
+                if (stripeItems.length === 0) {
+                    showError('No payable items in cart.');
+                    document.getElementById('loadingOverlay').classList.remove('active');
+                    document.getElementById('continueBtn').disabled = false;
+                    document.getElementById('continueBtn').textContent = 'Continue to Payment';
+                    return;
+                }
+
+                // Fulfill gift code before Stripe redirect
+                if (giftCode) {
+                    try {
+                        var sid = localStorage.getItem('funfairday_session') || '';
+                        await fetch('/claim-gift', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code: giftCode, session: sid, fulfill: true })
+                        });
+                    } catch(e) {
+                        console.log('Gift fulfill note:', e.message);
+                    }
+                }
+
+                // Call /create-checkout
+                var shipCost = window._shippingCost;
+                var shipMethod = window._shippingMethod;
+                var response = await fetch('/create-checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        items: stripeItems,
+                        cartItems: cartItems,
+                        total: Cart.getTotal(),
+                        shippingFee: shipCost !== undefined ? Math.round((shipCost || 0) / 7.8 * 100) / 100 : 0,
+                        shippingMethod: shipMethod || '',
+                        successUrl: window.location.origin + '/success.html',
+                        cancelUrl: window.location.origin + '/',
+                        useDynamicPrices: useDynamicPrices,
+                        shippingAddress: {
+                            name: name,
+                            street: street,
+                            city: city,
+                            state: state,
+                            zip: zip,
+                            phone: phone,
+                            country: countryCode
+                        }
+                    })
+                });
+
+                if (!response.ok) throw new Error('Checkout request failed');
+                var data = await response.json();
+
+                if (data.url) {
+                    // Store cart data for order creation after checkout
+                    sessionStorage.setItem('checkout_cart', JSON.stringify(cartItems));
+                    sessionStorage.setItem('checkout_total', Cart.getTotal().toString());
+                    sessionStorage.setItem('checkout_shipping', JSON.stringify({
+                        cost: shipCost !== undefined ? Math.round((shipCost || 0) / 7.8 * 100) / 100 : 0,
+                        method: shipMethod || '',
+                        methodId: window._selectedMethodId || '',
+                        country: window._selectedCountry
+                    }));
+                    window.location.href = data.url;
+                } else {
+                    throw new Error('No checkout URL');
+                }
+
+            } catch (error) {
+                console.error('Checkout error:', error);
+                showError('Unable to process checkout. Please try again later.');
+                document.getElementById('loadingOverlay').classList.remove('active');
+                document.getElementById('continueBtn').disabled = false;
+                document.getElementById('continueBtn').textContent = 'Continue to Payment';
+            }
+        });
+    });
+    </script>
+</body>
+</html>
