@@ -166,8 +166,8 @@ CREATE INDEX IF NOT EXISTS idx_category_options_category ON category_options(cat
 -- ============================================
 
 -- Categories
-INSERT INTO categories (id, name, short_name, description, long_description, badge, emoji) VALUES
-    ('stickers', 'Carousel''s Sticker Jar', 'Carousel''s Sticker Jar', 'Just the stickers pure joy. 30+ styles of stickers for you. Find the limited editional one.', 'Carousel loves to chase stickers across the floor. Now you can chase your creativity too!', 'Popular', '\u{1F3A0}'),
+INSERT INTO categories (id, name, short_name, description, long_description, badge, emoji, image_url) VALUES
+    ('stickers', 'Sticker Jar', 'Sticker Jar', 'Browse our 3D and Fluffy sticker collections!', 'Sticker Jar', 'Popular', '\u{1F3A0}', '/images/stickers/3d-sticker.jpeg'),
     ('diy-sticker-case', 'Tilly''s Sticky Carnival Kit', 'Tilly''s Sticky Carnival Kit', 'DIY Sticker Phone Case Set (per-sticked service is available)', 'Tilly is our busy little kitty always making a mess in the cutest way. Let her inspire your own sticky masterpiece!', 'Make to Order', '\u{1F36D}'),
     ('diy-paint-case', 'Pippin''s Paint & Paste Set', 'Pippin''s Paint & Paste Set', 'DIY Hand Paint Phone Case Set', 'Pippin has tiny paws but a big imagination. She paints with her tail but we recommend using the brush.', 'Make to Order', '\u{1F9F8}'),
     ('diy-epoxy-case', 'Dewey''s Dried Flower Magic Kit', 'Dewey''s Dried Flower Magic Kit', 'DIY Epoxy Flower Phone Case Set', 'Dewey loves to nap in the garden. This kit brings that peaceful, dewy feeling to your phone like pressed flowers from a happy day.', 'Make to Order', '\u{1F4A7}')
