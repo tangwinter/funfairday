@@ -591,6 +591,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         country: countryCode
                     }));
 
+                    window._selectedCountry = countryCode;
+
                     overlay.classList.remove('active');
                     proceedCheckout();
                 });
@@ -611,7 +613,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Pre-select country from current shipping selection
             var countryEl = overlay.querySelector('#addrCountry');
-            if (selectedCountry && countryEl) {
+            if (window._selectedCountry && countryEl) {
                 countryEl.value = window._selectedCountry;
             }
 
