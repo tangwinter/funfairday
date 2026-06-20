@@ -153,7 +153,11 @@
             <h1>Create Account</h1>
             <p class="page-subtitle">Join FunFairDay and start shopping</p>
             <div class="auth-error" id="registerError"></div>
-            <div class="auth-success" id="registerSuccess">Account created! 📧 Please check your email and click the confirmation link to activate your account.</div>
+            <div class="auth-success" id="registerSuccess">
+                <div style="font-size:1rem;font-weight:700;margin-bottom:6px;">Account Created! 🎉</div>
+                <div style="font-size:0.85rem;line-height:1.5;">Please check your email and click the confirmation link to activate your account.</div>
+                <div style="margin-top:14px;"><a href="login.html" class="btn btn-primary" id="goToLoginBtn" style="display:none;text-decoration:none;">Go to Login</a></div>
+            </div>
             <form class="auth-form" id="registerForm">
                 <div class="form-group">
                     <label for="email">Email <span class="required">*</span></label>
@@ -305,6 +309,7 @@
             const btn = document.getElementById('registerBtn');
             const errorDiv = document.getElementById('registerError');
             const successDiv = document.getElementById('registerSuccess');
+            const form = document.getElementById('registerForm');
             errorDiv.classList.remove('show');
             successDiv.classList.remove('show');
 
@@ -349,14 +354,13 @@
                     country: addrCountry === 'OTHERS' ? addrCustom : addrCountry
                 }));
 
+                // Hide form, show success message
+                form.style.display = 'none';
                 successDiv.classList.add('show');
-                // Auto-redirect after signup (email confirmation disabled)
-                setTimeout(function() {
-                    window.location.href = '/?checkout=1';
-                }, 1500);
+                document.getElementById('goToLoginBtn').style.display = 'inline-block';
 
             } catch (err) {
-                errorDiv.textContent = err.message;
+                errorDiv.textContent = err.message || 'Something went wrong. Please try again.';
                 errorDiv.classList.add('show');
                 btn.disabled = false;
                 btn.textContent = 'Create Account';
