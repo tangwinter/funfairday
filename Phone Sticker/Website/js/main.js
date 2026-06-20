@@ -304,7 +304,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const items = Cart.getItems();
         if (items.length === 0) return;
 
-        // Require shipping destination selection
+        // === RESUME MODE (after login): skip validation, go directly to address form ===
+        if (window._resumeCheckoutMode) {
+            window._resumeCheckoutMode = false;
+            try {
+                var savedState = JSON.parse(sessionStorage.getItem('funfairday_checkout_state') || 'null');
+                if (savedState) {
+                    sessionStorage.removeItem('funfairday_checkout_state');
+                    if (savedState.country) {
+                        selectedCountry = savedState.country;
+                        window._selectedCountry = savedState.country;
+                    }
+                    if (savedState.shippingCost !== undefined) window._shippingCost = savedState.shippingCost;
+                    if (savedState.shippingMethod) window._shippingMethod = savedState.shippingMethod;
+                    if (savedState.methodId) window._selectedMethodId = savedState.methodId;
+                }
+            } catch(e) {}
+            showAddressForm();
+            return;
+        }
         var countrySelect = document.getElementById('shippingCountry');
         var selectedCountry = countrySelect ? countrySelect.value : '';
         window._selectedCountry = selectedCountry;
@@ -1962,7 +1980,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var savedState = sessionStorage.getItem('funfairday_checkout_state');
         if (!savedState) return;
 
-        // Wait for auth check to complete, then show address form directly
+        // Wait for auth check to complete, then click checkout in resume mode
         var pollCount = 0;
         var pollInterval = setInterval(function() {
             pollCount++;
@@ -1972,24 +1990,24 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             if (window._authChecked === true && window._isLoggedIn === true) {
                 clearInterval(pollInterval);
-                sessionStorage.removeItem('funfairday_checkout_state');
                 try {
+                    // Don't remove state here - Resume Mode handler will do it
                     var state = JSON.parse(savedState);
                     var countrySelect = document.getElementById('shippingCountry');
                     if (countrySelect && state.country) {
                         countrySelect.value = state.country;
-                        window._selectedCountry = state.country;
                     }
+                    window._selectedCountry = state.country;
                     if (state.shippingCost !== undefined) window._shippingCost = state.shippingCost;
                     if (state.shippingMethod) window._shippingMethod = state.shippingMethod;
                     if (state.methodId) window._selectedMethodId = state.methodId;
 
-                    // Show address form directly
-                    setTimeout(function() {
-                        if (typeof window._showAddressFormFromLogin === 'function') {
-                            window._showAddressFormFromLogin();
-                        }
-                    }, 500);
+                    // Click checkout in Resume Mode
+                    window._resumeCheckoutMode = true;
+                    var btn = document.getElementById('checkoutBtn');
+                    if (btn) {
+                        setTimeout(function() { btn.click(); }, 300);
+                    }
                 } catch(e) {
                     console.log('Resume checkout error:', e);
                 }
