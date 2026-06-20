@@ -308,10 +308,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Checkout ---
     checkoutBtn.addEventListener('click', async function() {
+        console.log('[Checkout] Button clicked');
         const items = Cart.getItems();
+        console.log('[Checkout] Cart items:', items.length);
         if (items.length === 0) return;
 
         // If country already detected from saved address, pre-calculate shipping
+        console.log('[Checkout] _selectedCountry:', window._selectedCountry, '_shippingCost:', window._shippingCost);
         if (window._selectedCountry && window._shippingCost === undefined) {
             try {
                 await window._calculateShipping(window._selectedCountry);
@@ -326,6 +329,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         this.disabled = true;
         this.textContent = 'Processing...';
+        console.log('[Checkout] Button set to Processing...');
 
         // Helper to proceed with actual checkout (called by showAuthPopup)
         var proceedCheckout = async function() {
@@ -463,12 +467,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Step: Auth popup (Sign In / Create Account)
         function showAuthPopup() {
+            console.log('[AuthPopup] Called, _authChecked:', window._authChecked, '_isLoggedIn:', window._isLoggedIn);
             // If auth check hasn't completed yet, wait briefly
             if (!window._authChecked) {
+                console.log('[AuthPopup] _authChecked false, starting wait...');
                 showToast('Checking login status...');
                 var checkTimer = setInterval(function() {
                     if (window._authChecked) {
                         clearInterval(checkTimer);
+                        console.log('[AuthPopup] _authChecked now true via interval');
                         showAuthPopup();
                     }
                 }, 100);
@@ -476,6 +483,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 setTimeout(function() {
                     if (!window._authChecked) {
                         clearInterval(checkTimer);
+                        console.log('[AuthPopup] Safety timeout fired');
                         window._authChecked = true;
                         showAuthPopup();
                     }
@@ -485,13 +493,17 @@ document.addEventListener('DOMContentLoaded', function() {
             // If already signed in, go directly to Stripe
             if (window._isLoggedIn) {
                 var savedAddr = sessionStorage.getItem('funfairday_shipping_address');
+                console.log('[AuthPopup] Logged in, savedAddr:', !!savedAddr);
                 if (savedAddr) {
+                    console.log('[AuthPopup] Calling proceedCheckout');
                     proceedCheckout();
                 } else {
+                    console.log('[AuthPopup] No address, calling showAddressForm');
                     showAddressForm();
                 }
                 return;
             }
+            console.log('[AuthPopup] Not logged in, showing sign-in popup');
             showPopup({
                 icon: '🔐',
                 title: 'Almost there!',
@@ -530,6 +542,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // showAuthPopup after all helpers are defined
+        console.log('[Checkout] All helpers defined, calling showAuthPopup');
         showAuthPopup();
 
         // Step: Shipping address form
