@@ -257,7 +257,17 @@ async function supabaseFetch(table, query) {
             categoriesData.forEach(function(c) { 
                 // Only keep Sticker Jar category visible
                 if (c.id === 'stickers') {
-                    categories.push(c);
+                    // Map Supabase snake_case fields to camelCase expected by renderCategories
+                    categories.push({
+                        id: c.id,
+                        name: c.name,
+                        shortName: c.short_name || c.name,
+                        description: c.description || '',
+                        longDescription: c.long_description || c.description || '',
+                        image: c.image_url || c.image || null,
+                        badge: c.badge || null,
+                        emoji: c.emoji || null
+                    });
                 }
             });
         }
