@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Read category from URL
     const params = new URLSearchParams(window.location.search);
     const categoryId = params.get('cat');
+    const groupParam = params.get('group');
 
     if (!categoryId) {
         document.getElementById('categoryTitle').textContent = 'Category Not Found';
@@ -26,15 +27,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('categoryTitle').textContent = category.shortName || category.name;
     document.getElementById('categoryDesc').textContent = category.longDescription || category.description;
 
-    // Get products for this category
-    var categoryProducts = products.filter(function(p) { return p.category === categoryId; });
-
-    if (categoryProducts.length === 0) {
-        document.getElementById('productsGrid').innerHTML = '<p style="text-align:center;grid-column:1/-1;padding:40px;">No products available in this category yet.</p>';
-        return;
-    }
-
-    // Render products
     var productsGrid = document.getElementById('productsGrid');
 
     // Helper: render a single product card
@@ -59,66 +51,89 @@ document.addEventListener('DOMContentLoaded', function() {
         ].join('');
     }
 
-    // Check if this category has sub-category grouping
-    if (categoryId === 'stickers' && typeof STICKER_GROUPS !== 'undefined') {
-        // Group products by their group field
-        var groups = {};
-        var ungrouped = [];
-        categoryProducts.forEach(function(p) {
-            if (p.group && STICKER_GROUPS[p.group]) {
-                if (!groups[p.group]) groups[p.group] = [];
-                groups[p.group].push(p);
-            } else {
-                ungrouped.push(p);
-            }
-        });
+    // Check if this is the Sticker Jar main page (show sub-category cards)
+    if (categoryId === 'stickers' && !groupParam && typeof STICKER_GROUPS !== 'undefined') {
+        // Show sub-category cards for 3D Sticker and Fluffy Sticker
+        document.getElementById('categoryDesc').textContent = 'Choose a sticker collection to browse';
 
-        var html = '';
-        var globalIdx = 0;
-
-        // Render groups in sortOrder
         var groupKeys = Object.keys(STICKER_GROUPS).sort(function(a, b) {
             return STICKER_GROUPS[a].sortOrder - STICKER_GROUPS[b].sortOrder;
         });
 
-        groupKeys.forEach(function(key) {
+        productsGrid.innerHTML = groupKeys.map(function(key, idx) {
             var group = STICKER_GROUPS[key];
-            var groupProducts = groups[key] || [];
-            if (groupProducts.length === 0) return;
-
-            html += '<div class="sticker-section">';
-            html += '<div class="sticker-section-header">';
-            html += '<img src="' + group.image + '" alt="' + group.name + '" class="sticker-section-img">';
-            html += '<h3 class="sticker-section-title">' + group.name + '</h3>';
-            html += '</div>';
-            html += '<div class="products-grid">';
-            groupProducts.forEach(function(product) {
-                html += renderProductCard(product, globalIdx);
-                globalIdx++;
-            });
-            html += '</div></div>';
-        });
-
-        // Render ungrouped products at the bottom
-        if (ungrouped.length > 0) {
-            html += '<div class="sticker-section">';
-            html += '<div class="products-grid">';
-            ungrouped.forEach(function(product) {
-                html += renderProductCard(product, globalIdx);
-                globalIdx++;
-            });
-            html += '</div></div>';
-        }
-
-        productsGrid.innerHTML = html;
-    } else {
-        // Flat rendering for other categories
-        productsGrid.innerHTML = categoryProducts.map(function(product, index) {
-            return renderProductCard(product, index);
+            var colorClass = colorClasses[idx % colorClasses.length];
+            return [
+                '<a href="category.html?cat=stickers&group=' + key + '" class="category-card" style="text-decoration:none;color:inherit;">',
+                    '<div class="product-card">',
+                        '<div class="product-image ' + colorClass + '">',
+                            '<img src="' + group.image + '" alt="' + group.name + '">',
+                        '</div>',
+                        '<div class="product-info">',
+                            '<h3 class="product-name">' + group.name + '</h3>',
+                            '<span class="product-btn" style="display:block;text-align:center;">Browse Collection</span>',
+                        '</div>',
+                    '</div>',
+                '</a>'
+            ].join('');
         }).join('');
+
+        return; // Stop here - no product event listeners needed
     }
 
-    // Add to cart event listeners - open customization modal
+    // Check if viewing a specific sticker group
+    if (categoryId === 'stickers' && groupParam && typeof STICKER_GROUPS !== 'undefined' && STICKER_GROUPS[groupParam]) {
+        var group = STICKER_GROUPS[groupParam];
+        document.title = group.name + ' - FunFairDay';
+        document.getElementById('categoryTitle').textContent = group.name;
+        document.getElementById('categoryDesc').textContent = 'Browse our ' + group.name + ' collection';
+
+        // Filter products for this group
+        var groupProducts = products.filter(function(p) {
+            return p.category === 'stickers' && p.group === groupParam;
+        });
+
+        if (groupProducts.length === 0) {
+            productsGrid.innerHTML = '<p style="text-align:center;grid-column:1/-1;padding:40px;">No products in this collection yet.</p>';
+            return;
+        }
+
+        // Show back link + products grid
+        productsGrid.innerHTML =
+            '<a href="category.html?cat=stickers" class="back-link" style="display:inline-flex;align-items:center;gap:6px;color:var(--primary);font-weight:600;font-size:0.95rem;margin-bottom:20px;text-decoration:none;">&larr; Back to Sticker Jar</a>' +
+            '<div class="products-grid">' +
+            groupProducts.map(function(product, idx) {
+                return renderProductCard(product, idx);
+            }).join('') +
+            '</div>';
+
+        // Add to cart event listeners
+        document.querySelectorAll('.product-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var productId = this.dataset.productId;
+                if (window.openCustomizationModal) {
+                    window.openCustomizationModal(productId);
+                }
+            });
+        });
+
+        return;
+    }
+
+    // Get products for this category (other categories or fallback)
+    var categoryProducts = products.filter(function(p) { return p.category === categoryId; });
+
+    if (categoryProducts.length === 0) {
+        document.getElementById('productsGrid').innerHTML = '<p style="text-align:center;grid-column:1/-1;padding:40px;">No products available in this category yet.</p>';
+        return;
+    }
+
+    // Flat rendering for other categories
+    productsGrid.innerHTML = categoryProducts.map(function(product, index) {
+        return renderProductCard(product, index);
+    }).join('');
+
+    // Add to cart event listeners
     document.querySelectorAll('.product-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
             var productId = this.dataset.productId;
