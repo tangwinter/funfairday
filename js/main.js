@@ -1,9 +1,9 @@
 ﻿// Main Application Logic
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Auth state flags
-    window._isLoggedIn = false;
-    window._authChecked = false;
+    // Auth state flags (only set defaults if not already set by page inline script)
+    if (window._isLoggedIn === undefined) window._isLoggedIn = false;
+    if (window._authChecked === undefined) window._authChecked = false;
 
     const colorClasses = ['product-color-1', 'product-color-2', 'product-color-3', 'product-color-4'];
     const placeholderIcons = ['🎨', '📱', '🎭', '💐'];

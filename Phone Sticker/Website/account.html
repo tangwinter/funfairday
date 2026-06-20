@@ -282,6 +282,10 @@
             accessToken = session.access_token;
             document.getElementById('userEmail').textContent = session.user.email;
 
+            // Signal to main.js that auth is ready
+            window._authChecked = true;
+            window._isLoggedIn = true;
+
             // Store metadata for showProfile
             window._userMeta = session.user.user_metadata || {};
             var userName = window._userMeta.full_name || localStorage.getItem('funfairday_user_name') || '';
