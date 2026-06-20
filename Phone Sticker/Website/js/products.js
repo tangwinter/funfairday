@@ -19,6 +19,9 @@ const categories = [
     }
 ];
 
+// Save initial categories before Supabase override
+const initialCategories = JSON.parse(JSON.stringify(categories));
+
 const productTemplates = {
     'stickers': {
         priceBase: 1.92,
@@ -258,13 +261,15 @@ async function supabaseFetch(table, query) {
                 // Only keep Sticker Jar category visible
                 if (c.id === 'stickers') {
                     // Map Supabase snake_case fields to camelCase expected by renderCategories
+                    // Keep initial image if Supabase doesn't have one
+                    var existingCat = initialCategories.find(function(ic) { return ic.id === c.id; });
                     categories.push({
                         id: c.id,
                         name: c.name,
                         shortName: c.short_name || c.name,
                         description: c.description || '',
                         longDescription: c.long_description || c.description || '',
-                        image: c.image_url || c.image || null,
+                        image: c.image_url || (existingCat ? existingCat.image : null) || null,
                         badge: c.badge || null,
                         emoji: c.emoji || null
                     });
