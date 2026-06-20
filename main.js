@@ -1361,14 +1361,29 @@ document.addEventListener('DOMContentLoaded', function() {
         };
     })(Cart.onUpdate);
 
+    // --- Toast ---
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    document.body.appendChild(toast);
+    let toastTimeout;
+
+    window.showToast = function(message) {
+        toast.textContent = message;
+        toast.classList.add('active');
+        clearTimeout(toastTimeout);
+        toastTimeout = setTimeout(function() {
+            toast.classList.remove('active');
+        }, 3000);
+    };
+
     // --- Modal ---
     const modalOverlay = document.getElementById('modalOverlay');
     const productModal = document.getElementById('productModal');
     const modalClose = document.getElementById('modalClose');
     const modalContent = document.getElementById('modalContent');
 
-    modalClose.addEventListener('click', closeModal);
-    modalOverlay.addEventListener('click', closeModal);
+    if (modalClose) modalClose.addEventListener('click', closeModal);
+    if (modalOverlay) modalOverlay.addEventListener('click', closeModal);
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && productModal.style.display !== 'none') {
@@ -1878,21 +1893,6 @@ document.addEventListener('DOMContentLoaded', function() {
     if (localStorage.getItem('funfairday_discount30') === 'true') {
         showDiscountBanner();
     }
-
-    // --- Toast ---
-    const toast = document.createElement('div');
-    toast.className = 'toast';
-    document.body.appendChild(toast);
-    let toastTimeout;
-
-    window.showToast = function(message) {
-        toast.textContent = message;
-        toast.classList.add('active');
-        clearTimeout(toastTimeout);
-        toastTimeout = setTimeout(function() {
-            toast.classList.remove('active');
-        }, 3000);
-    };
 
     // --- Scroll Effect ---
     const header = document.querySelector('.header');
