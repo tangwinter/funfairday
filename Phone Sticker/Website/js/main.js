@@ -775,14 +775,18 @@ document.addEventListener('DOMContentLoaded', function() {
     function autoDetectShippingFromAddress() {
         var shippingSection = document.getElementById('cartShipping');
         var destEl = document.getElementById('shippingDestination');
+        var missingEl = document.getElementById('cartAddressMissing');
         if (!shippingSection || !destEl) return;
 
         try {
             var addrData = JSON.parse(getShippingAddress() || 'null');
             if (!addrData || !addrData.country) {
                 shippingSection.style.display = 'none';
+                if (missingEl) missingEl.style.display = 'flex';
                 return;
             }
+
+            if (missingEl) missingEl.style.display = 'none';
 
             var countryCode = addrData.country;
             var countryObj = SHIPPING_COUNTRIES.find(function(c) { return c.code === countryCode; });

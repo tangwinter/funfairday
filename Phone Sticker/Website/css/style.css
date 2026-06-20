@@ -939,6 +939,19 @@ ul {
     border: 1px solid #a5d6a7;
 }
 
+.cart-address-missing {
+    display: none;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    background: #fff8e1;
+    border-radius: 8px;
+    border: 1px solid #ffe082;
+}
+
 /* --- Shipping Method Radio Buttons --- */
 .cart-shipping-methods {
     margin-top: 8px;
