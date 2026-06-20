@@ -1977,10 +1977,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Checkout Resume After Login ---
     (function() {
-        var savedState = sessionStorage.getItem('funfairday_checkout_state');
-        if (!savedState) return;
+        if (!sessionStorage.getItem('funfairday_checkout_state')) return;
 
-        // Wait for auth check to complete, then click checkout in resume mode
         var pollCount = 0;
         var pollInterval = setInterval(function() {
             pollCount++;
@@ -1991,23 +1989,20 @@ document.addEventListener('DOMContentLoaded', function() {
             if (window._authChecked === true && window._isLoggedIn === true) {
                 clearInterval(pollInterval);
                 try {
-                    // Don't remove state here - Resume Mode handler will do it
+                    var savedState = sessionStorage.getItem('funfairday_checkout_state');
+                    if (!savedState) return;
+                    sessionStorage.removeItem('funfairday_checkout_state');
                     var state = JSON.parse(savedState);
-                    var countrySelect = document.getElementById('shippingCountry');
-                    if (countrySelect && state.country) {
-                        countrySelect.value = state.country;
-                    }
-                    window._selectedCountry = state.country;
+                    if (state.country) window._selectedCountry = state.country;
                     if (state.shippingCost !== undefined) window._shippingCost = state.shippingCost;
                     if (state.shippingMethod) window._shippingMethod = state.shippingMethod;
                     if (state.methodId) window._selectedMethodId = state.methodId;
 
-                    // Click checkout in Resume Mode
-                    window._resumeCheckoutMode = true;
-                    var btn = document.getElementById('checkoutBtn');
-                    if (btn) {
-                        setTimeout(function() { btn.click(); }, 300);
-                    }
+                    setTimeout(function() {
+                        if (typeof window._showAddressFormFromLogin === 'function') {
+                            window._showAddressFormFromLogin();
+                        }
+                    }, 500);
                 } catch(e) {
                     console.log('Resume checkout error:', e);
                 }
