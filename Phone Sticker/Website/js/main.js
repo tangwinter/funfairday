@@ -484,7 +484,7 @@ document.addEventListener('DOMContentLoaded', function() {
             return found ? found.name : code;
         }
 
-        // Step: Auth popup (Sign In / Continue as Guest)
+        // Step: Auth popup (Sign In / Create Account)
         function showAuthPopup() {
             // If already signed in, go directly to Stripe
             if (window._isLoggedIn) {
@@ -499,27 +499,12 @@ document.addEventListener('DOMContentLoaded', function() {
             showPopup({
                 icon: '🔐',
                 title: 'Almost there!',
-                text: 'Sign in to continue, or checkout as a guest.',
+                text: 'Please sign in to continue, or create a new account.',
                 buttons: [
                     {
-                        label: 'Continue as Guest',
+                        label: 'Sign In',
                         className: 'btn-primary',
                         action: function() {
-                            // Save checkout state and redirect to address form page
-                            sessionStorage.setItem('funfairday_checkout_state', JSON.stringify({
-                                country: selectedCountry,
-                                shippingCost: window._shippingCost,
-                                shippingMethod: window._shippingMethod,
-                                methodId: window._selectedMethodId
-                            }));
-                            window.location.href = 'address-form.html';
-                        }
-                    },
-                    {
-                        label: 'Sign In',
-                        className: 'btn-secondary',
-                        action: function() {
-                            // Save checkout state, will restore on return
                             sessionStorage.setItem('funfairday_checkout_state', JSON.stringify({
                                 country: selectedCountry,
                                 shippingCost: window._shippingCost,
@@ -527,6 +512,19 @@ document.addEventListener('DOMContentLoaded', function() {
                                 methodId: window._selectedMethodId
                             }));
                             window.location.href = 'login.html?return_to=' + encodeURIComponent(window.location.origin + '/?checkout=1');
+                        }
+                    },
+                    {
+                        label: 'Create an Account',
+                        className: 'btn-secondary',
+                        action: function() {
+                            sessionStorage.setItem('funfairday_checkout_state', JSON.stringify({
+                                country: selectedCountry,
+                                shippingCost: window._shippingCost,
+                                shippingMethod: window._shippingMethod,
+                                methodId: window._selectedMethodId
+                            }));
+                            window.location.href = 'register.html';
                         }
                     }
                 ]

@@ -342,10 +342,19 @@
                 }));
 
                 successDiv.classList.add('show');
-                setTimeout(() => {
-                    var returnTo = 'login.html?return_to=' + encodeURIComponent(window.location.origin + '/');
-                    window.location.href = returnTo;
-                }, 2000);
+                // Wait a moment then check if user is auto-logged in
+                setTimeout(async function() {
+                    try {
+                        var { data: { session } } = await supabase.auth.getSession();
+                        if (session) {
+                            window.location.href = '/?checkout=1';
+                        } else {
+                            window.location.href = 'login.html?return_to=' + encodeURIComponent(window.location.origin + '/?checkout=1');
+                        }
+                    } catch(e) {
+                        window.location.href = 'login.html';
+                    }
+                }, 1500);
 
             } catch (err) {
                 errorDiv.textContent = err.message;
