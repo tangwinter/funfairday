@@ -426,10 +426,76 @@
                     });
 
                 if (stripeItems.length === 0) {
-                    showError('No payable items in cart.');
-                    document.getElementById('loadingOverlay').classList.remove('active');
-                    document.getElementById('continueBtn').disabled = false;
-                    document.getElementById('continueBtn').textContent = 'Continue to Payment';
+                    // Free order (only free items, no paid items)
+                    // Get user from stored Supabase session
+                    var freeUser = null;
+                    try {
+                        for (var fi = 0; fi < localStorage.length; fi++) {
+                            var fk = localStorage.key(fi);
+                            if (fk && fk.indexOf('sb-') === 0 && fk.indexOf('-auth-token') > 0) {
+                                var fd = JSON.parse(localStorage.getItem(fk));
+                                if (fd && fd.user) freeUser = { id: fd.user.id, email: fd.user.email };
+                            }
+                        }
+                    } catch(e) {}
+
+                    if (!freeUser) {
+                        showError('Please log in to claim free items.');
+                        document.getElementById('loadingOverlay').classList.remove('active');
+                        document.getElementById('continueBtn').disabled = false;
+                        document.getElementById('continueBtn').textContent = 'Continue to Payment';
+                        return;
+                    }
+
+                    var freeOrderRef = 'FREE-' + Date.now().toString(36).toUpperCase();
+
+                    // Save order data for success page
+                    sessionStorage.setItem('checkout_cart', JSON.stringify(cartItems));
+                    sessionStorage.setItem('checkout_total', Cart.getTotal().toString());
+                    sessionStorage.setItem('checkout_shipping', JSON.stringify({
+                        cost: 0, method: '', methodId: '', country: countryCode
+                    }));
+
+                    var freeRes = await fetch('/create-order', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            customer_id: freeUser.id,
+                            customer_email: freeUser.email,
+                            items: cartItems,
+                            total: 0,
+                            shipping_address: addrData,
+                            stripe_session_id: '',
+                            shipping_method: '',
+                            shipping_cost: 0
+                        })
+                    });
+
+                    if (freeRes.ok) {
+                        // Fulfill gift code
+                        if (giftCode) {
+                            try {
+                                var s2 = localStorage.getItem('funfairday_session') || '';
+                                await fetch('/claim-gift', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ code: giftCode, session: s2, fulfill: true })
+                                });
+                            } catch(e) {}
+                            localStorage.removeItem('funfairday_gift_code');
+                            localStorage.removeItem('funfairday_gift_expires');
+                        }
+                        localStorage.removeItem('funfairday_cart');
+                        if (typeof Cart !== 'undefined' && Cart.init) Cart.init();
+                        window.location.href = 'success.html?order_ref=' + freeOrderRef;
+                    } else {
+                        var err2 = await freeRes.text();
+                        console.error('Free order failed:', err2);
+                        showError('Failed to create free order.');
+                        document.getElementById('loadingOverlay').classList.remove('active');
+                        document.getElementById('continueBtn').disabled = false;
+                        document.getElementById('continueBtn').textContent = 'Continue to Payment';
+                    }
                     return;
                 }
 

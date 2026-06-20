@@ -396,9 +396,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
 
                 if (stripeItems.length === 0) {
-                    showToast('No payable items in cart.');
-                    checkoutBtn.disabled = false;
-                    checkoutBtn.textContent = 'Checkout';
+                    // No items at all - try free order or show error
+                    createFreeOrder(cartItems, checkoutBtn);
                     return;
                 }
 
@@ -709,7 +708,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
 
             if (stripeItems.length === 0) {
-                showToast('No payable items in cart.');
+                // No items at all - try free order or show error
+                createFreeOrder(cartItems, null);
                 return;
             }
 
