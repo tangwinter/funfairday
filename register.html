@@ -153,7 +153,7 @@
             <h1>Create Account</h1>
             <p class="page-subtitle">Join FunFairDay and start shopping</p>
             <div class="auth-error" id="registerError"></div>
-            <div class="auth-success" id="registerSuccess">Account created! Redirecting...</div>
+            <div class="auth-success" id="registerSuccess">Account created! 📧 Please check your email and click the confirmation link to activate your account.</div>
             <form class="auth-form" id="registerForm">
                 <div class="form-group">
                     <label for="email">Email <span class="required">*</span></label>
@@ -326,7 +326,7 @@
                     email,
                     password,
                     options: {
-                        emailRedirectTo: window.location.origin + '/login.html',
+                        emailRedirectTo: 'https://funfairday.com/login.html',
                         data: {
                             full_name: document.getElementById('addrName').value.trim()
                         }
@@ -350,19 +350,19 @@
                 }));
 
                 successDiv.classList.add('show');
-                // Wait a moment then check if user is auto-logged in
-                setTimeout(async function() {
-                    try {
-                        var { data: { session } } = await supabase.auth.getSession();
-                        if (session) {
-                            window.location.href = '/?checkout=1';
-                        } else {
-                            window.location.href = 'login.html?return_to=' + encodeURIComponent(window.location.origin + '/?checkout=1');
-                        }
-                    } catch(e) {
-                        window.location.href = 'login.html';
-                    }
-                }, 1500);
+                // Don't auto-redirect — user needs to confirm email first
+                // Add a login button after a moment
+                setTimeout(function() {
+                    var loginBtn = document.createElement('a');
+                    loginBtn.href = 'login.html';
+                    loginBtn.className = 'btn btn-primary';
+                    loginBtn.textContent = 'Go to Login';
+                    loginBtn.style.display = 'block';
+                    loginBtn.style.textAlign = 'center';
+                    loginBtn.style.marginTop = '12px';
+                    loginBtn.style.textDecoration = 'none';
+                    successDiv.parentNode.appendChild(loginBtn);
+                }, 500);
 
             } catch (err) {
                 errorDiv.textContent = err.message;
