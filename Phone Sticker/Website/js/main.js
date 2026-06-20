@@ -1,8 +1,9 @@
 ﻿// Main Application Logic
 document.addEventListener('DOMContentLoaded', function() {
 
-    // Auth state flag
+    // Auth state flags
     window._isLoggedIn = false;
+    window._authChecked = false;
 
     const colorClasses = ['product-color-1', 'product-color-2', 'product-color-3', 'product-color-4'];
     const placeholderIcons = ['🎨', '📱', '🎭', '💐'];
@@ -1744,6 +1745,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
 
         supabase.auth.getSession().then(({ data: { session } }) => {
+            window._authChecked = true;
             const authLink = document.getElementById('authLink');
             if (authLink) {
                 if (session) {
@@ -1811,18 +1813,16 @@ document.addEventListener('DOMContentLoaded', function() {
                     console.log('Resume checkout error:', e);
                 }
             };
-            // Wait for auth check to complete (poll _isLoggedIn up to 3 seconds)
+            // Wait for auth check to complete (poll _authChecked up to 5 seconds)
             var pollCount = 0;
             var pollInterval = setInterval(function() {
                 pollCount++;
-                if (pollCount > 30) { // 3 second timeout
+                if (pollCount > 50) { // 5 second timeout
                     clearInterval(pollInterval);
                     resumeCheckout();
                     return;
                 }
-                // Check if auth state has been determined
-                var authLink = document.getElementById('authLink');
-                if (authLink && authLink.textContent !== '') {
+                if (window._authChecked === true) {
                     clearInterval(pollInterval);
                     resumeCheckout();
                 }
