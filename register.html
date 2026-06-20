@@ -276,6 +276,9 @@
                 const res = await fetch('/get-supabase-config');
                 const config = await res.json();
                 if (!config.configured) { showError('Site not configured yet.'); return; }
+                // Cache config in localStorage for main.js auth checks
+                localStorage.setItem('supabase_url', config.url);
+                localStorage.setItem('supabase_anon_key', config.anonKey);
                 supabase = window.supabase.createClient(config.url, config.anonKey);
                 console.log('[Register] Supabase initialized successfully');
             } catch(e) {
