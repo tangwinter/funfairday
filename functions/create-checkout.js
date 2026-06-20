@@ -8,7 +8,7 @@ export async function onRequest(context) {
     }
 
     try {
-        var { items, cartItems, total, shippingFee, shippingMethod, successUrl, cancelUrl, useDynamicPrices } = await context.request.json();
+        var { items, cartItems, total, shippingFee, shippingMethod, successUrl, cancelUrl, useDynamicPrices, shippingAddress } = await context.request.json();
 
         if (!items || items.length === 0) {
             return errorResponse('No items provided', 400);
@@ -78,6 +78,23 @@ export async function onRequest(context) {
         allowedCountries.forEach(function(c) {
             stripeBody.append('shipping_address_collection[allowed_countries][]', c);
         });
+
+        // Pre-fill shipping address if provided from our address form
+        if (shippingAddress && shippingAddress.name && shippingAddress.street) {
+            stripeBody.append('shipping[name]', shippingAddress.name);
+            stripeBody.append('shipping[address][line1]', shippingAddress.street);
+            stripeBody.append('shipping[address][city]', shippingAddress.city || '');
+            stripeBody.append('shipping[address][state]', shippingAddress.state || '');
+            stripeBody.append('shipping[address][postal_code]', shippingAddress.zip || '');
+            stripeBody.append('shipping[address][country]', shippingAddress.country || '');
+        }
+        // Pre-fill customer details
+        if (shippingAddress && shippingAddress.name) {
+            stripeBody.append('customer_details[name]', shippingAddress.name);
+            if (shippingAddress.phone) {
+                stripeBody.append('customer_details[phone]', shippingAddress.phone);
+            }
+        }
 
         // Add line items to form body
         lineItems.forEach(function(item, index) {
