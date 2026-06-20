@@ -296,6 +296,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
     updateCartBadge();
 
+    // On page load, restore selected country from saved address
+    (function() {
+        try {
+            var addrData = JSON.parse(sessionStorage.getItem('funfairday_shipping_address') || 'null');
+            if (addrData && addrData.country) {
+                window._selectedCountry = addrData.country;
+            }
+        } catch(e) {}
+    })();
+
     // --- Checkout ---
     checkoutBtn.addEventListener('click', async function() {
         const items = Cart.getItems();
