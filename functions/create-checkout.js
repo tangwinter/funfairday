@@ -16,7 +16,7 @@ export async function onRequest(context) {
 
         // Build line items for Stripe
         var lineItems = items
-            .filter(function(item) { return item.priceId || useDynamicPrices; })
+            .filter(function(item) { return (item.priceId && item.priceId !== 'null') || (useDynamicPrices && item.unitAmount && item.unitAmount > 0); })
             .map(function(item) {
                 if (useDynamicPrices && item.unitAmount) {
                     return {
@@ -33,6 +33,10 @@ export async function onRequest(context) {
                     quantity: item.quantity
                 };
             });
+
+        if (lineItems.length === 0) {
+            return errorResponse('No payable items - try adding items to your cart first', 400);
+        }
 
         // Add shipping fee as a line item if present
         if (shippingFee && shippingFee > 0) {

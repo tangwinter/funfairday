@@ -433,6 +433,21 @@
                     return;
                 }
 
+                // Remove zero-price items (e.g. free stickers)
+                stripeItems = stripeItems.filter(function(item) {
+                    if (item.priceId) return true;
+                    if (item.unitAmount && item.unitAmount > 0) return true;
+                    return false;
+                });
+
+                if (stripeItems.length === 0) {
+                    showError('No payable items in cart.');
+                    document.getElementById('loadingOverlay').classList.remove('active');
+                    document.getElementById('continueBtn').disabled = false;
+                    document.getElementById('continueBtn').textContent = 'Continue to Payment';
+                    return;
+                }
+
                 // Fulfill gift code before Stripe redirect
                 if (giftCode) {
                     try {

@@ -402,6 +402,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
+                // Remove zero-price items (e.g. free stickers)
+                stripeItems = stripeItems.filter(function(item) {
+                    if (item.priceId) return true;
+                    if (item.unitAmount && item.unitAmount > 0) return true;
+                    return false;
+                });
+
+                if (stripeItems.length === 0) {
+                    showToast('No payable items in cart.');
+                    checkoutBtn.disabled = false;
+                    checkoutBtn.textContent = 'Checkout';
+                    return;
+                }
+
                 if (giftCode) {
                     try {
                         var sid = localStorage.getItem('funfairday_session') || '';
@@ -599,6 +613,18 @@ document.addEventListener('DOMContentLoaded', function() {
                         quantity: item.quantity
                     };
                 });
+
+            if (stripeItems.length === 0) {
+                showToast('No payable items in cart.');
+                return;
+            }
+
+            // Remove zero-price items (e.g. free stickers)
+            stripeItems = stripeItems.filter(function(item) {
+                if (item.priceId) return true;
+                if (item.unitAmount && item.unitAmount > 0) return true;
+                return false;
+            });
 
             if (stripeItems.length === 0) {
                 showToast('No payable items in cart.');
