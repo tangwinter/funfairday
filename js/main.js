@@ -299,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // On page load, restore selected country from saved address
     (function() {
         try {
-            var addrData = JSON.parse(sessionStorage.getItem('funfairday_shipping_address') || 'null');
+            var addrData = JSON.parse(getShippingAddress() || 'null');
             if (addrData && addrData.country) {
                 window._selectedCountry = addrData.country;
             }
@@ -426,7 +426,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         successUrl: CONFIG.successUrl,
                         cancelUrl: CONFIG.cancelUrl,
                         useDynamicPrices: useDynamicPrices,
-                        shippingAddress: JSON.parse(sessionStorage.getItem('funfairday_shipping_address') || 'null')
+                        shippingAddress: JSON.parse(getShippingAddress() || 'null')
                     })
                 });
 
@@ -464,7 +464,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            var savedAddr = sessionStorage.getItem('funfairday_shipping_address');
+            var savedAddr = getShippingAddress();
             if (!savedAddr) {
                 showToast('Please enter your shipping address.');
                 window.location.href = 'account.html';
@@ -498,9 +498,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     }
 
-    // ============================================
-    // Global checkout functions (for resume after login)
-    // ============================================
+    // Helper: get shipping address from sessionStorage or localStorage
+    function getShippingAddress() {
+        var addr = sessionStorage.getItem('funfairday_shipping_address');
+        if (addr) return addr;
+        return localStorage.getItem('funfairday_shipping_address');
+    }
 
     window._resumeCheckout = function() {
         var checkoutBtnEl = document.getElementById('checkoutBtn');
@@ -592,7 +595,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     successUrl: CONFIG.successUrl,
                     cancelUrl: CONFIG.cancelUrl,
                     useDynamicPrices: useDynamicPrices,
-                    shippingAddress: JSON.parse(sessionStorage.getItem('funfairday_shipping_address') || 'null')
+                    shippingAddress: JSON.parse(getShippingAddress() || 'null')
                 })
             });
 
@@ -768,7 +771,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!shippingSection || !destEl) return;
 
         try {
-            var addrData = JSON.parse(sessionStorage.getItem('funfairday_shipping_address') || 'null');
+            var addrData = JSON.parse(getShippingAddress() || 'null');
             if (!addrData || !addrData.country) {
                 shippingSection.style.display = 'none';
                 return;
@@ -1762,7 +1765,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Check if we have a saved address
-        var savedAddr = sessionStorage.getItem('funfairday_shipping_address');
+        var savedAddr = getShippingAddress();
         if (!savedAddr) return;
 
         // Restore checkout state if available

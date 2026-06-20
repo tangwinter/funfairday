@@ -175,6 +175,13 @@
                     <div class="loading-state">Loading your orders...</div>
                 </div>
             </div>
+
+            <div class="account-section">
+                <h2>Shipping Address</h2>
+                <div id="profileContainer">
+                    <div class="loading-state">Loading profile...</div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -267,6 +274,10 @@
             accessToken = session.access_token;
             document.getElementById('userEmail').textContent = session.user.email;
 
+            // Store metadata for showProfile
+            window._userMeta = session.user.user_metadata || {};
+            var userName = window._userMeta.full_name || localStorage.getItem('funfairday_user_name') || '';
+
             try {
                 const cartData = JSON.parse(localStorage.getItem('funfairday_cart') || '[]');
                 const count = cartData.reduce((s, i) => s + i.quantity, 0);
@@ -276,6 +287,7 @@
             } catch(e) {}
 
             await loadOrders();
+            showProfile(userName);
         })();
 
         async function loadOrders() {
@@ -363,6 +375,60 @@
             await supabase.auth.signOut();
             window.location.href = 'index.html';
         });
+
+        function showProfile(displayName) {
+            var container = document.getElementById('profileContainer');
+
+            // Get address from sessionStorage first, then localStorage as fallback
+            var addrData = null;
+            try {
+                addrData = JSON.parse(sessionStorage.getItem('funfairday_shipping_address') || 'null');
+                if (!addrData) {
+                    addrData = JSON.parse(localStorage.getItem('funfairday_shipping_address') || 'null');
+                }
+            } catch(e) {}
+
+            var countryName = '';
+            if (addrData) {
+                countryName = addrData.country;
+                // Try to look up a friendly country name
+                var countrySelect = document.querySelector('select#addrCountry');
+                if (!countrySelect) {
+                    // Use a simple mapping
+                    var map = { 'HK': 'Hong Kong', 'CN': 'China', 'TW': 'Taiwan', 'US': 'United States', 'GB': 'United Kingdom', 'CA': 'Canada', 'AU': 'Australia', 'JP': 'Japan', 'KR': 'South Korea', 'SG': 'Singapore', 'MY': 'Malaysia', 'PH': 'Philippines', 'TH': 'Thailand', 'VN': 'Vietnam', 'DE': 'Germany', 'FR': 'France', 'IT': 'Italy', 'ES': 'Spain', 'NL': 'Netherlands', 'CH': 'Switzerland', 'SE': 'Sweden', 'NO': 'Norway', 'DK': 'Denmark', 'FI': 'Finland', 'IE': 'Ireland', 'NZ': 'New Zealand', 'ZA': 'South Africa', 'AE': 'United Arab Emirates', 'SA': 'Saudi Arabia', 'BR': 'Brazil', 'OTHERS': 'Other' };
+                    countryName = map[addrData.country] || addrData.country;
+                }
+            }
+
+            var html = '';
+            if (displayName) {
+                html += '<div style="margin-bottom:12px;"><strong>Name:</strong> ' + displayName + '</div>';
+            }
+            if (addrData) {
+                html += '<div style="margin-bottom:12px;"><strong>Phone:</strong> ' + (addrData.phone || '—') + '</div>';
+                html += '<div style="margin-bottom:12px;"><strong>Address:</strong><br>';
+                html += escapeHtml(addrData.street) + '<br>';
+                html += escapeHtml(addrData.city || '');
+                if (addrData.state) html += ', ' + escapeHtml(addrData.state);
+                if (addrData.zip) html += ' ' + escapeHtml(addrData.zip);
+                html += '<br>' + escapeHtml(countryName) + '</div>';
+                html += '<div style="margin-top:16px;">';
+                html += '<a href="address-form.html" class="btn btn-primary" style="padding:8px 20px;font-size:0.85rem;text-decoration:none;">Edit Address</a>';
+                html += '</div>';
+            } else {
+                html += '<p style="color:var(--text-light);">You haven\'t saved a shipping address yet.</p>';
+                html += '<div style="margin-top:12px;">';
+                html += '<a href="address-form.html" class="btn btn-primary" style="padding:8px 20px;font-size:0.85rem;text-decoration:none;">Add Address</a>';
+                html += '</div>';
+            }
+
+            container.innerHTML = html;
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
 
         // Basic cart UI (simplified)
         const cartPanel = document.getElementById('cartPanel');

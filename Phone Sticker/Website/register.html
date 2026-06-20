@@ -357,8 +357,9 @@
                 // Save user display name to localStorage for nav
                 localStorage.setItem('funfairday_user_name', document.getElementById('addrName').value.trim());
 
-                // Save shipping address to sessionStorage
-                sessionStorage.setItem('funfairday_shipping_address', JSON.stringify({
+                // Save shipping address to sessionStorage and localStorage
+                // (localStorage persists across browser sessions)
+                var addressData = {
                     name: addrName,
                     street: addrStreet,
                     city: addrCity,
@@ -366,7 +367,9 @@
                     zip: document.getElementById('addrZip').value.trim(),
                     phone: document.getElementById('addrPhone').value.trim(),
                     country: addrCountry === 'OTHERS' ? addrCustom : addrCountry
-                }));
+                };
+                sessionStorage.setItem('funfairday_shipping_address', JSON.stringify(addressData));
+                localStorage.setItem('funfairday_shipping_address', JSON.stringify(addressData));
 
                 // Hide form, show success message with Go to Login button
                 form.style.display = 'none';
