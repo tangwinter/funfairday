@@ -861,88 +861,96 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 
     window._showAddressFormFromLogin = function() {
-        var overlay = document.getElementById('addressFormOverlay2');
-        if (!overlay) {
-            overlay = document.createElement('div');
-            overlay.id = 'addressFormOverlay2';
-            overlay.className = 'popup-overlay';
-            overlay.innerHTML = '<div class="popup-card address-form-card">'
-                + '<div class="addr-header">'
-                + '<span class="addr-icon">📦</span>'
-                + '<h3 class="addr-title">Shipping Address</h3>'
-                + '<p class="addr-subtitle">Fill in your shipping details to continue</p>'
-                + '</div>'
-                + '<form id="addressForm2" class="addr-form">'
-                + '<div class="form-group"><label>Full Name <span class="required">*</span></label><input type="text" id="addrFullName2" required placeholder="e.g. John Smith"></div>'
-                + '<div class="form-group"><label>Street Address <span class="required">*</span></label><input type="text" id="addrStreet2" required placeholder="e.g. 123 Main St, Apt 4B"></div>'
-                + '<div class="form-row">'
-                + '<div class="form-group"><label>City <span class="required">*</span></label><input type="text" id="addrCity2" required placeholder="Hong Kong"></div>'
-                + '<div class="form-group"><label>State / Province</label><input type="text" id="addrState2" placeholder="Optional"></div>'
-                + '</div>'
-                + '<div class="form-row">'
-                + '<div class="form-group"><label>ZIP / Postal Code</label><input type="text" id="addrZip2" placeholder="Optional"></div>'
-                + '<div class="form-group"><label>Phone</label><input type="tel" id="addrPhone2" placeholder="Optional"></div>'
-                + '</div>'
-                + '<div class="form-group"><label>Country <span class="required">*</span></label><select id="addrCountry2" class="addr-select"></select></div>'
-                + '<div class="addr-actions">'
-                + '<button type="submit" class="btn btn-primary addr-btn">Continue to Payment →</button>'
-                + '</div>'
-                + '</form>'
-                + '</div>';
-            document.body.appendChild(overlay);
+        try {
+            var overlay = document.getElementById('addressFormOverlay2');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'addressFormOverlay2';
+                overlay.className = 'popup-overlay';
+                overlay.innerHTML = '<div class="popup-card address-form-card">'
+                    + '<div class="addr-header">'
+                    + '<span class="addr-icon">📦</span>'
+                    + '<h3 class="addr-title">Shipping Address</h3>'
+                    + '<p class="addr-subtitle">Fill in your shipping details to continue</p>'
+                    + '</div>'
+                    + '<form id="addressForm2" class="addr-form">'
+                    + '<div class="form-group"><label>Full Name <span class="required">*</span></label><input type="text" id="addrFullName2" required placeholder="e.g. John Smith"></div>'
+                    + '<div class="form-group"><label>Street Address <span class="required">*</span></label><input type="text" id="addrStreet2" required placeholder="e.g. 123 Main St, Apt 4B"></div>'
+                    + '<div class="form-row">'
+                    + '<div class="form-group"><label>City <span class="required">*</span></label><input type="text" id="addrCity2" required placeholder="Hong Kong"></div>'
+                    + '<div class="form-group"><label>State / Province</label><input type="text" id="addrState2" placeholder="Optional"></div>'
+                    + '</div>'
+                    + '<div class="form-row">'
+                    + '<div class="form-group"><label>ZIP / Postal Code</label><input type="text" id="addrZip2" placeholder="Optional"></div>'
+                    + '<div class="form-group"><label>Phone</label><input type="tel" id="addrPhone2" placeholder="Optional"></div>'
+                    + '</div>'
+                    + '<div class="form-group"><label>Country <span class="required">*</span></label><select id="addrCountry2" class="addr-select"></select></div>'
+                    + '<div class="addr-actions">'
+                    + '<button type="submit" class="btn btn-primary addr-btn">Continue to Payment →</button>'
+                    + '</div>'
+                    + '</form>'
+                    + '</div>';
+                document.body.appendChild(overlay);
 
-            var countrySelectEl = overlay.querySelector('#addrCountry2');
-            SHIPPING_COUNTRIES.forEach(function(c) {
-                var opt = document.createElement('option');
-                opt.value = c.code;
-                opt.textContent = c.name;
-                countrySelectEl.appendChild(opt);
-            });
+                var countrySelectEl = overlay.querySelector('#addrCountry2');
+                SHIPPING_COUNTRIES.forEach(function(c) {
+                    var opt = document.createElement('option');
+                    opt.value = c.code;
+                    opt.textContent = c.name;
+                    countrySelectEl.appendChild(opt);
+                });
 
-            overlay.querySelector('#addressForm2').addEventListener('submit', function(e) {
-                e.preventDefault();
-                var name = document.getElementById('addrFullName2').value.trim();
-                var street = document.getElementById('addrStreet2').value.trim();
-                var city = document.getElementById('addrCity2').value.trim();
-                var state = document.getElementById('addrState2').value.trim();
-                var zip = document.getElementById('addrZip2').value.trim();
-                var phone = document.getElementById('addrPhone2').value.trim();
-                var countryCode = document.getElementById('addrCountry2').value;
+                overlay.querySelector('#addressForm2').addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    var name = document.getElementById('addrFullName2').value.trim();
+                    var street = document.getElementById('addrStreet2').value.trim();
+                    var city = document.getElementById('addrCity2').value.trim();
+                    var state = document.getElementById('addrState2').value.trim();
+                    var zip = document.getElementById('addrZip2').value.trim();
+                    var phone = document.getElementById('addrPhone2').value.trim();
+                    var countryCode = document.getElementById('addrCountry2').value;
 
-                if (!name || !street || !city || !countryCode) {
-                    showToast('Please fill in all required fields.');
-                    return;
-                }
+                    if (!name || !street || !city || !countryCode) {
+                        showToast('Please fill in all required fields.');
+                        return;
+                    }
 
-                sessionStorage.setItem('funfairday_shipping_address', JSON.stringify({
-                    name: name, street: street, city: city,
-                    state: state, zip: zip, phone: phone, country: countryCode
-                }));
+                    sessionStorage.setItem('funfairday_shipping_address', JSON.stringify({
+                        name: name, street: street, city: city,
+                        state: state, zip: zip, phone: phone, country: countryCode
+                    }));
 
-                overlay.classList.remove('active');
-                window._proceedCheckoutFromLogin();
-            });
-
-            overlay.addEventListener('click', function(e) {
-                if (e.target === overlay) {
                     overlay.classList.remove('active');
-                }
-            });
+                    window._proceedCheckoutFromLogin();
+                });
+
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === overlay) {
+                        overlay.classList.remove('active');
+                    }
+                });
+            }
+
+            var countryEl = overlay.querySelector('#addrCountry2');
+            if (window._selectedCountry && countryEl) {
+                countryEl.value = window._selectedCountry;
+            }
+
+            overlay.querySelector('#addrFullName2').value = '';
+            overlay.querySelector('#addrStreet2').value = '';
+            overlay.querySelector('#addrCity2').value = '';
+            overlay.querySelector('#addrState2').value = '';
+            overlay.querySelector('#addrZip2').value = '';
+            overlay.querySelector('#addrPhone2').value = '';
+
+            overlay.classList.add('active');
+        } catch(e) {
+            console.error('Address form error:', e);
+            // Fallback: try Resume Mode via button click
+            window._resumeCheckoutMode = true;
+            var btn = document.getElementById('checkoutBtn');
+            if (btn) btn.click();
         }
-
-        var countryEl = overlay.querySelector('#addrCountry2');
-        if (window._selectedCountry && countryEl) {
-            countryEl.value = window._selectedCountry;
-        }
-
-        overlay.querySelector('#addrFullName2').value = '';
-        overlay.querySelector('#addrStreet2').value = '';
-        overlay.querySelector('#addrCity2').value = '';
-        overlay.querySelector('#addrState2').value = '';
-        overlay.querySelector('#addrZip2').value = '';
-        overlay.querySelector('#addrPhone2').value = '';
-
-        overlay.classList.add('active');
     };
 
     // --- Shipping ---
@@ -1976,38 +1984,38 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Checkout Resume After Login ---
+    // Simple self-contained resume: no auth dependency needed since address form works for guests too
     (function() {
-        if (!sessionStorage.getItem('funfairday_checkout_state')) return;
+        var savedState = sessionStorage.getItem('funfairday_checkout_state');
+        if (!savedState) return;
 
-        var pollCount = 0;
-        var pollInterval = setInterval(function() {
-            pollCount++;
-            if (pollCount > 50) {
-                clearInterval(pollInterval);
-                return;
-            }
-            if (window._authChecked === true && window._isLoggedIn === true) {
-                clearInterval(pollInterval);
-                try {
-                    var savedState = sessionStorage.getItem('funfairday_checkout_state');
-                    if (!savedState) return;
-                    sessionStorage.removeItem('funfairday_checkout_state');
-                    var state = JSON.parse(savedState);
-                    if (state.country) window._selectedCountry = state.country;
-                    if (state.shippingCost !== undefined) window._shippingCost = state.shippingCost;
-                    if (state.shippingMethod) window._shippingMethod = state.shippingMethod;
-                    if (state.methodId) window._selectedMethodId = state.methodId;
+        sessionStorage.removeItem('funfairday_checkout_state');
 
-                    setTimeout(function() {
-                        if (typeof window._showAddressFormFromLogin === 'function') {
-                            window._showAddressFormFromLogin();
-                        }
-                    }, 500);
-                } catch(e) {
-                    console.log('Resume checkout error:', e);
+        try {
+            var state = JSON.parse(savedState);
+            if (state.country) window._selectedCountry = state.country;
+            if (state.shippingCost !== undefined) window._shippingCost = state.shippingCost;
+            if (state.shippingMethod) window._shippingMethod = state.shippingMethod;
+            if (state.methodId) window._selectedMethodId = state.methodId;
+        } catch(e) {
+            console.log('Resume checkout state error:', e);
+            return;
+        }
+
+        // Wait for page to fully stabilize, then show address form
+        setTimeout(function() {
+            try {
+                if (typeof window._showAddressFormFromLogin === 'function') {
+                    window._showAddressFormFromLogin();
+                    return;
                 }
+                window._resumeCheckoutMode = true;
+                var btn = document.getElementById('checkoutBtn');
+                if (btn) btn.click();
+            } catch(e) {
+                console.log('Resume checkout show error:', e);
             }
-        }, 100);
+        }, 800);
     })();
 
     // Listen for public data loaded event to update dynamic content
