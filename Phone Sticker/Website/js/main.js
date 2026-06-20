@@ -432,7 +432,12 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                 });
 
-                if (!response.ok) throw new Error('Checkout request failed');
+                if (!response.ok) {
+                    var errText = await response.text();
+                    var errMsg = 'Checkout request failed';
+                    try { var errJson = JSON.parse(errText); errMsg = errJson.error || errMsg; } catch(e) { errMsg = errText || errMsg; }
+                    throw new Error(errMsg);
+                }
                 var data = await response.json();
 
                 if (data.url) {
