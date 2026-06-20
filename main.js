@@ -1,4 +1,4 @@
-﻿// Main Application Logic
+﻿// Main Application Logic - v2
 document.addEventListener('DOMContentLoaded', function() {
 
     // Auth state flags (only set defaults if not already set by page inline script)
