@@ -27,7 +27,7 @@ export async function onRequest(context) {
             {
                 headers: {
                     'apikey': env.SUPABASE_ANON_KEY,
-                    'Authorization': 'Bearer ' + env.SUPABASE_ANON_KEY,
+                    'Authorization': 'Bearer ' + token,
                     'Accept': 'application/json'
                 }
             }

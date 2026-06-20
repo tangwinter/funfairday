@@ -589,6 +589,21 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             } catch(e) {}
 
+            // Fallback: create Supabase client from cached config
+            if (!accessToken) {
+                try {
+                    var suUrl = localStorage.getItem('supabase_url');
+                    var suKey = localStorage.getItem('supabase_anon_key');
+                    if (suUrl && suKey && window.supabase) {
+                        var sbClient = window.supabase.createClient(suUrl, suKey);
+                        var sessRes = await sbClient.auth.getSession();
+                        if (sessRes && sessRes.data && sessRes.data.session && sessRes.data.session.access_token) {
+                            accessToken = sessRes.data.session.access_token;
+                        }
+                    }
+                } catch(e2) {}
+            }
+
             if (!accessToken) {
                 showToast('Please log in to claim free items.');
                 if (checkoutBtnEl) { checkoutBtnEl.disabled = false; checkoutBtnEl.textContent = 'Checkout'; }
