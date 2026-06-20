@@ -553,8 +553,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Helper: get logged-in user info from stored Supabase session
+    // Helper: get logged-in user info from stored Supabase session
     function getStoredUser() {
         try {
+            // Method 1: Find Supabase session in localStorage
             for (var i = 0; i < localStorage.length; i++) {
                 var key = localStorage.key(i);
                 if (key && key.indexOf('sb-') === 0 && key.indexOf('-auth-token') > 0) {
@@ -572,8 +574,22 @@ document.addEventListener('DOMContentLoaded', function() {
     async function createFreeOrder(cartItems, checkoutBtnEl) {
         try {
             showToast('Processing free order...');
-            var userInfo = getStoredUser();
-            if (!userInfo) {
+
+            // Get Supabase access token from localStorage
+            var accessToken = '';
+            try {
+                for (var ti = 0; ti < localStorage.length; ti++) {
+                    var tk = localStorage.key(ti);
+                    if (tk && tk.indexOf('sb-') === 0 && tk.indexOf('-auth-token') > 0) {
+                        var tData = JSON.parse(localStorage.getItem(tk));
+                        if (tData && tData.access_token) {
+                            accessToken = tData.access_token;
+                        }
+                    }
+                }
+            } catch(e) {}
+
+            if (!accessToken) {
                 showToast('Please log in to claim free items.');
                 if (checkoutBtnEl) { checkoutBtnEl.disabled = false; checkoutBtnEl.textContent = 'Checkout'; }
                 return;
@@ -595,16 +611,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
             var freeOrderRef = 'FREE-' + Date.now().toString(36).toUpperCase();
 
-            var orderRes = await fetch('/create-order', {
+            var orderRes = await fetch('/create-free-order', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + accessToken
+                },
                 body: JSON.stringify({
-                    customer_id: userInfo.id,
-                    customer_email: userInfo.email,
                     items: cartItems,
                     total: 0,
                     shipping_address: shippingAddr,
-                    stripe_session_id: '',
                     shipping_method: shipMethod,
                     shipping_cost: shipCost
                 })
@@ -637,7 +653,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 var errText = await orderRes.text();
                 console.error('Free order failed:', errText);
-                showToast('Failed to create free order. Please try again.');
+                try { var errJson = JSON.parse(errText); showToast('Failed: ' + (errJson.error || errText)); } catch(e) { showToast('Failed to create free order: ' + errText.slice(0, 100)); }
                 if (checkoutBtnEl) { checkoutBtnEl.disabled = false; checkoutBtnEl.textContent = 'Checkout'; }
             }
         } catch(e) {
