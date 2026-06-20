@@ -125,13 +125,13 @@
     <!-- Gift Content -->
     <section class="gift-page" id="giftPage">
         <div class="gift-card">
-            <span class="gift-icon">??</span>
+            <span class="gift-icon">🎁</span>
             <h1>FREE RANDOM STICKER</h1>
             <div class="gift-price">$0.00</div>
-            <p class="gift-desc">Free random sticker gift ??claim now! No purchase necessary. Just add to cart and checkout to receive your free sticker.</p>
+            <p class="gift-desc">Free random sticker gift — claim now! No purchase necessary. Just add to cart and checkout to receive your free sticker.</p>
             <button class="btn btn-primary gift-btn" id="claimBtn">Add to Cart</button>
             <div class="gift-message" id="giftMessage"></div>
-            <div class="gift-footer-text">Only one free gift per person ??30min to checkout</div>
+            <div class="gift-footer-text">Only one free gift per person • 30min to checkout</div>
         </div>
     </section>
 
@@ -219,11 +219,43 @@
                     }
                     localStorage.setItem('funfairday_cart', JSON.stringify(cart));
                     localStorage.setItem('funfairday_gift_code', giftCode);
-                    // Set flag so homepage shows the popup
-                    localStorage.setItem('funfairday_gift_claimed', 'true');
+                    // Set 30min expiry timer
+                    var expiresAt = Date.now() + 30 * 60 * 1000;
+                    localStorage.setItem('funfairday_gift_expires', expiresAt.toString());
 
-                    // Redirect to homepage
-                    window.location.href = 'index.html';
+                    // Show celebration with timer instead of immediate redirect
+                    btn.style.display = 'none';
+                    document.querySelector('.gift-footer-text').style.display = 'none';
+                    document.querySelector('.gift-icon').textContent = '🎉';
+                    document.querySelector('h1').textContent = 'Free Gift Claimed!';
+                    document.querySelector('.gift-price').textContent = '';
+                    document.querySelector('.gift-desc').innerHTML = 'Please complete checkout within <strong>30 minutes</strong>, otherwise the link will expire.<br><br><span id="giftTimer" style="font-size:2rem;font-weight:800;color:var(--primary);">30:00</span><br><br>Your free sticker has been added to cart!';
+                    document.querySelector('.gift-btn').style.display = 'none';
+                    // Add continue button
+                    var continueBtn = document.createElement('button');
+                    continueBtn.className = 'btn btn-primary gift-btn';
+                    continueBtn.textContent = 'Continue Shopping';
+                    continueBtn.style.marginTop = '16px';
+                    continueBtn.addEventListener('click', function() {
+                        window.location.href = 'index.html';
+                    });
+                    document.querySelector('.gift-card').appendChild(continueBtn);
+
+                    // Start countdown
+                    var timerEl = document.getElementById('giftTimer');
+                    var totalSeconds = 30 * 60;
+                    var timerInterval = setInterval(function() {
+                        totalSeconds--;
+                        if (totalSeconds <= 0) {
+                            clearInterval(timerInterval);
+                            timerEl.textContent = '00:00';
+                            timerEl.style.color = '#e74c3c';
+                            return;
+                        }
+                        var mins = Math.floor(totalSeconds / 60);
+                        var secs = totalSeconds % 60;
+                        timerEl.textContent = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+                    }, 1000);
                 } else if (result.error === 'claimed') {
                     // Already claimed - offer 30% discount
                     showGiftMessage('This gift has already been claimed!', 'error');

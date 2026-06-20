@@ -397,6 +397,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     return;
                 }
 
+                // Fulfill gift code before Stripe redirect
+                if (giftCode) {
+                    try {
+                        var sid = localStorage.getItem('funfairday_session') || '';
+                        await fetch('/claim-gift', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code: giftCode, session: sid, fulfill: true })
+                        });
+                    } catch(e) {
+                        console.log('Gift fulfill note:', e.message);
+                    }
+                }
+
                 var response = await fetch('/create-checkout', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -438,84 +452,190 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
 
-        // Check if bundle offer should be shown
-        var bundleInCart = items.some(function(i) { return i.id === 'bundle-5pcs-stick' || i.productId === 'bundle-5pcs-stick'; });
+        // ============ NEW CHECKOUT FLOW ============
 
-        if (!bundleInCart) {
-            // Show bundle offer popup
-            var bundleProduct = products.find(function(p) { return p.id === 'bundle-5pcs-stick'; });
-            if (bundleProduct) {
-                var bundlePrice = Cart.isDiscountActive()
-                    ? '$' + Cart.getDiscountedPrice(bundleProduct.price).toFixed(2)
-                    : '$' + bundleProduct.price.toFixed(2);
-
-                showPopup({
-                    icon: '🎉',
-                    title: 'Special Offer for You!',
-                    text: 'Get 5pcs Stick Bundle Pack at ' + bundlePrice + ' only!\n(50% off - was US$16, now US$8)',
-                    buttons: [
-                        {
-                            label: 'Add to Cart',
-                            className: 'btn-primary',
-                            action: function() {
-                                Cart.addItem(bundleProduct, 1);
-                                showToast('5pcs Stick Bundle Pack added to cart!');
-                                updateCartUI();
-                                openCart();
-                                // Now proceed to checkout
-                                setTimeout(function() { proceedCheckout(); }, 500);
-                            }
-                        },
-                        {
-                            label: 'Keep Checkout',
-                            className: 'btn-secondary',
-                            action: function() {
-                                proceedCheckout();
-                            }
-                        }
-                    ]
-                });
-                this.disabled = false;
-                this.textContent = 'Checkout';
-                return;
-            }
+        // Helper: find country name from code
+        function getCountryName(code) {
+            var found = SHIPPING_COUNTRIES.find(function(c) { return c.code === code; });
+            return found ? found.name : code;
         }
 
-        // Check if free shipping popup should be shown
-        var hasFreeGiftCheck = items.some(function(i) { return i.id === 'free-sticker-gift' || i.productId === 'free-sticker-gift'; });
-        var subtotalCheck = Cart.getTotal();
-        var isShippingFree = hasFreeGiftCheck || subtotalCheck >= SHIP_FREE_THRESHOLD;
-
-        if (!isShippingFree && subtotalCheck < SHIP_FREE_THRESHOLD) {
-            var needed = (SHIP_FREE_THRESHOLD - subtotalCheck).toFixed(2);
-            this.disabled = false;
-            this.textContent = 'Checkout';
+        // Step: Auth popup (Sign In / Register / Stranger)
+        function showAuthPopup() {
             showPopup({
-                icon: '🚚',
-                title: 'Free Shipping Available!',
-                text: 'Add US$' + needed + ' more to your order and get Free Shipping!',
+                icon: '🔐',
+                title: 'Almost there!',
+                text: 'Please sign in to save your address, or continue as a guest.',
                 buttons: [
                     {
-                        label: 'Continue to Checkout',
+                        label: 'Buy as Stranger',
                         className: 'btn-primary',
                         action: function() {
-                            proceedCheckout();
+                            showShippingConfirm();
                         }
                     },
                     {
-                        label: 'Keep Shopping',
+                        label: 'Sign In / Register',
                         className: 'btn-secondary',
                         action: function() {
-                            closeCart();
+                            window.location.href = 'login.html?return_to=' + encodeURIComponent(window.location.href);
                         }
                     }
                 ]
             });
-            return;
+            checkoutBtn.disabled = false;
+            checkoutBtn.textContent = 'Checkout';
         }
 
-        // No bundle offer needed, proceed directly
-        proceedCheckout.call(this);
+        // Step: Shipping cost confirmation
+        function showShippingConfirm() {
+            var countryName = getCountryName(selectedCountry);
+            var shipCostUSD = Math.round((window._shippingCost || 0) / 7.8 * 100) / 100;
+            var shipMethod = window._shippingMethod || 'Shipping';
+
+            showPopup({
+                icon: '📦',
+                title: 'Confirm Shipping',
+                text: 'Destination: ' + countryName + '\nMethod: ' + shipMethod + '\nCost: $' + shipCostUSD.toFixed(2),
+                buttons: [
+                    {
+                        label: 'Change Country',
+                        className: 'btn-secondary',
+                        action: function() {
+                            if (countrySelect) {
+                                countrySelect.focus();
+                                showToast('Please select a different country to recalculate shipping.');
+                            }
+                        }
+                    },
+                    {
+                        label: 'Confirm & Pay',
+                        className: 'btn-primary',
+                        action: function() {
+                            showFinalSteps();
+                        }
+                    }
+                ]
+            });
+        }
+
+        // Step: Bundle offer + free shipping check + proceed
+        function showFinalSteps() {
+            var bundleInCart = items.some(function(i) { return i.id === 'bundle-5pcs-stick' || i.productId === 'bundle-5pcs-stick'; });
+
+            if (!bundleInCart) {
+                var bundleProduct = products.find(function(p) { return p.id === 'bundle-5pcs-stick'; });
+                if (bundleProduct) {
+                    var bundlePrice = Cart.isDiscountActive()
+                        ? '$' + Cart.getDiscountedPrice(bundleProduct.price).toFixed(2)
+                        : '$' + bundleProduct.price.toFixed(2);
+
+                    showPopup({
+                        icon: '🎉',
+                        title: 'Special Offer for You!',
+                        text: 'Get 5pcs Stick Bundle Pack at ' + bundlePrice + ' only!\n(50% off - was US$16, now US$8)',
+                        buttons: [
+                            {
+                                label: 'Add to Cart',
+                                className: 'btn-primary',
+                                action: function() {
+                                    Cart.addItem(bundleProduct, 1);
+                                    showToast('5pcs Stick Bundle Pack added to cart!');
+                                    updateCartUI();
+                                    openCart();
+                                    setTimeout(function() { showFreeShippingCheck(); }, 500);
+                                }
+                            },
+                            {
+                                label: 'Keep Checkout',
+                                className: 'btn-secondary',
+                                action: function() {
+                                    showFreeShippingCheck();
+                                }
+                            }
+                        ]
+                    });
+                    return;
+                }
+            }
+
+            showFreeShippingCheck();
+        }
+
+        // Step: Free shipping threshold check
+        function showFreeShippingCheck() {
+            var hasFreeGiftCheck = items.some(function(i) { return i.id === 'free-sticker-gift' || i.productId === 'free-sticker-gift'; });
+            var subtotalCheck = Cart.getTotal();
+            var isShippingFree = hasFreeGiftCheck || subtotalCheck >= SHIP_FREE_THRESHOLD;
+
+            if (!isShippingFree && subtotalCheck < SHIP_FREE_THRESHOLD) {
+                var needed = (SHIP_FREE_THRESHOLD - subtotalCheck).toFixed(2);
+                checkoutBtn.disabled = false;
+                checkoutBtn.textContent = 'Checkout';
+                showPopup({
+                    icon: '🚚',
+                    title: 'Free Shipping Available!',
+                    text: 'Add US$' + needed + ' more to your order and get Free Shipping!',
+                    buttons: [
+                        {
+                            label: 'Continue to Checkout',
+                            className: 'btn-primary',
+                            action: function() {
+                                proceedCheckout();
+                            }
+                        },
+                        {
+                            label: 'Keep Shopping',
+                            className: 'btn-secondary',
+                            action: function() {
+                                closeCart();
+                            }
+                        }
+                    ]
+                });
+                return;
+            }
+
+            // Proceed directly
+            proceedCheckout();
+        }
+
+        // ===== START CHECKOUT FLOW =====
+        // If gift code in use, show fluffy sticker upsell first
+        var hasGiftCode = !!localStorage.getItem('funfairday_gift_code');
+
+        if (hasGiftCode) {
+            var fluffyProduct = products.find(function(p) { return p.id === 'sticker-fluffy-pack-8'; });
+            showPopup({
+                icon: '🎁',
+                title: 'Add a Fluffy Sticker Pack?',
+                text: 'Add 8pcs Assorted Fluffy Sticker Pack ($9.62) to your gift order?',
+                buttons: [
+                    {
+                        label: 'Add to Cart ($9.62)',
+                        className: 'btn-primary',
+                        action: function() {
+                            if (fluffyProduct) {
+                                Cart.addItem(fluffyProduct, 1);
+                                showToast('Fluffy Sticker Pack added!');
+                                updateCartUI();
+                                openCart();
+                            }
+                            setTimeout(showAuthPopup, 300);
+                        }
+                    },
+                    {
+                        label: 'No thanks, keep checking out',
+                        className: 'btn-secondary',
+                        action: function() {
+                            showAuthPopup();
+                        }
+                    }
+                ]
+            });
+        } else {
+            showAuthPopup();
+        }
     });
 
     // --- Shipping ---
@@ -1443,34 +1563,40 @@ document.addEventListener('DOMContentLoaded', function() {
         localStorage.setItem('funfairday_session', sessionId);
     }
 
-    // Gift claim popup (triggered after redirect from free-sticker.html)
-    var giftClaimedFlag = localStorage.getItem('funfairday_gift_claimed');
-    if (giftClaimedFlag === 'true') {
-        localStorage.removeItem('funfairday_gift_claimed');
-        // Wait a moment for page to fully render
-        setTimeout(function() {
-            showPopup({
-                icon: '🎁',
-                title: 'Free Gift Added! 🎉',
-                text: 'Please process the free sticker checkout within 30mins to claim your gift!',
-                buttons: [
-                    {
-                        label: 'Check out Now',
-                        className: 'btn-primary',
-                        action: function() {
-                            openCart();
+    // Gift timer banner (check if user has an active gift claim)
+    var giftExpires = localStorage.getItem('funfairday_gift_expires');
+    if (giftExpires) {
+        var remaining = parseInt(giftExpires) - Date.now();
+        if (remaining > 0) {
+            var mins = Math.floor(remaining / 60000);
+            var secs = Math.floor((remaining % 60000) / 1000);
+            var timeStr = String(mins).padStart(2, '0') + ':' + String(secs).padStart(2, '0');
+            setTimeout(function() {
+                showPopup({
+                    icon: '🎁',
+                    title: 'Free Gift Added!',
+                    text: 'You have ' + timeStr + ' remaining to checkout with your free gift!',
+                    buttons: [
+                        {
+                            label: 'Check out Now',
+                            className: 'btn-primary',
+                            action: function() {
+                                openCart();
+                            }
+                        },
+                        {
+                            label: 'Shop Around',
+                            className: 'btn-secondary',
+                            action: function() {}
                         }
-                    },
-                    {
-                        label: 'Shop Around',
-                        className: 'btn-secondary',
-                        action: function() {
-                            window.location.href = 'category.html?cat=stickers';
-                        }
-                    }
-                ]
-            });
-        }, 500);
+                    ]
+                });
+            }, 500);
+        } else {
+            // Expired - clean up
+            localStorage.removeItem('funfairday_gift_expires');
+            localStorage.removeItem('funfairday_gift_code');
+        }
     }
 
     // Discount banner

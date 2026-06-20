@@ -27,7 +27,9 @@ INSERT INTO free_gift_codes (code) VALUES
     ('GIFT-D9yU1iO3pL'),
     ('GIFT-P7sE5jK8qW'),
     ('GIFT-W6gH0zR2vX'),
-    ('GIFT-Q1mC8nF3bD')
+    ('GIFT-Q1mC8nF3bD'),
+    ('GIFT-hJ5kL9mN2pR'),
+    ('GIFT-xP8sV3wQ6bT')
 ON CONFLICT (code) DO NOTHING;
 
 -- Index for faster lookups
