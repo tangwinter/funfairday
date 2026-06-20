@@ -181,6 +181,33 @@
     }
 
     // ============================================
+    // Save address to Supabase database
+    // ============================================
+    async function saveAddressToSupabase(addrData) {
+        try {
+            var res = await fetch('/get-supabase-config');
+            var config = await res.json();
+            if (!config.configured || !window.supabase) return;
+            var sb = window.supabase.createClient(config.url, config.anonKey);
+            var { data: { session } } = await sb.auth.getSession();
+            if (session) {
+                await sb.from('shipping_addresses').upsert({
+                    user_id: session.user.id,
+                    name: addrData.name,
+                    street: addrData.street,
+                    city: addrData.city,
+                    state: addrData.state || '',
+                    zip: addrData.zip || '',
+                    phone: addrData.phone || '',
+                    country: addrData.country
+                }, { onConflict: 'user_id' });
+            }
+        } catch(e) {
+            console.log('Supabase save note:', e.message);
+        }
+    }
+
+    // ============================================
     // Page Initialization
     // ============================================
     document.addEventListener('DOMContentLoaded', function() {
@@ -253,6 +280,9 @@
                 };
                 sessionStorage.setItem('funfairday_shipping_address', JSON.stringify(addrData));
                 localStorage.setItem('funfairday_shipping_address', JSON.stringify(addrData));
+
+                // Save to Supabase asynchronously
+                saveAddressToSupabase(addrData);
 
                 showToast('Address saved!');
                 setTimeout(function() {
@@ -336,6 +366,9 @@
             };
             sessionStorage.setItem('funfairday_shipping_address', JSON.stringify(addrData));
             localStorage.setItem('funfairday_shipping_address', JSON.stringify(addrData));
+
+            // Save to Supabase
+            saveAddressToSupabase(addrData);
 
             // Show loading
             document.getElementById('loadingOverlay').classList.add('active');

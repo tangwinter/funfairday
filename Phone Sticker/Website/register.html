@@ -371,6 +371,24 @@
                 sessionStorage.setItem('funfairday_shipping_address', JSON.stringify(addressData));
                 localStorage.setItem('funfairday_shipping_address', JSON.stringify(addressData));
 
+                // Save address to Supabase database
+                try {
+                    if (data.session) {
+                        await supabase.from('shipping_addresses').upsert({
+                            user_id: data.session.user.id,
+                            name: addressData.name,
+                            street: addressData.street,
+                            city: addressData.city,
+                            state: addressData.state,
+                            zip: addressData.zip,
+                            phone: addressData.phone,
+                            country: addressData.country
+                        }, { onConflict: 'user_id' });
+                    }
+                } catch(dbErr) {
+                    console.log('Supabase address save note:', dbErr.message);
+                }
+
                 // Hide form, show success message with Go to Login button
                 form.style.display = 'none';
                 successDiv.classList.add('show');

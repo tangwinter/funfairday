@@ -282,6 +282,33 @@
             window._userMeta = session.user.user_metadata || {};
             var userName = window._userMeta.full_name || localStorage.getItem('funfairday_user_name') || '';
 
+            // Fetch saved address from Supabase
+            var dbAddress = null;
+            try {
+                var { data: addrRows } = await supabase
+                    .from('shipping_addresses')
+                    .select('*')
+                    .eq('user_id', session.user.id)
+                    .limit(1)
+                    .maybeSingle();
+                if (addrRows) {
+                    dbAddress = {
+                        name: addrRows.name,
+                        street: addrRows.street,
+                        city: addrRows.city,
+                        state: addrRows.state || '',
+                        zip: addrRows.zip || '',
+                        phone: addrRows.phone || '',
+                        country: addrRows.country
+                    };
+                    // Sync to localStorage for checkout use
+                    localStorage.setItem('funfairday_shipping_address', JSON.stringify(dbAddress));
+                    sessionStorage.setItem('funfairday_shipping_address', JSON.stringify(dbAddress));
+                }
+            } catch(e) {
+                console.log('Supabase address fetch note:', e.message);
+            }
+
             try {
                 const cartData = JSON.parse(localStorage.getItem('funfairday_cart') || '[]');
                 const count = cartData.reduce((s, i) => s + i.quantity, 0);
@@ -291,7 +318,7 @@
             } catch(e) {}
 
             await loadOrders();
-            showProfile(userName);
+            showProfile(userName, dbAddress);
         })();
 
         async function loadOrders() {
@@ -380,17 +407,19 @@
             window.location.href = 'index.html';
         });
 
-        function showProfile(displayName) {
+        function showProfile(displayName, dbAddress) {
             var container = document.getElementById('profileContainer');
 
-            // Get address from sessionStorage first, then localStorage as fallback
-            var addrData = null;
-            try {
-                addrData = JSON.parse(sessionStorage.getItem('funfairday_shipping_address') || 'null');
-                if (!addrData) {
+            // Get address from Supabase first, then localStorage, then sessionStorage
+            var addrData = dbAddress || null;
+            if (!addrData) {
+                try {
                     addrData = JSON.parse(localStorage.getItem('funfairday_shipping_address') || 'null');
-                }
-            } catch(e) {}
+                    if (!addrData) {
+                        addrData = JSON.parse(sessionStorage.getItem('funfairday_shipping_address') || 'null');
+                    }
+                } catch(e) {}
+            }
 
             var countryName = '';
             if (addrData) {

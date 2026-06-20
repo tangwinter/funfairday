@@ -1744,6 +1744,25 @@ document.addEventListener('DOMContentLoaded', function() {
                     window._userDisplayName = session.user.user_metadata && session.user.user_metadata.full_name || localStorage.getItem('funfairday_user_name') || session.user.email || '';
                     authLink.textContent = window._userDisplayName;
                     authLink.href = 'account.html';
+
+                    // Fetch shipping address from Supabase and cache locally
+                    supabase.from('shipping_addresses').select('*').eq('user_id', session.user.id).limit(1).maybeSingle().then(function(addrResult) {
+                        if (addrResult && addrResult.data) {
+                            var addr = addrResult.data;
+                            var addrData = {
+                                name: addr.name,
+                                street: addr.street,
+                                city: addr.city,
+                                state: addr.state || '',
+                                zip: addr.zip || '',
+                                phone: addr.phone || '',
+                                country: addr.country
+                            };
+                            localStorage.setItem('funfairday_shipping_address', JSON.stringify(addrData));
+                            sessionStorage.setItem('funfairday_shipping_address', JSON.stringify(addrData));
+                            if (addr.country) window._selectedCountry = addr.country;
+                        }
+                    }).catch(function() {});
                 } else {
                     authLink.textContent = 'Sign In';
                     authLink.href = 'login.html';
