@@ -123,6 +123,9 @@ CREATE TABLE IF NOT EXISTS orders (
     total DECIMAL(10,2) NOT NULL DEFAULT 0,
     shipping_address JSONB,
     stripe_session_id TEXT,
+    shipping_method TEXT DEFAULT '',
+    shipping_cost DECIMAL(10,2) DEFAULT 0,
+    weight_grams INTEGER DEFAULT 0,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

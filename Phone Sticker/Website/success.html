@@ -89,11 +89,21 @@
                         orderPayload.shipping_cost = shippingInfo.cost;
                     }
 
-                    await fetch('/create-order', {
+                    // Read shipping address from saved data
+                    try {
+                        var savedAddr = JSON.parse(localStorage.getItem('funfairday_shipping_address') || 'null');
+                        if (savedAddr) orderPayload.shipping_address = savedAddr;
+                    } catch(e) {}
+
+                    var orderRes = await fetch('/create-order', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(orderPayload)
                     });
+                    if (!orderRes.ok) {
+                        var errText = await orderRes.text();
+                        console.error('Order creation failed:', errText);
+                    }
 
                     // Mark gift as fulfilled if a gift code was used
                     if (cartItems._giftCode) {
