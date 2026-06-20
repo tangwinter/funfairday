@@ -126,6 +126,8 @@ CREATE TABLE IF NOT EXISTS orders (
     shipping_method TEXT DEFAULT '',
     shipping_cost DECIMAL(10,2) DEFAULT 0,
     weight_grams INTEGER DEFAULT 0,
+    tracking_number TEXT DEFAULT '',
+    tracking_url TEXT DEFAULT '',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

@@ -2,6 +2,8 @@
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_method TEXT DEFAULT '';
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_cost DECIMAL(10,2) DEFAULT 0;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS weight_grams INTEGER DEFAULT 0;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_number TEXT DEFAULT '';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_url TEXT DEFAULT '';
 
 -- (Optional) Create the tables if they don't exist yet
 CREATE TABLE IF NOT EXISTS orders (
@@ -15,6 +17,8 @@ CREATE TABLE IF NOT EXISTS orders (
     shipping_method TEXT DEFAULT '',
     shipping_cost DECIMAL(10,2) DEFAULT 0,
     weight_grams INTEGER DEFAULT 0,
+    tracking_number TEXT DEFAULT '',
+    tracking_url TEXT DEFAULT '',
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
