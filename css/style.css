@@ -907,6 +907,32 @@ ul {
     color: var(--secondary);
 }
 
+.cart-free-threshold {
+    display: none;
+    padding: 8px 16px;
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--primary);
+    background: #fff5f5;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px dashed var(--primary);
+}
+
+.cart-free-shipping-msg {
+    display: none;
+    padding: 10px 16px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #2e7d32;
+    background: #e8f5e9;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #a5d6a7;
+}
+
 /* --- Shipping Method Radio Buttons --- */
 .cart-shipping-methods {
     margin-top: 8px;
@@ -1506,6 +1532,36 @@ ul {
     }
 }
 
+/* --- Sticker Category Sub-Sections --- */
+.sticker-section {
+    margin-bottom: 40px;
+}
+
+.sticker-section-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 24px;
+    padding: 20px;
+    background: var(--bg-light);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+}
+
+.sticker-section-img {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+}
+
+.sticker-section-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--dark);
+    margin: 0;
+}
+
 @media (max-width: 768px) {
     .hero-title {
         font-size: 2.8rem;
@@ -1694,17 +1750,4 @@ ul {
 .price-discounted {
     color: #E74C3C;
     font-weight: 800;
-}
-
-.cart-free-shipping-msg {
-    display: none;
-    padding: 10px 16px;
-    margin-bottom: 8px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    color: #2e7d32;
-    background: #e8f5e9;
-    border-radius: 8px;
-    text-align: center;
-    border: 1px solid #a5d6a7;
 }

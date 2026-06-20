@@ -1,8 +1,8 @@
-// Main Application Logic
+﻿// Main Application Logic
 document.addEventListener('DOMContentLoaded', function() {
 
     const colorClasses = ['product-color-1', 'product-color-2', 'product-color-3', 'product-color-4'];
-    const placeholderIcons = ['?嚙踝蕭', '?嚙踝蕭', '?嚙踝蕭', '??'];
+    const placeholderIcons = ['🎨', '📱', '🎭', '💐'];
 
     // --- Render Categories on Homepage ---
     const categoriesGrid = document.getElementById('categoriesGrid');
@@ -206,6 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show free shipping threshold banner
         var freeThresholdEl = document.getElementById('cartFreeThreshold');
         if (!freeThresholdEl) {
+            // Create the banner element if not present
             var shippingSection = document.querySelector('.cart-shipping');
             if (shippingSection) {
                 var banner = document.createElement('div');
@@ -216,10 +217,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         if (freeThresholdEl) {
-            var hasFreeGift2 = items.some(function(item) {
+            var hasFreeGift = items.some(function(item) {
                 return item.id === 'free-sticker-gift' || item.productId === 'free-sticker-gift';
             });
-            if (hasFreeGift2 || subtotal >= SHIP_FREE_THRESHOLD) {
+            if (hasFreeGift || subtotal >= SHIP_FREE_THRESHOLD) {
                 freeThresholdEl.style.display = 'none';
             } else {
                 var needed = (SHIP_FREE_THRESHOLD - subtotal).toFixed(2);
@@ -227,6 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 freeThresholdEl.style.display = 'block';
             }
         }
+
         // Show free shipping message above total
         var freeShipMsg = document.getElementById('cartFreeShippingMsg');
         if (freeShipMsg) {
@@ -236,14 +238,15 @@ document.addEventListener('DOMContentLoaded', function() {
             if (hasFreeGiftMsg || subtotal >= SHIP_FREE_THRESHOLD) {
                 freeShipMsg.style.display = 'block';
                 if (hasFreeGiftMsg) {
-                    freeShipMsg.textContent = '?? Free Shipping (Free Gift in cart!)';
+                    freeShipMsg.textContent = '🚚 Free Shipping (Free Gift in cart!)';
                 } else {
-                    freeShipMsg.textContent = '?? Free Shipping (Order over US$' + SHIP_FREE_THRESHOLD + ')';
+                    freeShipMsg.textContent = '🚚 Free Shipping (Order over US$' + SHIP_FREE_THRESHOLD + ')';
                 }
             } else {
                 freeShipMsg.style.display = 'none';
             }
-        }    }
+        }
+    }
 
     // Event delegation for cart actions (more reliable than per-item listeners)
     cartItems.addEventListener('click', function(e) {
@@ -442,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         // Check if bundle offer should be shown
-        var bundleInCart = Cart.getItems().some(function(i) { return i.id === 'bundle-5pcs-stick' || i.productId === 'bundle-5pcs-stick'; });
+        var bundleInCart = items.some(function(i) { return i.id === 'bundle-5pcs-stick' || i.productId === 'bundle-5pcs-stick'; });
 
         if (!bundleInCart) {
             // Show bundle offer popup
@@ -453,7 +456,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     : '$' + bundleProduct.price.toFixed(2);
 
                 showPopup({
-                    icon: '??',
+                    icon: '🎉',
                     title: 'Special Offer for You!',
                     text: 'Get 5pcs Stick Bundle Pack at ' + bundlePrice + ' only!\n(50% off - was US$16, now US$8)',
                     buttons: [
@@ -494,7 +497,7 @@ document.addEventListener('DOMContentLoaded', function() {
             this.disabled = false;
             this.textContent = 'Checkout';
             showPopup({
-                icon: '??',
+                icon: '🚚',
                 title: 'Free Shipping Available!',
                 text: 'Add US$' + needed + ' more to your order and get Free Shipping!',
                 buttons: [
@@ -580,7 +583,7 @@ document.addEventListener('DOMContentLoaded', function() {
             opt.textContent = c.name;
             select.appendChild(opt);
         });
-        // Country select starts empty ??user must choose
+        // Country select starts empty — user must choose
     })();
 
     // Render shipping method radio buttons (or fallback to old #shippingInfo)
@@ -688,7 +691,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'MX': 322, 'BR': 287, 'AR': 336
     };
 
-    // EC-GET Hong Kong local rates (HKD) ??Special offer until Jun 2026
+    // EC-GET Hong Kong local rates (HKD) — Special offer until Jun 2026
     var SHIP_ECGET_RATES = [
         { maxG: 500, cost: 10 },
         { maxG: 2000, cost: 13 },
@@ -718,7 +721,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Note: UAE (AE) and Saudi Arabia (SA) have no Speedpost service from HK Post.
     // They remain in the country list for reference but rates will use fallback pricing.
 
-    // Registered Air Mail 0.5kg packet base rates per country (HKD) ??from HK Post calculator
+    // Registered Air Mail 0.5kg packet base rates per country (HKD) — from HK Post calculator
     var SHIP_AIRMAIL_RATES = {
         'US': 114.10, 'CA': 114.10,
         'GB': 114.10, 'FR': 114.10, 'DE': 114.10, 'IT': 114.10, 'ES': 114.10,
@@ -736,7 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Registration surcharge (adds tracking)
     var SHIP_AIRMAIL_REG_FEE = 15.50;
 
-    // Airmail delivery time estimates (working days) ??from HK Post
+    // Airmail delivery time estimates (working days) — from HK Post
     var SHIP_AIRMAIL_EDD = {
         'US': '7-16 days', 'CA': '9-14 days',
         'GB': '10-11 days', 'FR': '10-12 days', 'DE': '10-12 days',
@@ -755,13 +758,13 @@ document.addEventListener('DOMContentLoaded', function() {
         'AE': '10-18 days', 'SA': '10-18 days'
     };
 
-    // Local Mail Packet rates (HKD) ??Hong Kong home delivery, up to 2kg
+    // Local Mail Packet rates (HKD) — Hong Kong home delivery, up to 2kg
     var SHIP_LOCALMAIL_RATES = [
         { maxG: 1000, cost: 15.80 },
         { maxG: 2000, cost: 30.40 }
     ];
 
-    // Local Parcel rates (HKD) ??for items over 2kg
+    // Local Parcel rates (HKD) — for items over 2kg
     var SHIP_LOCALPARCEL_RATES = [
         { maxG: 3000, cost: 77.00 },
         { maxG: 4000, cost: 93.00 },
@@ -800,6 +803,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var code = countryCode.toUpperCase();
         return SHIP_SPEEDPOST_EDD[code] || '3-5 days';
     }
+
     function _shipGetAirmailRate(countryCode, totalGrams) {
         var code = countryCode.toUpperCase();
         var baseRate = SHIP_AIRMAIL_RATES[code] || 114.10;
@@ -825,7 +829,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return Math.round(SHIP_LOCALMAIL_RATES[i].cost * 100) / 100;
             }
         }
-        // Over 2kg ??use Local Parcel rates
+        // Over 2kg — use Local Parcel rates
         for (var j = 0; j < SHIP_LOCALPARCEL_RATES.length; j++) {
             if (totalGrams <= SHIP_LOCALPARCEL_RATES[j].maxG) {
                 return Math.round(SHIP_LOCALPARCEL_RATES[j].cost * 100) / 100;
@@ -838,7 +842,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return Math.round((_shipGetLocalMailRate(totalGrams) + SHIP_AIRMAIL_REG_FEE) * 100) / 100;
     }
 
-        window._calculateShipping = function(country) {
+    window._calculateShipping = function(country) {
         var items = Cart.getItems().map(function(item) {
             var prod = products.find(function(p) { return p.id === item.id; });
             return {
@@ -863,12 +867,12 @@ document.addEventListener('DOMContentLoaded', function() {
         var methods = [];
 
         if (isFreeShipping) {
-            // Free shipping - single option
+            // Free shipping — single option
             methods.push({
                 id: 'free',
                 name: 'Free Shipping',
                 cost: 0,
-                deliveryTime: '\u2014'
+                deliveryTime: '—'
             });
         } else if (isHK) {
             // Hong Kong: offer EC-GET + Local Mail options
@@ -945,6 +949,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         return Promise.resolve({ methods: methods, freeGift: isFreeShipping, weight: totalGrams });
     };
+
     // Country dropdown change
     document.addEventListener('change', function(e) {
         if (e.target && e.target.id === 'shippingCountry') {
@@ -1026,9 +1031,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (!cat || !cat.hasCaseSelection) {
             // Simple modal for stickers (no case selection)
+            var productImageHtml = product.image
+                ? '<img src="' + product.image + '" alt="' + product.name + '" style="max-width:100%;max-height:100%;object-fit:contain;">'
+                : '<span style="font-size:5rem;">' + icon + '</span>';
             modalContent.innerHTML = [
                 '<div class="modal-product-image ' + colorClasses[idx] + '">',
-                    '<span style="font-size:5rem;">' + icon + '</span>',
+                    productImageHtml,
                 '</div>',
                 '<h2 class="modal-product-name">' + product.name + '</h2>',
                 '<div class="modal-product-price">$' + product.price.toFixed(2) + '</div>',
@@ -1401,7 +1409,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     window.showPopup = function(opts) {
-        popupIcon.textContent = opts.icon || '??';
+        popupIcon.textContent = opts.icon || '🎉';
         popupTitle.textContent = opts.title || '';
         popupText.textContent = opts.text || '';
         popupActions.innerHTML = '';
@@ -1411,10 +1419,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 el.className = 'btn ' + (btn.className || 'btn-primary');
                 el.textContent = btn.label;
                 el.addEventListener('click', function(e) {
-                    // Close popup first, then run action (prevents stuck popups)
-                    var shouldClose = btn.closeOnClick !== false;
-                    if (shouldClose) popupOverlay.classList.remove('active');
                     if (btn.action) btn.action(e);
+                    if (btn.closeOnClick !== false) {
+                        popupOverlay.classList.remove('active');
+                    }
                 });
                 popupActions.appendChild(el);
             });
@@ -1448,8 +1456,8 @@ document.addEventListener('DOMContentLoaded', function() {
         // Wait a moment for page to fully render
         setTimeout(function() {
             showPopup({
-                icon: '??',
-                title: 'Free Gift Added! ??',
+                icon: '🎁',
+                title: 'Free Gift Added! 🎉',
                 text: 'Please process the free sticker checkout within 30mins to claim your gift!',
                 buttons: [
                     {
