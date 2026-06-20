@@ -149,8 +149,12 @@
                 if (!config.configured) { showLoginError('Site not configured yet.'); return; }
                 supabase = window.supabase.createClient(config.url, config.anonKey);
 
+                // Check return_to parameter for redirect after login
+                var returnTo = new URLSearchParams(window.location.search).get('return_to') || 'index.html';
+                sessionStorage.setItem('login_return_to', returnTo);
+
                 const { data: { session } } = await supabase.auth.getSession();
-                if (session) { window.location.href = 'account.html'; }
+                if (session) { window.location.href = returnTo; }
             } catch(e) {
                 showLoginError('Failed to connect. Please contact the site owner.');
             }
@@ -171,7 +175,9 @@
             try {
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                window.location.href = 'account.html';
+                var returnTo = sessionStorage.getItem('login_return_to') || 'index.html';
+                sessionStorage.removeItem('login_return_to');
+                window.location.href = returnTo;
             } catch (err) {
                 document.getElementById('loginError').textContent = err.message;
                 document.getElementById('loginError').classList.add('show');
