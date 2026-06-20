@@ -920,6 +920,19 @@ ul {
     border: 1px dashed var(--primary);
 }
 
+.cart-free-shipping-msg {
+    display: none;
+    padding: 10px 16px;
+    margin-bottom: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #2e7d32;
+    background: #e8f5e9;
+    border-radius: 8px;
+    text-align: center;
+    border: 1px solid #a5d6a7;
+}
+
 /* --- Shipping Method Radio Buttons --- */
 .cart-shipping-methods {
     margin-top: 8px;

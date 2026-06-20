@@ -228,6 +228,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 freeThresholdEl.style.display = 'block';
             }
         }
+
+        // Show free shipping message above total
+        var freeShipMsg = document.getElementById('cartFreeShippingMsg');
+        if (freeShipMsg) {
+            var hasFreeGiftMsg = items.some(function(item) {
+                return item.id === 'free-sticker-gift' || item.productId === 'free-sticker-gift';
+            });
+            if (hasFreeGiftMsg || subtotal >= SHIP_FREE_THRESHOLD) {
+                freeShipMsg.style.display = 'block';
+                if (hasFreeGiftMsg) {
+                    freeShipMsg.textContent = '🚚 Free Shipping (Free Gift in cart!)';
+                } else {
+                    freeShipMsg.textContent = '🚚 Free Shipping (Order over US$' + SHIP_FREE_THRESHOLD + ')';
+                }
+            } else {
+                freeShipMsg.style.display = 'none';
+            }
+        }
     }
 
     // Event delegation for cart actions (more reliable than per-item listeners)
@@ -584,7 +602,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     var methodEl = document.getElementById('shippingMethod');
                     var costEl = document.getElementById('shippingCost');
                     if (methodEl) methodEl.textContent = firstMethod.name;
-                    if (costEl) costEl.textContent = 'HK$' + firstMethod.cost.toFixed(2);
+                    if (costEl) costEl.textContent = '$' + (firstMethod.cost / 7.8).toFixed(2);
                     infoEl.style.display = 'flex';
                     window._selectedMethodId = firstMethod.id;
                     window._shippingCost = firstMethod.cost;
@@ -610,7 +628,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     '<input type="radio" name="shippingMethod" value="' + m.id + '" data-cost="' + m.cost + '" data-name="' + m.name + '"' + checked + '>' +
                     '<div class="ship-method-info">' +
                         '<span class="ship-method-name">' + m.name + '</span>' +
-                        '<span class="ship-method-cost">HK$' + m.cost.toFixed(2) + '</span>' +
+                        '<span class="ship-method-cost">$' + (m.cost / 7.8).toFixed(2) + '</span>' +
                         '<span class="ship-method-time">' + m.deliveryTime + '</span>' +
                     '</div>' +
                 '</label>';
@@ -648,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
         var lineCostEl = document.getElementById('shippingLineCost');
         if (!lineEl) return;
         lineEl.style.display = 'flex';
-        if (lineCostEl) lineCostEl.textContent = 'HK$' + (window._shippingCost || 0).toFixed(2);
+        if (lineCostEl) lineCostEl.textContent = '$' + ((window._shippingCost || 0) / 7.8).toFixed(2);
         updateCartUI();
     }
 
@@ -703,6 +721,58 @@ document.addEventListener('DOMContentLoaded', function() {
     // Note: UAE (AE) and Saudi Arabia (SA) have no Speedpost service from HK Post.
     // They remain in the country list for reference but rates will use fallback pricing.
 
+    // Registered Air Mail 0.5kg packet base rates per country (HKD) — from HK Post calculator
+    var SHIP_AIRMAIL_RATES = {
+        'US': 114.10, 'CA': 114.10,
+        'GB': 114.10, 'FR': 114.10, 'DE': 114.10, 'IT': 114.10, 'ES': 114.10,
+        'NL': 114.10, 'BE': 114.10, 'CH': 114.10, 'SE': 114.10, 'NO': 114.10,
+        'DK': 114.10, 'AT': 114.10, 'IE': 114.10, 'PT': 114.10, 'GR': 114.10,
+        'PL': 114.10, 'CZ': 114.10,
+        'AU': 114.10, 'NZ': 114.10,
+        'JP': 114.10, 'KR': 114.10, 'SG': 114.10, 'MY': 114.10, 'TH': 114.10,
+        'PH': 114.10, 'ID': 114.10, 'VN': 114.10,
+        'CN': 91.80, 'TW': 114.10,
+        'ZA': 114.10,
+        'MX': 114.10, 'BR': 114.10, 'AR': 114.10,
+        'AE': 114.10, 'SA': 114.10
+    };
+    // Registration surcharge (adds tracking)
+    var SHIP_AIRMAIL_REG_FEE = 15.50;
+
+    // Airmail delivery time estimates (working days) — from HK Post
+    var SHIP_AIRMAIL_EDD = {
+        'US': '7-16 days', 'CA': '9-14 days',
+        'GB': '10-11 days', 'FR': '10-12 days', 'DE': '10-12 days',
+        'IT': '10-14 days', 'ES': '10-14 days',
+        'NL': '10-12 days', 'BE': '10-12 days', 'CH': '10-12 days',
+        'SE': '10-14 days', 'NO': '10-14 days', 'DK': '10-12 days',
+        'AT': '10-12 days', 'IE': '10-14 days', 'PT': '10-14 days',
+        'GR': '10-14 days', 'PL': '10-14 days', 'CZ': '10-12 days',
+        'AU': '9-14 days', 'NZ': '10-14 days',
+        'JP': '8-10 days', 'KR': '8-12 days', 'SG': '7-10 days',
+        'MY': '8-12 days', 'TH': '8-12 days', 'PH': '8-14 days',
+        'ID': '8-14 days', 'VN': '8-14 days',
+        'CN': '7-14 days', 'TW': '8-12 days',
+        'ZA': '10-18 days',
+        'MX': '10-18 days', 'BR': '12-20 days', 'AR': '12-20 days',
+        'AE': '10-18 days', 'SA': '10-18 days'
+    };
+
+    // Local Mail Packet rates (HKD) — Hong Kong home delivery, up to 2kg
+    var SHIP_LOCALMAIL_RATES = [
+        { maxG: 1000, cost: 15.80 },
+        { maxG: 2000, cost: 30.40 }
+    ];
+
+    // Local Parcel rates (HKD) — for items over 2kg
+    var SHIP_LOCALPARCEL_RATES = [
+        { maxG: 3000, cost: 77.00 },
+        { maxG: 4000, cost: 93.00 },
+        { maxG: 5000, cost: 109.00 },
+        { maxG: 7000, cost: 129.00 },
+        { maxG: 10000, cost: 151.00 },
+        { maxG: 20000, cost: 177.00 }
+    ];
     function _shipGetSpeedpostRate(countryCode, totalGrams) {
         var code = countryCode.toUpperCase();
         var baseRateHkd = SHIP_SPEEDPOST_RATES[code];
@@ -734,6 +804,44 @@ document.addEventListener('DOMContentLoaded', function() {
         return SHIP_SPEEDPOST_EDD[code] || '3-5 days';
     }
 
+    function _shipGetAirmailRate(countryCode, totalGrams) {
+        var code = countryCode.toUpperCase();
+        var baseRate = SHIP_AIRMAIL_RATES[code] || 114.10;
+        if (totalGrams <= 500) {
+            return Math.round((baseRate + SHIP_AIRMAIL_REG_FEE) * 100) / 100;
+        } else if (totalGrams <= 1000) {
+            return Math.round((baseRate * 2 + SHIP_AIRMAIL_REG_FEE) * 100) / 100;
+        } else if (totalGrams <= 2000) {
+            return Math.round((baseRate * 4 + SHIP_AIRMAIL_REG_FEE) * 100) / 100;
+        } else {
+            return Math.round((baseRate * 4 + SHIP_AIRMAIL_REG_FEE) * 100) / 100;
+        }
+    }
+
+    function _shipGetAirmailDeliveryTime(countryCode) {
+        var code = countryCode.toUpperCase();
+        return SHIP_AIRMAIL_EDD[code] || '7-24 days';
+    }
+
+    function _shipGetLocalMailRate(totalGrams) {
+        for (var i = 0; i < SHIP_LOCALMAIL_RATES.length; i++) {
+            if (totalGrams <= SHIP_LOCALMAIL_RATES[i].maxG) {
+                return Math.round(SHIP_LOCALMAIL_RATES[i].cost * 100) / 100;
+            }
+        }
+        // Over 2kg — use Local Parcel rates
+        for (var j = 0; j < SHIP_LOCALPARCEL_RATES.length; j++) {
+            if (totalGrams <= SHIP_LOCALPARCEL_RATES[j].maxG) {
+                return Math.round(SHIP_LOCALPARCEL_RATES[j].cost * 100) / 100;
+            }
+        }
+        return Math.round(SHIP_LOCALPARCEL_RATES[SHIP_LOCALPARCEL_RATES.length - 1].cost * 100) / 100;
+    }
+
+    function _shipGetLocalRegisteredRate(totalGrams) {
+        return Math.round((_shipGetLocalMailRate(totalGrams) + SHIP_AIRMAIL_REG_FEE) * 100) / 100;
+    }
+
     window._calculateShipping = function(country) {
         var items = Cart.getItems().map(function(item) {
             var prod = products.find(function(p) { return p.id === item.id; });
@@ -756,37 +864,70 @@ document.addEventListener('DOMContentLoaded', function() {
         var isHK = country.toUpperCase() === 'HK';
         var isFreeShipping = hasFreeGift || subtotal >= SHIP_FREE_THRESHOLD;
 
-        var cost, name, deliveryTime, methodId;
+        var methods = [];
 
-        if (isHK) {
-            // Hong Kong local: EC-GET only
-            cost = _shipGetECGETRate(totalGrams);
-            name = 'EC-GET (Post Office / 7-Eleven Collection)';
-            deliveryTime = '2 working days';
-            methodId = 'ec-get';
-        } else {
-            // Overseas: Speedpost only
-            cost = _shipGetSpeedpostRate(country, totalGrams);
-            name = 'Speedpost (Tracking included)';
-            deliveryTime = _shipGetDeliveryTime(country);
-            methodId = 'speedpost';
-        }
-
-        // Apply free shipping
         if (isFreeShipping) {
-            cost = 0;
-            name = 'Free Shipping';
-            deliveryTime = '—';
+            // Free shipping — single option
+            methods.push({
+                id: 'free',
+                name: 'Free Shipping',
+                cost: 0,
+                deliveryTime: '—'
+            });
+        } else if (isHK) {
+            // Hong Kong: offer EC-GET + Local Mail options
+            methods.push({
+                id: 'ec-get',
+                name: 'EC-GET (Post Office / 7-Eleven Collection)',
+                cost: _shipGetECGETRate(totalGrams),
+                deliveryTime: '2 working days'
+            });
+            if (totalGrams <= 2000) {
+                methods.push({
+                    id: 'local-mail',
+                    name: 'Local Mail (Home Delivery)',
+                    cost: _shipGetLocalMailRate(totalGrams),
+                    deliveryTime: '2 working days'
+                });
+                methods.push({
+                    id: 'local-registered',
+                    name: 'Local Registered (Home Delivery, Tracking)',
+                    cost: _shipGetLocalRegisteredRate(totalGrams),
+                    deliveryTime: '2 working days'
+                });
+            } else {
+                // Over 2kg, use Local Parcel (tracked)
+                methods.push({
+                    id: 'local-parcel',
+                    name: 'Local Parcel (Home Delivery, Tracking)',
+                    cost: _shipGetLocalMailRate(totalGrams),
+                    deliveryTime: '2-3 working days'
+                });
+            }
+        } else {
+            // Overseas: offer Speedpost + Registered Air Mail
+            methods.push({
+                id: 'speedpost',
+                name: 'Speedpost Express (Tracking, 1-5 days)',
+                cost: _shipGetSpeedpostRate(country, totalGrams),
+                deliveryTime: _shipGetDeliveryTime(country)
+            });
+            methods.push({
+                id: 'airmail',
+                name: 'Registered Air Mail (Tracking, 7-24 days)',
+                cost: _shipGetAirmailRate(country, totalGrams),
+                deliveryTime: _shipGetAirmailDeliveryTime(country)
+            });
         }
-
-        var methods = [{
-            id: methodId,
-            name: name,
-            cost: cost,
-            deliveryTime: deliveryTime
-        }];
 
         window._shippingMethods = methods;
+
+        // Set first method as default
+        if (methods.length > 0) {
+            window._selectedMethodId = methods[0].id;
+            window._shippingCost = methods[0].cost;
+            window._shippingMethod = methods[0].name;
+        }
 
         // Update free shipping banner
         var freeEl = document.getElementById('shippingFree');
@@ -803,7 +944,8 @@ document.addEventListener('DOMContentLoaded', function() {
             if (freeEl) freeEl.style.display = 'none';
         }
 
-        renderShippingMethods(methods, false);
+        renderShippingMethods(methods, isFreeShipping);
+        updateShippingLine();
 
         return Promise.resolve({ methods: methods, freeGift: isFreeShipping, weight: totalGrams });
     };
