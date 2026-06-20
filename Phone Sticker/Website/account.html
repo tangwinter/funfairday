@@ -519,6 +519,7 @@
             var subEl = document.getElementById('cartSubtotal');
             if (subEl) subEl.textContent = '$' + subtotal.toFixed(2);
             updateBadge();
+            updateCartShipping();
         }
 
         function updateBadge() {
@@ -527,6 +528,33 @@
             var count = Cart.getItemCount();
             badge.textContent = count;
             badge.style.display = count > 0 ? 'flex' : 'none';
+        }
+
+        function updateCartShipping() {
+            var shippingSection = document.getElementById('cartShipping');
+            var destEl = document.getElementById('shippingDestination');
+            var missingEl = document.getElementById('cartAddressMissing');
+            if (!shippingSection || !destEl) return;
+
+            try {
+                var addrStr = localStorage.getItem('funfairday_shipping_address') || sessionStorage.getItem('funfairday_shipping_address');
+                var addrData = addrStr ? JSON.parse(addrStr) : null;
+                if (!addrData || !addrData.country) {
+                    shippingSection.style.display = 'none';
+                    if (missingEl) missingEl.style.display = 'flex';
+                    return;
+                }
+                if (missingEl) missingEl.style.display = 'none';
+
+                var countryName = addrData.country;
+                var map = { 'HK': 'Hong Kong', 'CN': 'China', 'TW': 'Taiwan', 'US': 'United States', 'GB': 'United Kingdom', 'CA': 'Canada', 'AU': 'Australia', 'JP': 'Japan', 'KR': 'South Korea', 'SG': 'Singapore', 'MY': 'Malaysia', 'PH': 'Philippines', 'TH': 'Thailand', 'VN': 'Vietnam', 'DE': 'Germany', 'FR': 'France', 'IT': 'Italy', 'ES': 'Spain', 'NL': 'Netherlands', 'CH': 'Switzerland', 'SE': 'Sweden', 'NO': 'Norway', 'DK': 'Denmark', 'FI': 'Finland', 'IE': 'Ireland', 'NZ': 'New Zealand', 'ZA': 'South Africa', 'AE': 'United Arab Emirates', 'SA': 'Saudi Arabia', 'BR': 'Brazil', 'OTHERS': 'Other' };
+                countryName = map[addrData.country] || addrData.country;
+
+                destEl.textContent = countryName;
+                shippingSection.style.display = 'block';
+            } catch(e) {
+                shippingSection.style.display = 'none';
+            }
         }
 
         // Cart event delegation for quantity buttons
