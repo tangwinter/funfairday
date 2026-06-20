@@ -79,22 +79,8 @@ export async function onRequest(context) {
             stripeBody.append('shipping_address_collection[allowed_countries][]', c);
         });
 
-        // Pre-fill shipping address if provided from our address form
-        if (shippingAddress && shippingAddress.name && shippingAddress.street) {
-            stripeBody.append('shipping[name]', shippingAddress.name);
-            stripeBody.append('shipping[address][line1]', shippingAddress.street);
-            stripeBody.append('shipping[address][city]', shippingAddress.city || '');
-            stripeBody.append('shipping[address][state]', shippingAddress.state || '');
-            stripeBody.append('shipping[address][postal_code]', shippingAddress.zip || '');
-            stripeBody.append('shipping[address][country]', shippingAddress.country || '');
-        }
-        // Pre-fill customer details
-        if (shippingAddress && shippingAddress.name) {
-            stripeBody.append('customer_details[name]', shippingAddress.name);
-            if (shippingAddress.phone) {
-                stripeBody.append('customer_details[phone]', shippingAddress.phone);
-            }
-        }
+        // Note: shipping address is collected by Stripe's built-in checkout form via shipping_address_collection.
+        // Our own address form data is stored locally for order fulfillment tracking.
 
         // Add line items to form body
         lineItems.forEach(function(item, index) {
