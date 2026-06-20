@@ -451,7 +451,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
             } catch (error) {
                 console.error('Checkout error:', error);
-                showToast('Unable to process checkout. Please try again later.');
+                showToast('Error: ' + (error.message || error));
+                console.error('Full error:', error);
                 checkoutBtn.disabled = false;
                 checkoutBtn.textContent = 'Checkout';
             }
