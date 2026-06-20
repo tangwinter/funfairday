@@ -1925,19 +1925,21 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // --- Auth State ---
-    const supabaseUrl = localStorage.getItem('supabase_url');
-    const supabaseAnonKey = localStorage.getItem('supabase_anon_key');
+    var supabaseUrl = localStorage.getItem('supabase_url');
+    var supabaseAnonKey = localStorage.getItem('supabase_anon_key');
 
-    if (supabaseUrl && supabaseAnonKey && window.supabase) {
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
-
-        supabase.auth.getSession().then(({ data: { session } }) => {
+    // If not in localStorage, fetch from Cloudflare Function
+    function initAuth(url, anonKey) {
+        if (!url || !anonKey || !window.supabase) return;
+        var supabase = window.supabase.createClient(url, anonKey);
+        supabase.auth.getSession().then(function(_ref) {
+            var session = _ref.data.session;
             window._authChecked = true;
-            const authLink = document.getElementById('authLink');
+            var authLink = document.getElementById('authLink');
             if (authLink) {
                 if (session) {
                     window._isLoggedIn = true;
-                    window._userDisplayName = session.user.user_metadata?.full_name || localStorage.getItem('funfairday_user_name') || session.user.email || '';
+                    window._userDisplayName = session.user.user_metadata && session.user.user_metadata.full_name || localStorage.getItem('funfairday_user_name') || session.user.email || '';
                     authLink.textContent = window._userDisplayName;
                     authLink.href = 'account.html';
                 } else {
@@ -1945,6 +1947,20 @@ document.addEventListener('DOMContentLoaded', function() {
                     authLink.href = 'login.html';
                 }
             }
+        });
+    }
+
+    if (supabaseUrl && supabaseAnonKey) {
+        initAuth(supabaseUrl, supabaseAnonKey);
+    } else {
+        fetch('/get-supabase-config').then(function(r) { return r.json(); }).then(function(config) {
+            if (config.configured) {
+                initAuth(config.url, config.anonKey);
+            } else {
+                window._authChecked = true;
+            }
+        }).catch(function() {
+            window._authChecked = true;
         });
     }
     // --- Checkout Resume: detect ?checkout=1 after login ---
