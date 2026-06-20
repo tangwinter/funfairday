@@ -1032,7 +1032,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!cat || !cat.hasCaseSelection) {
             // Simple modal for stickers (no case selection)
             var productImageHtml = product.image
-                ? '<img src="' + product.image + '" alt="' + product.name + '" style="max-width:100%;max-height:100%;object-fit:contain;">'
+                ? '<img src="' + product.image + '" alt="' + product.name + '" style="max-width:100%;max-height:100%;object-fit:contain;cursor:pointer;" onclick="window.openLightbox(\'' + product.image + '\', \'' + product.name + '\')">'
                 : '<span style="font-size:5rem;">' + icon + '</span>';
             modalContent.innerHTML = [
                 '<div class="modal-product-image ' + colorClasses[idx] + '">',

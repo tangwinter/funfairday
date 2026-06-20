@@ -112,9 +112,8 @@ Object.entries(productTemplates).forEach(([categoryId, template]) => {
 // Each sticker product with photo and sub-category group
 var STICKER_PRODUCTS = [
     // ===== 3D Sticker Group (bundles first) =====
-    { id: 'sticker-3d-pack-4', name: '3D Sticker Assorted 4-Pack', price: 6.67, description: '4 assorted 3D stickers (random styles) - HK$52 value!', weight_grams: 100, image: '/images/stickers/3d/Cute%20Cat.jpeg', group: '3d' },
-    { id: 'sticker-3d-pack-8', name: '3D Sticker Assorted 8-Pack', price: 11.28, description: '8 assorted 3D stickers (random styles) - HK$88 value!', weight_grams: 200, image: '/images/stickers/3d/Cute%20Dino.jpeg', group: '3d' },
-    { id: 'sticker-3d', name: '3D Sticker', price: 1.92, description: 'High-quality 3D sticker with raised design - HK$15/sheet', weight_grams: 25, image: '/images/stickers/3d-sticker.jpeg', group: '3d' },
+    { id: 'sticker-3d-pack-4', name: '3D Sticker Assorted 4-Pack', price: 6.67, description: '4 assorted 3D stickers (random styles)', weight_grams: 100, image: '/images/stickers/3d-sticker.jpeg', group: '3d' },
+    { id: 'sticker-3d-pack-8', name: '3D Sticker Assorted 8-Pack', price: 11.28, description: '8 assorted 3D stickers (random styles)', weight_grams: 200, image: '/images/stickers/3d-sticker.jpeg', group: '3d' },
     { id: 'sticker-3d-cute-animal', name: '3D Cute Animal', price: 1.92, description: '3D Sticker - Cute Animal Design', weight_grams: 25, image: '/images/stickers/3d/Cute%20Animal.jpeg', group: '3d' },
     { id: 'sticker-3d-cute-beard-bear', name: '3D Cute Beard and Bear', price: 1.92, description: '3D Sticker - Cute Beard and Bear', weight_grams: 25, image: '/images/stickers/3d/Cute%20Beard%20and%20Bear.jpeg', group: '3d' },
     { id: 'sticker-3d-cute-bird', name: '3D Cute Bird', price: 1.92, description: '3D Sticker - Cute Bird Design', weight_grams: 25, image: '/images/stickers/3d/Cute%20Bird.jpeg', group: '3d' },
@@ -128,9 +127,8 @@ var STICKER_PRODUCTS = [
     { id: 'sticker-3d-cute-sea-animal', name: '3D Cute Sea Animal', price: 1.92, description: '3D Sticker - Cute Sea Animal', weight_grams: 25, image: '/images/stickers/3d/Cute%20Sea%20Animal.jpeg', group: '3d' },
     { id: 'sticker-3d-cute-white-bunny', name: '3D Cute White Bunny', price: 1.92, description: '3D Sticker - Cute White Bunny', weight_grams: 25, image: '/images/stickers/3d/Cute%20White%20Bunny.jpeg', group: '3d' },
     // ===== Fluffy Sticker Group (bundles first) =====
-    { id: 'sticker-fluffy-pack-4', name: 'Fluffy Sticker Assorted 4-Pack', price: 5.77, description: '4 assorted fluffy stickers (random styles) - HK$45 value!', weight_grams: 120, image: '/images/stickers/fluffy/Mini%20Tiny%20Cat.jpeg', group: 'fluffy' },
-    { id: 'sticker-fluffy-pack-8', name: 'Fluffy Sticker Assorted 8-Pack', price: 9.62, description: '8 assorted fluffy stickers (random styles) - HK$75 value!', weight_grams: 240, image: '/images/stickers/fluffy/Mini%20Tiny%20Bunny.jpeg', group: 'fluffy' },
-    { id: 'sticker-fluffy', name: 'Fluffy Sticker', price: 1.67, description: 'Soft fluffy sticker with textured finish - HK$13/sheet', weight_grams: 30, image: '/images/stickers/fluffy-sticker.jpeg', group: 'fluffy' },
+    { id: 'sticker-fluffy-pack-4', name: 'Fluffy Sticker Assorted 4-Pack', price: 5.77, description: '4 assorted fluffy stickers (random styles)', weight_grams: 120, image: '/images/stickers/fluffy-sticker.jpeg', group: 'fluffy' },
+    { id: 'sticker-fluffy-pack-8', name: 'Fluffy Sticker Assorted 8-Pack', price: 9.62, description: '8 assorted fluffy stickers (random styles)', weight_grams: 240, image: '/images/stickers/fluffy-sticker.jpeg', group: 'fluffy' },
     { id: 'sticker-fluffy-mini-animal-food', name: 'Fluffy Mini Animal and Food', price: 1.67, description: 'Fluffy Sticker - Mini Animal and Food', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Animal%20and%20Food.jpeg', group: 'fluffy' },
     { id: 'sticker-fluffy-mini-bunny', name: 'Fluffy Mini Bunny', price: 1.67, description: 'Fluffy Sticker - Mini Bunny', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Bunny.jpeg', group: 'fluffy' },
     { id: 'sticker-fluffy-mini-dog', name: 'Fluffy Mini Dog', price: 1.67, description: 'Fluffy Sticker - Mini Dog', weight_grams: 30, image: '/images/stickers/fluffy/Mini%20Dog.jpeg', group: 'fluffy' },
