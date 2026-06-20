@@ -107,6 +107,7 @@ document.addEventListener('DOMContentLoaded', function() {
         cartOverlay.classList.add('active');
         document.body.style.overflow = 'hidden';
         renderCartItems();
+        autoDetectShippingFromAddress();
     }
 
     function closeCart() {
