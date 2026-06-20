@@ -301,19 +301,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const items = Cart.getItems();
         if (items.length === 0) return;
 
-        // Get country from auto-detected address; if not set, trigger auth flow
-        if (!window._selectedCountry) {
-            showToast('Please sign in to set your shipping destination.');
-            this.disabled = false;
-            this.textContent = 'Checkout';
-            return;
-        }
-        var selectedCountry = window._selectedCountry;
-
-        // Auto-calculate shipping if not yet done
-        if (window._shippingCost === undefined) {
+        // If country already detected from saved address, pre-calculate shipping
+        if (window._selectedCountry && window._shippingCost === undefined) {
             try {
-                await window._calculateShipping(selectedCountry);
+                await window._calculateShipping(window._selectedCountry);
             } catch(e) {
                 console.error('Checkout shipping error:', e);
                 showToast('Shipping error: ' + e.message);
@@ -326,7 +317,7 @@ document.addEventListener('DOMContentLoaded', function() {
         this.disabled = true;
         this.textContent = 'Processing...';
 
-        // Helper to proceed with actual checkout
+        // Helper to proceed with actual checkout (called by showAuthPopup)
         var proceedCheckout = async function() {
             try {
                 const updatedItems = Cart.getItems();
@@ -437,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         cost: Math.round((window._shippingCost || 0) / 7.8 * 100) / 100,
                         method: window._shippingMethod || '',
                         methodId: window._selectedMethodId || '',
-                        country: selectedCountry
+                        country: window._selectedCountry
                     }));
                     window.location.href = data.url;
                 } else {
@@ -452,7 +443,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
 
-        // ============ NEW CHECKOUT FLOW ============
+        // ============ CHECKOUT FLOW ============
 
         // Helper: find country name from code
         function getCountryName(code) {
@@ -501,7 +492,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         className: 'btn-primary',
                         action: function() {
                             sessionStorage.setItem('funfairday_checkout_state', JSON.stringify({
-                                country: selectedCountry,
+                                country: window._selectedCountry,
                                 shippingCost: window._shippingCost,
                                 shippingMethod: window._shippingMethod,
                                 methodId: window._selectedMethodId
@@ -514,7 +505,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         className: 'btn-secondary',
                         action: function() {
                             sessionStorage.setItem('funfairday_checkout_state', JSON.stringify({
-                                country: selectedCountry,
+                                country: window._selectedCountry,
                                 shippingCost: window._shippingCost,
                                 shippingMethod: window._shippingMethod,
                                 methodId: window._selectedMethodId
@@ -527,6 +518,9 @@ document.addEventListener('DOMContentLoaded', function() {
             checkoutBtn.disabled = false;
             checkoutBtn.textContent = 'Checkout';
         }
+
+        // showAuthPopup after all helpers are defined
+        showAuthPopup();
 
         // Step: Shipping address form
         function showAddressForm() {
