@@ -1399,7 +1399,8 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedModel: null,
         selectedStyle: null,
         selectedColor: null,
-        selectedOptions: []
+        selectedOptions: [],
+        selectedUVOptions: []
     };
 
     window.openCustomizationModal = function(productId) {
@@ -1414,7 +1415,8 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedModel: null,
             selectedStyle: null,
             selectedColor: null,
-            selectedOptions: (cat && cat.hasOptionalCase) ? [] : (cat.options.length > 0 ? [cat.options[0]] : [])
+            selectedOptions: (cat && cat.hasOptionalCase) ? [] : (cat.options.length > 0 ? [cat.options[0]] : []),
+            selectedUVOptions: (cat && cat.hasOptionalCase) ? [] : []
         };
 
         const idx = products.indexOf(product) % colorClasses.length;
@@ -1503,13 +1505,33 @@ document.addEventListener('DOMContentLoaded', function() {
         var CASE_BASE_PRICE = 1.50;
         var casePrice = customState.selectedStyle ? parseFloat(customState.selectedStyle.price) + CASE_BASE_PRICE : 0;
 
-        // Calculate options price
+        // UV resin & lamp options (replaces old Option C)
+        var UV_OPTIONS = [
+            { key: 'uv-resin-50g', name: 'UV Resin 50g', price: 1.90 },
+            { key: 'uv-resin-100g', name: 'UV Resin 100g', price: 3.00 },
+            { key: 'uv-lamp', name: 'UV Lamp (USB Connected)', price: 3.00 }
+        ];
+
+        // Calculate options price (Option B is free/discount)
         var optionsPrice = 0;
         var optionsText = [];
         customState.selectedOptions.forEach(function(opt) {
             if (optionDetails[opt]) {
-                optionsPrice += optionDetails[opt].price;
-                optionsText.push(optionDetails[opt].name);
+                var optPrice = opt === 'B' ? 0 : optionDetails[opt].price;
+                optionsPrice += optPrice;
+                if (opt === 'B') {
+                    optionsText.push(optionDetails[opt].name + ' (FREE - DISCOUNT)');
+                } else {
+                    optionsText.push(optionDetails[opt].name);
+                }
+            }
+        });
+        // Add UV options
+        customState.selectedUVOptions.forEach(function(uvKey) {
+            var uvOpt = UV_OPTIONS.find(function(u) { return u.key === uvKey; });
+            if (uvOpt) {
+                optionsPrice += uvOpt.price;
+                optionsText.push(uvOpt.name);
             }
         });
         var totalPrice = product.price + casePrice + optionsPrice;
@@ -1551,22 +1573,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }).join('');
         }
 
-        // Build options (B and C as checkboxes - both optional)
+        // Build Option B (Stick on Phone Case Service - FREE/DISCOUNT)
         var optionsHtml = cat.options.map(function(opt) {
             var detail = optionDetails[opt];
             if (!detail) return '';
             var checked = customState.selectedOptions.indexOf(opt) !== -1;
             var displayName = detail.name;
             var displayDesc = detail.description;
-            // Customize labels for sticker context
+            var priceHtml;
             if (opt === 'B') {
                 displayName = 'Stick on Phone Case Service';
                 displayDesc = 'We stick the stickers on your phone case for you';
-            } else if (opt === 'C') {
-                displayName = 'UV Resin + UV Lamp';
-                displayDesc = 'UV resin and UV lamp to seal and protect your stickers';
+                priceHtml = '<span class="option-price"><span style="text-decoration:line-through;color:var(--text-light);">$' + detail.price.toFixed(2) + '</span> <span style="color:#2ECC71;font-weight:700;">FREE (DISCOUNT)</span></span>';
+            } else {
+                priceHtml = '<span class="option-price">' + (detail.price > 0 ? '+$' + detail.price.toFixed(2) : 'Included') + '</span>';
             }
-            return '<label class="option-checkbox"><input type="checkbox" class="option-input" data-option="' + opt + '" ' + (checked ? 'checked' : '') + '><span class="option-info"><span class="option-name">' + displayName + '</span><span class="option-desc">' + displayDesc + '</span><span class="option-price">' + (detail.price > 0 ? '+$' + detail.price.toFixed(2) : 'Included') + '</span></span></label>';
+            return '<label class="option-checkbox"><input type="checkbox" class="option-input" data-option="' + opt + '" ' + (checked ? 'checked' : '') + '><span class="option-info"><span class="option-name">' + displayName + '</span><span class="option-desc">' + displayDesc + '</span>' + priceHtml + '</span></label>';
+        }).join('');
+
+        // Build UV options (replaces old Option C)
+        var uvOptionsHtml = UV_OPTIONS.map(function(uv) {
+            var checked = customState.selectedUVOptions.indexOf(uv.key) !== -1;
+            return '<label class="option-checkbox"><input type="checkbox" class="uv-option-input" data-uv-option="' + uv.key + '" ' + (checked ? 'checked' : '') + '><span class="option-info"><span class="option-name">' + uv.name + '</span><span class="option-price">+$' + uv.price.toFixed(2) + '</span></span></label>';
         }).join('');
 
         modalContent.innerHTML = [
@@ -1599,6 +1627,10 @@ document.addEventListener('DOMContentLoaded', function() {
             '<div class="custom-section">',
                 '<h3 class="custom-step-title">Optional: Add-On Services</h3>',
                 '<div class="options-list">' + optionsHtml + '</div>',
+            '</div>',
+            '<div class="custom-section">',
+                '<h3 class="custom-step-title">Optional: UV Resin & Lamp</h3>',
+                '<div class="options-list">' + uvOptionsHtml + '</div>',
             '</div>',
             '<div class="custom-total">',
                 '<div class="custom-total-breakdown">',
@@ -1665,7 +1697,7 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
-        // Bind option events (B and C as independent checkboxes)
+        // Bind option events (B as checkbox)
         document.querySelectorAll('.option-input').forEach(function(cb) {
             cb.addEventListener('change', function() {
                 var opt = this.dataset.option;
@@ -1680,6 +1712,21 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
 
+        // Bind UV option events (independent checkboxes)
+        document.querySelectorAll('.uv-option-input').forEach(function(cb) {
+            cb.addEventListener('change', function() {
+                var uvKey = this.dataset.uvOption;
+                if (this.checked) {
+                    if (customState.selectedUVOptions.indexOf(uvKey) === -1) {
+                        customState.selectedUVOptions.push(uvKey);
+                    }
+                } else {
+                    customState.selectedUVOptions = customState.selectedUVOptions.filter(function(o) { return o !== uvKey; });
+                }
+                renderOptionalCaseModal();
+            });
+        });
+
         // Bind add to cart
         document.getElementById('optAddBtn').addEventListener('click', function() {
             var cCasePrice = customState.selectedStyle ? parseFloat(customState.selectedStyle.price) + 1.50 : 0;
@@ -1687,19 +1734,33 @@ document.addEventListener('DOMContentLoaded', function() {
             var cOptionsText = [];
             customState.selectedOptions.forEach(function(opt) {
                 if (optionDetails[opt]) {
-                    cOptionsPrice += optionDetails[opt].price;
-                    cOptionsText.push(optionDetails[opt].name);
+                    var optPrice = opt === 'B' ? 0 : optionDetails[opt].price;
+                    cOptionsPrice += optPrice;
+                    if (opt === 'B') {
+                        cOptionsText.push(optionDetails[opt].name + ' (FREE - DISCOUNT)');
+                    } else {
+                        cOptionsText.push(optionDetails[opt].name);
+                    }
+                }
+            });
+            // Add UV options
+            customState.selectedUVOptions.forEach(function(uvKey) {
+                var uvOpt = UV_OPTIONS.find(function(u) { return u.key === uvKey; });
+                if (uvOpt) {
+                    cOptionsPrice += uvOpt.price;
+                    cOptionsText.push(uvOpt.name);
                 }
             });
 
-            var hasCustomization = customState.selectedStyle || customState.selectedOptions.length > 0;
+            var hasCustomization = customState.selectedStyle || customState.selectedOptions.length > 0 || customState.selectedUVOptions.length > 0;
             var customization = null;
             if (hasCustomization) {
+                var allOptions = customState.selectedOptions.concat(customState.selectedUVOptions);
                 customization = {
                     phoneModel: selectedModelName || null,
                     caseStyle: customState.selectedStyle ? customState.selectedStyle.name : null,
                     caseColor: customState.selectedColor || null,
-                    options: customState.selectedOptions,
+                    options: allOptions,
                     optionsText: cOptionsText.join(', ')
                 };
             }
