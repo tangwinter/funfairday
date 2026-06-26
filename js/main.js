@@ -1499,8 +1499,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
 
-        // Calculate case price
-        var casePrice = customState.selectedStyle ? parseFloat(customState.selectedStyle.price) : 0;
+        // Calculate case price (base $1.50 per case + style price)
+        var CASE_BASE_PRICE = 1.50;
+        var casePrice = customState.selectedStyle ? parseFloat(customState.selectedStyle.price) + CASE_BASE_PRICE : 0;
 
         // Calculate options price
         var optionsPrice = 0;
@@ -1531,7 +1532,8 @@ document.addEventListener('DOMContentLoaded', function() {
             stylesHtml = availableStyles.map(function(style) {
                 var selected = customState.selectedStyle && customState.selectedStyle.id === style.id ? ' selected' : '';
                 var previewHtml = style.image_url ? '<img src="' + style.image_url + '" class="case-style-preview-img" alt="' + style.name + '">' : '<div class="case-style-preview"></div>';
-                return '<div class="case-style-card' + selected + '" data-style-id="' + style.id + '">' + previewHtml + '<span class="case-style-name">' + style.name + '</span>' + (style.price > 0 ? '<span class="case-style-price">+$' + parseFloat(style.price).toFixed(2) + '</span>' : '') + '</div>';
+                var styleTotalPrice = parseFloat(style.price) + 1.50;
+                return '<div class="case-style-card' + selected + '" data-style-id="' + style.id + '">' + previewHtml + '<span class="case-style-name">' + style.name + '</span><span class="case-style-price">+$' + styleTotalPrice.toFixed(2) + '</span></div>';
             }).join('');
         }
 
@@ -1583,7 +1585,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 '</div>',
             '</div>',
             '<div class="custom-section">',
-                '<h3 class="custom-step-title">Optional: Add a Phone Case</h3>',
+                '<h3 class="custom-step-title">Optional: Add a Phone Case <span style="font-size:0.75em;font-weight:400;color:var(--text-light);">($1.50/case + style)</span></h3>',
                 '<select id="optModelSelector" class="model-selector">' + modelsHtml + '</select>',
             '</div>',
             '<div class="custom-section" id="optStyleSection" style="display:' + (selectedModelId ? 'block' : 'none') + ';">',
@@ -1601,7 +1603,7 @@ document.addEventListener('DOMContentLoaded', function() {
             '<div class="custom-total">',
                 '<div class="custom-total-breakdown">',
                     '<span>Sticker: $' + product.price.toFixed(2) + '</span>',
-                    (casePrice > 0 ? '<span>Case: +$' + casePrice.toFixed(2) + '</span>' : ''),
+                    (casePrice > 0 ? '<span>Case: +$' + casePrice.toFixed(2) + ' <span style="font-size:0.8em;color:var(--text-light);">($1.50 case + $' + parseFloat(customState.selectedStyle.price).toFixed(2) + ' style)</span></span>' : ''),
                     (optionsPrice > 0 ? '<span>Services: +$' + optionsPrice.toFixed(2) + '</span>' : ''),
                 '</div>',
                 '<div class="custom-total-row">',
@@ -1680,7 +1682,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // Bind add to cart
         document.getElementById('optAddBtn').addEventListener('click', function() {
-            var cCasePrice = customState.selectedStyle ? parseFloat(customState.selectedStyle.price) : 0;
+            var cCasePrice = customState.selectedStyle ? parseFloat(customState.selectedStyle.price) + 1.50 : 0;
             var cOptionsPrice = 0;
             var cOptionsText = [];
             customState.selectedOptions.forEach(function(opt) {
