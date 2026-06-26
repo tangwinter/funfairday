@@ -201,7 +201,7 @@ const phoneModels = [];
 
 // Available options per category
 const categoryCustomization = {
-    'stickers': { hasCaseSelection: false, options: [] },
+    'stickers': { hasCaseSelection: false, hasOptionalCase: true, options: ['B', 'C'] },
     'diy-sticker-case': { hasCaseSelection: true, options: ['A', 'B', 'C'] },
     'diy-paint-case': { hasCaseSelection: true, options: ['A', 'B'] },
     'diy-epoxy-case': { hasCaseSelection: true, options: ['A', 'B'] }
@@ -328,7 +328,8 @@ async function supabaseFetch(table, query) {
             categoriesData.forEach(function(cat) {
                 categoryCustomization[cat.id] = {
                     hasCaseSelection: cat.id !== 'stickers',
-                    options: categoryOptions[cat.id] || []
+                    hasOptionalCase: cat.id === 'stickers',
+                    options: cat.id === 'stickers' ? ['B', 'C'] : (categoryOptions[cat.id] || [])
                 };
             });
         }

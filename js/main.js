@@ -157,14 +157,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const icon = placeholderIcons[colorIndex >= 0 ? colorIndex : 0];
 
             var customDetails = '';
-            if (item.caseStyle) {
+            if (item.caseStyle || (item.options && item.options.length > 0) || item.phoneModel) {
                 customDetails = '<div class="cart-item-custom">';
                 if (item.phoneModel) {
                     customDetails += '<span>Model: ' + item.phoneModel + '</span>';
                 }
-                customDetails += '<span>Case: ' + item.caseStyle + ' (' + item.caseColor + ')</span>';
+                if (item.caseStyle) {
+                    customDetails += '<span>Case: ' + item.caseStyle + ' (' + item.caseColor + ')</span>';
+                }
                 if (item.optionsText) {
-                    customDetails += '<span>Options: ' + item.optionsText + '</span>';
+                    customDetails += '<span>Services: ' + item.optionsText + '</span>';
                 }
                 customDetails += '</div>';
             }
@@ -385,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     .map(function(item) {
                         var prodId = item.productId || item.id;
                         var prod = products.find(function(p) { return p.id === prodId; });
-                        var basePrice = item.caseStyle ? item.price : (prod ? prod.price : item.price);
+                        var basePrice = (item.caseStyle || (item.options && item.options.length > 0)) ? item.price : (prod ? prod.price : item.price);
                         var unitAmount = useDynamicPrices ? Math.round(basePrice * (discountActive ? 0.7 : 1.0) * 100) : null;
                         return {
                             priceId: prod ? prod.stripePriceId : null,
@@ -728,7 +730,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 .map(function(item) {
                     var prodId = item.productId || item.id;
                     var prod = products.find(function(p) { return p.id === prodId; });
-                    var basePrice = item.caseStyle ? item.price : (prod ? prod.price : item.price);
+                    var basePrice = (item.caseStyle || (item.options && item.options.length > 0)) ? item.price : (prod ? prod.price : item.price);
                     var unitAmount = useDynamicPrices ? Math.round(basePrice * (discountActive ? 0.7 : 1.0) * 100) : null;
                     return {
                         priceId: prod ? prod.stripePriceId : null,
@@ -1412,13 +1414,16 @@ document.addEventListener('DOMContentLoaded', function() {
             selectedModel: null,
             selectedStyle: null,
             selectedColor: null,
-            selectedOptions: cat.options.length > 0 ? [cat.options[0]] : []
+            selectedOptions: (cat && cat.hasOptionalCase) ? [] : (cat.options.length > 0 ? [cat.options[0]] : [])
         };
 
         const idx = products.indexOf(product) % colorClasses.length;
         const icon = placeholderIcons[idx % placeholderIcons.length];
 
-        if (!cat || !cat.hasCaseSelection) {
+        if (cat && cat.hasOptionalCase) {
+            // Optional case modal for stickers (phone case + services are optional)
+            renderOptionalCaseModal();
+        } else if (!cat || !cat.hasCaseSelection) {
             // Simple modal for stickers (no case selection)
             var productImageHtml = product.image
                 ? '<img src="' + product.image + '" alt="' + product.name + '" style="max-width:100%;max-height:100%;object-fit:contain;cursor:pointer;" onclick="window.openLightbox(\'' + product.image + '\', \'' + product.name + '\')">'
@@ -1465,6 +1470,272 @@ document.addEventListener('DOMContentLoaded', function() {
         productModal.style.display = 'block';
         document.body.style.overflow = 'hidden';
     };
+
+    function renderOptionalCaseModal() {
+        const product = customState.product;
+        const idx = products.indexOf(product) % colorClasses.length;
+        const icon = placeholderIcons[idx % placeholderIcons.length];
+        const cat = categoryCustomization[product.category];
+
+        // Get selected model info
+        var selectedModelId = customState.selectedModel;
+        var selectedModelName = '';
+        if (selectedModelId) {
+            var modelObj = phoneModels.find(function(m) { return m.id === selectedModelId; });
+            if (modelObj) selectedModelName = modelObj.name;
+        }
+
+        // Get styles for the selected model
+        var availableStyles = selectedModelId
+            ? phoneCaseStyles.filter(function(s) { return s.model_id === selectedModelId; })
+            : [];
+
+        // If selected style no longer valid for current model, reset
+        if (customState.selectedStyle) {
+            var styleStillValid = availableStyles.some(function(s) { return s.id === customState.selectedStyle.id; });
+            if (!styleStillValid) {
+                customState.selectedStyle = null;
+                customState.selectedColor = null;
+            }
+        }
+
+        // Calculate case price
+        var casePrice = customState.selectedStyle ? parseFloat(customState.selectedStyle.price) : 0;
+
+        // Calculate options price
+        var optionsPrice = 0;
+        var optionsText = [];
+        customState.selectedOptions.forEach(function(opt) {
+            if (optionDetails[opt]) {
+                optionsPrice += optionDetails[opt].price;
+                optionsText.push(optionDetails[opt].name);
+            }
+        });
+        var totalPrice = product.price + casePrice + optionsPrice;
+
+        // Product image
+        var productImageHtml = product.image
+            ? '<img src="' + product.image + '" alt="' + product.name + '" style="max-width:100%;max-height:100%;object-fit:contain;cursor:pointer;" onclick="window.openLightbox(\'' + product.image + '\', \'' + product.name + '\')">'
+            : '<span style="font-size:5rem;">' + icon + '</span>';
+
+        // Build model selector (with "No phone case" as default)
+        var modelsHtml = '<option value="">No phone case (stickers only)</option>';
+        phoneModels.forEach(function(m) {
+            var sel = m.id === selectedModelId ? ' selected' : '';
+            modelsHtml += '<option value="' + m.id + '"' + sel + '>' + m.name + '</option>';
+        });
+
+        // Build style cards (filtered by model)
+        var stylesHtml = '';
+        if (selectedModelId) {
+            stylesHtml = availableStyles.map(function(style) {
+                var selected = customState.selectedStyle && customState.selectedStyle.id === style.id ? ' selected' : '';
+                var previewHtml = style.image_url ? '<img src="' + style.image_url + '" class="case-style-preview-img" alt="' + style.name + '">' : '<div class="case-style-preview"></div>';
+                return '<div class="case-style-card' + selected + '" data-style-id="' + style.id + '">' + previewHtml + '<span class="case-style-name">' + style.name + '</span>' + (style.price > 0 ? '<span class="case-style-price">+$' + parseFloat(style.price).toFixed(2) + '</span>' : '') + '</div>';
+            }).join('');
+        }
+
+        // Build color swatches
+        var colorsHtml = '';
+        if (customState.selectedStyle) {
+            colorsHtml = customState.selectedStyle.colors.map(function(color) {
+                var label = typeof color === 'string' ? color : color.label;
+                var imgUrl = typeof color === 'string' ? null : color.value;
+                var selected = customState.selectedColor === label ? ' selected' : '';
+                if (imgUrl) {
+                    return '<div class="color-swatch' + selected + '" data-color="' + label + '" title="' + label + '"><img src="' + imgUrl + '" class="color-swatch-img"></div>';
+                }
+                return '<div class="color-swatch' + selected + '" data-color="' + label + '" title="' + label + '" style="background:' + getColorCSS(label) + ';"></div>';
+            }).join('');
+        }
+
+        // Build options (B and C as checkboxes - both optional)
+        var optionsHtml = cat.options.map(function(opt) {
+            var detail = optionDetails[opt];
+            if (!detail) return '';
+            var checked = customState.selectedOptions.indexOf(opt) !== -1;
+            var displayName = detail.name;
+            var displayDesc = detail.description;
+            // Customize labels for sticker context
+            if (opt === 'B') {
+                displayName = 'Stick on Phone Case Service';
+                displayDesc = 'We stick the stickers on your phone case for you';
+            } else if (opt === 'C') {
+                displayName = 'UV Resin + UV Lamp';
+                displayDesc = 'UV resin and UV lamp to seal and protect your stickers';
+            }
+            return '<label class="option-checkbox"><input type="checkbox" class="option-input" data-option="' + opt + '" ' + (checked ? 'checked' : '') + '><span class="option-info"><span class="option-name">' + displayName + '</span><span class="option-desc">' + displayDesc + '</span><span class="option-price">' + (detail.price > 0 ? '+$' + detail.price.toFixed(2) : 'Included') + '</span></span></label>';
+        }).join('');
+
+        modalContent.innerHTML = [
+            '<div class="modal-product-image ' + colorClasses[idx] + '">',
+                productImageHtml,
+            '</div>',
+            '<h2 class="modal-product-name">' + product.name + '</h2>',
+            '<div class="modal-product-price">$' + product.price.toFixed(2) + '</div>',
+            '<p class="modal-product-desc">' + product.description + '</p>',
+            '<div class="modal-qty">',
+                '<label>Quantity:</label>',
+                '<div class="modal-qty-selector">',
+                    '<button class="modal-qty-btn" id="optQtyMinus">-</button>',
+                    '<span class="modal-qty-input" id="optQtyValue">1</span>',
+                    '<button class="modal-qty-btn" id="optQtyPlus">+</button>',
+                '</div>',
+            '</div>',
+            '<div class="custom-section">',
+                '<h3 class="custom-step-title">Optional: Add a Phone Case</h3>',
+                '<select id="optModelSelector" class="model-selector">' + modelsHtml + '</select>',
+            '</div>',
+            '<div class="custom-section" id="optStyleSection" style="display:' + (selectedModelId ? 'block' : 'none') + ';">',
+                '<h3 class="custom-step-title">Choose Your Case Style</h3>',
+                '<div class="case-styles-grid">' + stylesHtml + '</div>',
+                '<div class="color-selector" id="optColorSelector" style="display:' + (customState.selectedStyle ? 'block' : 'none') + ';">',
+                    '<p class="color-label">Choose Color:</p>',
+                    '<div class="color-swatches">' + colorsHtml + '</div>',
+                '</div>',
+            '</div>',
+            '<div class="custom-section">',
+                '<h3 class="custom-step-title">Optional: Add-On Services</h3>',
+                '<div class="options-list">' + optionsHtml + '</div>',
+            '</div>',
+            '<div class="custom-total">',
+                '<div class="custom-total-breakdown">',
+                    '<span>Sticker: $' + product.price.toFixed(2) + '</span>',
+                    (casePrice > 0 ? '<span>Case: +$' + casePrice.toFixed(2) + '</span>' : ''),
+                    (optionsPrice > 0 ? '<span>Services: +$' + optionsPrice.toFixed(2) + '</span>' : ''),
+                '</div>',
+                '<div class="custom-total-row">',
+                    '<span>Total:</span>',
+                    '<span class="custom-total-price">$' + totalPrice.toFixed(2) + '</span>',
+                '</div>',
+            '</div>',
+            '<div class="custom-selections" id="optCustomSelections">',
+                (selectedModelName ? '<span>Model: ' + selectedModelName + '</span>' : ''),
+                (customState.selectedStyle ? '<span>Case: ' + customState.selectedStyle.name + ' (' + customState.selectedColor + ')</span>' : ''),
+                (optionsText.length > 0 ? '<span>Services: ' + optionsText.join(', ') + '</span>' : ''),
+            '</div>',
+            '<button class="btn btn-primary modal-add-btn" id="optAddBtn">Add to Cart</button>'
+        ].join('');
+
+        var optQty = 1;
+        var optQtyMinus = document.getElementById('optQtyMinus');
+        var optQtyPlus = document.getElementById('optQtyPlus');
+        if (optQtyMinus) {
+            optQtyMinus.addEventListener('click', function() {
+                if (optQty > 1) { optQty--; document.getElementById('optQtyValue').textContent = optQty; }
+            });
+        }
+        if (optQtyPlus) {
+            optQtyPlus.addEventListener('click', function() {
+                optQty++; document.getElementById('optQtyValue').textContent = optQty;
+            });
+        }
+
+        // Bind model selector change
+        var modelSel = document.getElementById('optModelSelector');
+        if (modelSel) {
+            modelSel.addEventListener('change', function() {
+                customState.selectedModel = this.value || null;
+                customState.selectedStyle = null;
+                customState.selectedColor = null;
+                renderOptionalCaseModal();
+            });
+        }
+
+        // Bind style selection events
+        document.querySelectorAll('.case-style-card').forEach(function(card) {
+            card.addEventListener('click', function() {
+                var styleId = this.dataset.styleId;
+                var style = availableStyles.find(function(s) { return s.id === styleId; });
+                if (!style) return;
+                customState.selectedStyle = style;
+                var firstColor = style.colors[0];
+                customState.selectedColor = typeof firstColor === 'string' ? firstColor : firstColor.label;
+                renderOptionalCaseModal();
+            });
+        });
+
+        // Bind color selection events
+        document.querySelectorAll('.color-swatch').forEach(function(swatch) {
+            swatch.addEventListener('click', function() {
+                customState.selectedColor = this.dataset.color;
+                renderOptionalCaseModal();
+            });
+        });
+
+        // Bind option events (B and C as independent checkboxes)
+        document.querySelectorAll('.option-input').forEach(function(cb) {
+            cb.addEventListener('change', function() {
+                var opt = this.dataset.option;
+                if (this.checked) {
+                    if (customState.selectedOptions.indexOf(opt) === -1) {
+                        customState.selectedOptions.push(opt);
+                    }
+                } else {
+                    customState.selectedOptions = customState.selectedOptions.filter(function(o) { return o !== opt; });
+                }
+                renderOptionalCaseModal();
+            });
+        });
+
+        // Bind add to cart
+        document.getElementById('optAddBtn').addEventListener('click', function() {
+            var cCasePrice = customState.selectedStyle ? parseFloat(customState.selectedStyle.price) : 0;
+            var cOptionsPrice = 0;
+            var cOptionsText = [];
+            customState.selectedOptions.forEach(function(opt) {
+                if (optionDetails[opt]) {
+                    cOptionsPrice += optionDetails[opt].price;
+                    cOptionsText.push(optionDetails[opt].name);
+                }
+            });
+
+            var hasCustomization = customState.selectedStyle || customState.selectedOptions.length > 0;
+            var customization = null;
+            if (hasCustomization) {
+                customization = {
+                    phoneModel: selectedModelName || null,
+                    caseStyle: customState.selectedStyle ? customState.selectedStyle.name : null,
+                    caseColor: customState.selectedColor || null,
+                    options: customState.selectedOptions,
+                    optionsText: cOptionsText.join(', ')
+                };
+            }
+
+            var cTotalPrice = product.price + cCasePrice + cOptionsPrice;
+            var customProduct = Object.assign({}, product, { price: cTotalPrice });
+            for (var i = 0; i < optQty; i++) {
+                Cart.addItem(customProduct, 1, customization);
+            }
+            showToast(product.name + ' added to cart!');
+            updateCartUI();
+            closeModal();
+        });
+
+        // Bind lightbox for style preview images
+        document.querySelectorAll('.case-style-preview-img').forEach(function(img) {
+            img.addEventListener('click', function(e) {
+                var styleCard = this.closest('.case-style-card');
+                if (styleCard) {
+                    var styleId = styleCard.dataset.styleId;
+                    var style = availableStyles.find(function(s) { return s.id === styleId; });
+                    if (style) {
+                        window.openLightbox(style.image_url, style.name);
+                    }
+                }
+            });
+        });
+
+        // Bind lightbox for color swatch images
+        document.querySelectorAll('.color-swatch img').forEach(function(img) {
+            img.addEventListener('click', function(e) {
+                var swatch = this.closest('.color-swatch');
+                if (swatch) {
+                    window.openLightbox(this.src, swatch.title || 'Color');
+                }
+            });
+        });
+    }
 
     function renderCustomizationModal() {
         const product = customState.product;

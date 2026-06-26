@@ -48,7 +48,7 @@ const Cart = {
         // For customized items, generate a unique ID based on selections
         let itemId = product.id;
         if (customization) {
-            const customStr = customization.caseStyle + '_' + customization.caseColor + '_' + (customization.options || []).join('');
+            const customStr = (customization.caseStyle || 'none') + '_' + (customization.caseColor || 'none') + '_' + (customization.options || []).join('');
             itemId = product.id + '_' + btoa(customStr).replace(/=/g, '');
         }
 
@@ -66,6 +66,7 @@ const Cart = {
                 category: product.category,
                 image: product.image,
                 badge: product.badge,
+                phoneModel: customization ? (customization.phoneModel || null) : null,
                 caseStyle: customization ? customization.caseStyle : null,
                 caseColor: customization ? customization.caseColor : null,
                 options: customization ? customization.options : [],
